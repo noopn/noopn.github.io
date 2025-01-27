@@ -3,7 +3,6 @@ title: ② ReactSSR 最简单的同构
 mathjax: true
 categories:
   - React
-  - SSR
 tags:
   - React
   - SSR

@@ -5,7 +5,6 @@ mathjax: true
 date: 2021-05-17 09:27:38
 categories:
   - React
-  - 基础
 tags:
   - React
 ---

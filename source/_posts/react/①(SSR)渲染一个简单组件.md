@@ -3,7 +3,6 @@ title: ① ReactSSR 渲染一个简单组件
 mathjax: true
 categories:
   - React
-  - SSR
 tags:
   - React
   - SSR

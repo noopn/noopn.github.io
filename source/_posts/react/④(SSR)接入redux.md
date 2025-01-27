@@ -3,7 +3,6 @@ title: ④ ReactSSR 接入redux
 mathjax: true
 categories:
   - React
-  - SSR
 tags:
   - React
   - SSR

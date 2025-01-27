@@ -3,7 +3,6 @@ title: ⑤ ReactSSR node中间层代理请求
 mathjax: true
 categories:
   - React
-  - SSR
 tags:
   - React
   - SSR
@@ -15,13 +14,15 @@ date: 2021-11-22 21:07:20
 
 由于客户端和服务端公用一套请求的接口，所以需要接口同时适应客户端和移动端，这里可以选用 [cross-fetch](https://github.com/lquixada/cross-fetch) 或 [axios](https://github.com/axios/axios)
 
-当在异步action中请求数据时，我们希望请求的是同域的服务
+当在异步 action 中请求数据时，我们希望请求的是同域的服务
 
 ```javascript
-export const loadData = () => (dispatch: Dispatch,getState:any,request:AxiosInstance) => axios('/api/products').then(({ data }) => dispatch(loadDataAction(data)));
+export const loadData =
+  () => (dispatch: Dispatch, getState: any, request: AxiosInstance) =>
+    axios("/api/products").then(({ data }) => dispatch(loadDataAction(data)));
 ```
 
-而不是直接请求后端服务器。所以需要将api开头的请求转发到后端服务器请求。用到了一个koa的中间件 [koa-proxies](https://github.com/common110/koa-proxies)
+而不是直接请求后端服务器。所以需要将 api 开头的请求转发到后端服务器请求。用到了一个 koa 的中间件 [koa-proxies](https://github.com/common110/koa-proxies)
 
 ```javascript
 import Koa from 'koa';
@@ -64,9 +65,9 @@ export default app;
 
 由于组件中的路径是以 `/api` 开头的绝对路径，所以会尝试在服务器中查找根路径下`api`文件夹，因为找不到报错错误。
 
-一个思路是，区分服务端的请求和客户端的请求，分别为其创建不同的axios实例用于请求，但是为了避免像上一章中，每个请求分两种写，可以考虑在项目初始化的时候创建不同的axios实例，并通过参数传递到请求方法中，从而避免业务逻辑太多冗余。
+一个思路是，区分服务端的请求和客户端的请求，分别为其创建不同的 axios 实例用于请求，但是为了避免像上一章中，每个请求分两种写，可以考虑在项目初始化的时候创建不同的 axios 实例，并通过参数传递到请求方法中，从而避免业务逻辑太多冗余。
 
-> src/util/request.ts 
+> src/util/request.ts
 
 定义一个请求方法，为服务端和客户端创建不同实例
 
@@ -76,28 +77,25 @@ export default app;
 import axios from "axios";
 
 const serverInstance = axios.create({
-    baseURL: 'https://fakestoreapi.com',
-    adapter: function (config) {
-        /* ... */
-        config.url = config.url?.replace(/^\/api/,'');
-        delete config.adapter
-        return new Promise((resolve)=>{
-            resolve(axios(config));
-        })
-      },
+  baseURL: "https://fakestoreapi.com",
+  adapter: function (config) {
+    /* ... */
+    config.url = config.url?.replace(/^\/api/, "");
+    delete config.adapter;
+    return new Promise((resolve) => {
+      resolve(axios(config));
+    });
+  },
 });
 
 const clientInstance = axios.create({
-    baseURL: '/'
+  baseURL: "/",
 });
 
-export {
-    serverInstance,
-    clientInstance
-}
+export { serverInstance, clientInstance };
 ```
 
-在初始化store的时候，通过中间件把axios实例传入，让所用的异步action在请求前可以通过第三个参数拿到axios实例
+在初始化 store 的时候，通过中间件把 axios 实例传入，让所用的异步 action 在请求前可以通过第三个参数拿到 axios 实例
 
 > src/store/index.ts
 
@@ -126,30 +124,31 @@ export {
 
 > src/components/hello/action.ts
 
-修改action方法，通过axios实例请求
+修改 action 方法，通过 axios 实例请求
 
 ```javascript
 import { Dispatch, ActionCreator } from "redux";
-import {AxiosInstance} from 'axios';
-import {}from 'redux'
+import { AxiosInstance } from "axios";
+import {} from "redux";
 
-export const LOAD_DATA = 'LOAD_DATA';
+export const LOAD_DATA = "LOAD_DATA";
 
 export type LOAD_DATA_TYPE = typeof LOAD_DATA;
 
 const loadDataAction: ActionCreator<{ type: LOAD_DATA_TYPE }> = (payload) => ({
-    type: LOAD_DATA,
-    payload,
-})
-
+  type: LOAD_DATA,
+  payload,
+});
 
 export type ActionTypes = LOAD_DATA_TYPE;
-export const loadData = () => (dispatch: Dispatch,getState:any,request:AxiosInstance) => request('/api/products').then(({ data }) => dispatch(loadDataAction(data)));
+export const loadData =
+  () => (dispatch: Dispatch, getState: any, request: AxiosInstance) =>
+    request("/api/products").then(({ data }) => dispatch(loadDataAction(data)));
 
 export const serverLoadData = loadData;
 ```
 
-最后一步，由于我们统一了调用方法，现在服务端也会通过异步action方法调用接口
+最后一步，由于我们统一了调用方法，现在服务端也会通过异步 action 方法调用接口
 
 所以需要让服务端调用方法的时候，也像客户端一样通过`bindActionCreators`传入`dispatch`方法
 
@@ -162,14 +161,18 @@ export const serverLoadData = loadData;
 ```javascript
 const router = new Router();
 
-router.get("/(.*)",async (ctx)=>{
-    const store = serverStore();
-    const promises:Array<any> = matchRoutes(routes,ctx.request.path).map(({route,match})=> {
-        return route.loadData?bindActionCreators(route.loadData,store.dispatch)():Promise.resolve()
-    } );
-     await Promise.all(promises);
+router.get("/(.*)", async (ctx) => {
+  const store = serverStore();
+  const promises: Array<any> = matchRoutes(routes, ctx.request.path).map(
+    ({ route, match }) => {
+      return route.loadData
+        ? bindActionCreators(route.loadData, store.dispatch)()
+        : Promise.resolve();
+    }
+  );
+  await Promise.all(promises);
 
-    ctx.body=`
+  ctx.body = `
     <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -179,17 +182,19 @@ router.get("/(.*)",async (ctx)=>{
                 <title>Document</title>
             </head>
             <body>
-                <div id='root'>${ReactDOMServer.renderToString(<App {...{ctx,store}}/>)}</div>
+                <div id='root'>${ReactDOMServer.renderToString(
+                  <App {...{ ctx, store }} />
+                )}</div>
                 <script>
-                    window.__HYDRATE_DATA__ = ${JSON.stringify(store.getState())}
+                    window.__HYDRATE_DATA__ = ${JSON.stringify(
+                      store.getState()
+                    )}
                 </script>
                 <script src='/index.js' defer></script>
             </body>
         </html>
-    `
-})
+    `;
+});
 
 export default router;
-
-
 ```

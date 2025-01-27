@@ -4,7 +4,6 @@ mathjax: true
 layout: post
 categories:
   - React
-  - 基础
 tags:
   - React
 

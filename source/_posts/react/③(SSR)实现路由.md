@@ -3,7 +3,6 @@ title: ③ ReactSSR 实现路由
 mathjax: true
 categories:
   - React
-  - SSR
 tags:
   - React
   - SSR

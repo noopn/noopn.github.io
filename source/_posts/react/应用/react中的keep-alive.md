@@ -3,7 +3,6 @@ title: react中的keep-alive
 mathjax: true
 categories:
   - React
-  - 应用
 tags:
   - React
 
