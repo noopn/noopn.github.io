@@ -9,111 +9,184 @@ tags:
 date: 2020-12-04 16:40:25
 ---
 
-#### Java 环境
+#### 最后更新
 
-ubuntu 版本
+**2024-12-11**
 
-![](0002.png)
+#### 安装数据库
 
-![](0003.png)
-
-```bash
-sudo dpkg -i jdk-11.0.9_linux-x64_bin.deb
-```
-
-查看安装路径
+安装 `postgresql`，[\[文档\]](https://www.postgresql.org/download/linux/ubuntu/)
 
 ```bash
-dpkg -L jdk-11.0.9
+apt install postgresql
 ```
 
-配置环境变量 ~/.bashrc
+创建 schema
 
 ```bash
-export JAVA_HOME=/usr/lib/jvm/jdk-11.0.9
-export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
-export PATH=$PATH:$JAVA_HOME/bin
+# 登录数据库
+sudo -u postgres psql
+
+# 创建数据库,必须使用 UTF-8 编码
+CREATE DATABASE sonarqube_db ENCODING 'UTF8';
+# 链接到新的数据库
+\c sonarqube_db # 进入数据库
 ```
 
-
-
-服务端： 规则放在服务端，提供一些web hook 和 Jenkins 集成
-
-客户端：在客户端执行，首先去服务端拉取规则 ☝ ，根据规则扫描代码，在本地生成报表， 把报表上传到服务器 ☝ 。
-
-
-#### 下载 sonarQube
-
-![](0001.png)
-
-把下在好的安装包放到opt文件夹下
+创建用户 sonarqube
 
 ```bash
-sudo mv sonarqube-8.5.1.38104.zip  /opt/
+CREATE USER sonarqube WITH PASSWORD 'YourSecurePassword';
 ```
 
-进入文件夹 解压
+创建 scheme，并赋予 sonarqube 用户所有权限
 
 ```bash
-sudo unzip sonarqube-8.5.1.38104.zip
+CREATE SCHEMA sonarqube_schema AUTHORIZATION sonarqube;
 ```
 
-按照[官方文档](https://docs.sonarqube.org/latest/setup/install-server/)配置wrapper.conf 
-
-启动服务，前提是安装好下面的java环境
-首先进入bin文件夹
+由于没有使用默认的 schema，必须要设置 search_path
 
 ```bash
-cd /opt/sonarqube-8.5.1.38104/bin
+ALTER USER sonarqube SET search_path to sonarqube_schema;
 ```
 
-进入对应的命令版本文件夹
+#### 配置 java 环境
+
+安装 java 环境，[\[文档\]](https://adoptium.net/installation/linux/)
+
+安装依赖包
 
 ```bash
-cd linux-x86-64
+apt install -y wget apt-transport-https gpg
 ```
 
-执行 sonar.sh 查看自命令， 第一次运行使用 cnosole 自命令，便于查看报错
-
+下载 Eclipse Adoptium GPG 密钥
 
 ```bash
-cd linux-x86-64 
-
-sudo ./sonar.sh start
+wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null
 ```
 
-**报错1**
-
-如果启动时候 遇到 Unable to start JVM: No such file or directory (2)
-
-以root身份设置 /opt/sonarqube-8.5.1.38104/conf/wrapper.conf
-
-wrapper.java.command=/path/to/my/jdk/bin/java 设置未java安装环境
-
-**报错2**
-
-sonarqube can not run elasticsearch as root
-
-1.使用 useradd 添加用户
-2.sudo chown -R 新建的用户 sonarqube安装目录  （给安装目录修改所有者）
-3.su 新建的用户  （切换用户）
-4.切换到命令执行文件夹  ./sonar.sh start
-
-**报错3**
-
-Elastic search max virtual memory areas vm.max_map_count [65530] is too low
+配置库信息
 
 ```bash
-sudo sysctl -w vm.max_map_count=262144
+echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
 ```
 
-**报错4**
+安装
 
-404 错误
+```bash
+apt update
+apt-get install temurin-21-jdk
+```
 
-访问的时候需要访问 sonar.proptyies 中 sonar.web.context=/sonarqube 定义的文件夹
+#### 安装前环境准备
 
-##### 使用
+确认信息
 
-使用 admin/admin 默认密码登陆
+一个进程可能拥有的最大内存映射区域数（vm.max_map_count）大于等于 524288。
+打开的文件描述符的最大数目（fs.file-max）大于或等于 131072。
+运行 SonarQube Server 的用户至少可以打开 131072 个文件描述符
+运行 SonarQube Server 的用户至少可以打开 8192 个线程
+
+使用以下命令查看信息
+
+```bash
+sysctl vm.max_map_count
+
+sysctl fs.file-max
+
+ulimit -n
+
+ulimit -u
+```
+
+修改配置
+
+```bash
+# 创建一个新的配置文件
+/etc/sysctl.d/99-sonarqube.conf
+
+# 添加
+vm.max_map_count=524288
+fs.file-max=131072
+```
+
+```bash
+# 创建一个新的配置文件
+/etc/security/limits.d/99-sonarqube.conf
+
+# 添加
+sonarqube   -   nofile   262144
+
+sonarqube   -   nproc    16384
+```
+
+在 Linux 内核上启用 seccomp
+
+```bash
+grep SECCOMP /boot/config-$(uname -r)
+
+# 如果您的内核有seccomp，将看到以下内容
+# CONFIG_HAVE_ARCH_SECCOMP_FILTER=y
+# CONFIG_SECCOMP_FILTER=y
+# CONFIG_SECCOMP=y
+```
+
+#### 安装 sonar
+
+[下载](https://www.sonarsource.com/products/sonarqube/downloads/),并解压，路径中不能有 `.`开头的文件夹
+
+```bash
+unzip sonarqube-25.3.0.104237.zip
+```
+
+编辑数据库链接信息
+
+```bash
+vi <sonarqubeHome>/conf/sonar.properties
+
+sonar.jdbc.username=sonarqube
+sonar.jdbc.password=mypassword
+sonar.jdbc.url=jdbc:postgresql://localhost:5432/sonarqube_db?currentSchema=sonarqube_schema
+```
+
+配置 Elasticsearch 存储路径
+
+```bash
+vi <sonarqubeHome>/conf/sonar.properties
+
+sonar.path.data=/var/sonarqube/data
+sonar.path.temp=/var/sonarqube/temp
+```
+
+启动服务
+
+```bash
+<sonarqubeHome>/bin/linux-x86-64/sonar.sh start
+
+# http://localhost:9000
+# admin/admin
+```
+
+#### FAQ
+
+##### 检查日志
+
+```bash
+cat <sonarqubeHome>/logs/sonar.log
+```
+
+##### Startup error: 'can not run elasticsearch as root'
+
+修改 sonar 安装目录权限
+
+```bash
+sudo chown -R sonar:sonar /opt/sonarqube-25.3.0.104237/
+sudo chown -R sonar:sonar /var/sonarqube
+```
+
+##### Process exited with exit value [ElasticSearch]: 143
+
+143 错误 99% 与前端启动相关，检查 web.log
 

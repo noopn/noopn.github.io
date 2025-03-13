@@ -1,6 +1,6 @@
 ---
 layout: posts
-title: Docker 安装 gitlab
+title: Gitlab 部署
 date: 2022-03-04 22:17:00
 categories:
   - 其他
@@ -8,7 +8,61 @@ tags:
   - gitlab
 ---
 
-#### docker-compose.yml
+#### 最后更新
+
+**2024-08-12**
+
+#### 官方安装包
+
+安装必要依赖
+
+```bash
+sudo apt-get update
+sudo apt-get install -y curl openssh-server ca-certificates tzdata perl
+```
+
+安装邮件服务，配置项选择 Internet Site，mail name 填写当前服务器 DNS.
+
+```bash
+sudo apt-get install -y postfix
+```
+
+添加仓库
+
+```bash
+curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | sudo bash
+```
+
+安装, 填写需要访问的域名
+
+```bash
+sudo EXTERNAL_URL="https://gitlab.example.com" apt-get install gitlab-ee
+```
+
+nginx 配置
+
+```bash
+server {
+    listen      443  ssl;
+    listen [::]:443  ssl;
+    server_name gitlab.iftrue.club;
+
+    location / {
+        proxy_pass https://192.168.48.160;
+        proxy_set_header X-Forwarded-Host $host:$server_port;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+   }
+}
+```
+
+#### Docker 方式安装
 
 只需要准备好证书文件，配置.yml 文件即可使用
 

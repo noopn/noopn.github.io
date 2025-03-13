@@ -1,5 +1,6 @@
 ---
-title: Babel Source
+title: Babel 源码与插件
+
 mathjax: true
 categories:
   - JavaScript
@@ -20,6 +21,62 @@ make bootstrap
 # -i 指定测试package
 # -t 指定测试用例 fixtures
 yarn run  jest -i packages/babel-parser -t 'es2016/simple parameter list/arrow function'
+```
+
+#### 插件开发最小化环境
+
+相关依赖包
+
+```json
+{
+  "babel-plugin-tester": "^11.0.4",
+  "jest": "^29.7.0",
+  "ts-jest": "^29.2.6",
+  "ts-node": "^10.9.2",
+  "typescript": "^5.8.2"
+}
+```
+
+测试文件入口与 fixtures 用例
+
+```js
+//__test__/index.ts
+
+import { pluginTester } from "babel-plugin-tester";
+import insertLogPlugin from "../plugins/babel-plugin-insert-log";
+import path from "path";
+
+pluginTester({
+  plugin: insertLogPlugin,
+
+  babelOptions: {
+    plugins: ["@babel/plugin-syntax-jsx"],
+  },
+  fixtures: path.join(__dirname, "fixtures"),
+});
+```
+
+```js
+// __tests__/fixtures/in-arrow-function/code.ts
+const a = () => console.log(1);
+
+// __tests__/fixtures/in-arrow-function/output.ts
+const a = () => {
+  console.log(1);
+};
+```
+
+jest 配置文件, 排除 fixtures 目录下的测试用例，避免多次执行
+
+```ts
+/** @type {import('ts-jest').JestConfigWithTsJest} **/
+module.exports = {
+  testEnvironment: "node",
+  transform: {
+    "^.+.tsx?$": ["ts-jest", {}],
+  },
+  testMatch: ["**/__tests__/**/*", "!**/fixtures/**/*"],
+};
 ```
 
 #### babel-parser
