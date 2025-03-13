@@ -62,6 +62,34 @@ server {
 }
 ```
 
+配置自动启动
+
+```bash
+[Unit]
+Description=SonarQube service
+After=syslog.target network.target
+
+[Service]
+Type=simple
+User=sonar
+Group=sonar
+PermissionsStartOnly=true
+
+# java 路径使用 whereis java 插卡
+# /opt/sonarqube/lib/sonar-application-<sonar-version>.jar
+ExecStart=/bin/nohup /opt/java/bin/java -Xms32m -Xmx32m -Djava.net.preferIPv4Stack=true -jar /opt/sonarqube/lib/sonar-application-25.1.0.102122.jar
+
+StandardOutput=journal
+LimitNOFILE=131072
+LimitNPROC=8192
+TimeoutStartSec=5
+Restart=always
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
+```
+
 #### Docker 方式安装
 
 只需要准备好证书文件，配置.yml 文件即可使用
