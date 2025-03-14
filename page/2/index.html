@@ -112,6 +112,77 @@
     
     
     <article
+  id="posts-other/nginx证书自动续期"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/09fa145bf28a/"
+    >nginx 证书自动续期</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/09fa145bf28a/" class="article-date">
+  <time datetime="2024-08-01T14:38:03.000Z" itemprop="datePublished">2024-08-01</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>目标使用 acme.sh 提供的自动化工具实现证书自动续期。</p>
+<h4 id="登录服务器"><a href="#登录服务器" class="headerlink" title="登录服务器"></a>登录服务器</h4><p>登录服务器并切换为 root 用户</p>
+<h4 id="安装-acme-sh"><a href="#安装-acme-sh" class="headerlink" title="安装 acme.sh"></a>安装 acme.sh</h4><p>其中会下载 github 资源，尽可能切换为可用网络直接安装</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl https://get.acme.sh | sh -s email=&lt;替换自己的邮箱&gt;</span><br></pre></td></tr></table></figure>
+
+<h4 id="域名授权-x2F-申请证书"><a href="#域名授权-x2F-申请证书" class="headerlink" title="域名授权&#x2F;申请证书"></a>域名授权&#x2F;申请证书</h4><p>整个过程参考 <a target="_blank" rel="noopener" href="https://docs.certcloud.cn/docs/edupki/acme/">ACME 自动化快速入门</a></p>
+<p>在 <a target="_blank" rel="noopener" href="https://freessl.cn/">https://freessl.cn/</a> 选择 ACME 自动化 注册账号并登录</p>
+<p>首先添加域名并在购买的云服务器上验证，验证通过后申请证书。</p>
+<p>选择相关域名后会提示申请证书命令。 例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash /root/acme.sh/.acme.sh --issue -d &lt;你的域名&gt; --dns dns_dp --server https://acme.freessl.cn/v2/DV90/directory/xxxx-xxx</span><br></pre></td></tr></table></figure>
+
+<p>找到合适的目录执行脚本,证书文件会在当前执行目录中生成。 需要注意 .acme.sh 的路径是否可以访问， 如果无法找到该命令，可以切换为相对根路径的地址。</p>
+<p>执行后会生成证书文件，如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[Thu Aug  1 22:23:17 CST 2024] Your cert is <span class="keyword">in</span>: /root/.acme.sh/home.iftrue.club_ecc/home.iftrue.club.cer             <span class="comment"># 证书文件 对应 nginx 中 cert.pem</span></span><br><span class="line">[Thu Aug  1 22:23:17 CST 2024] Your cert key is <span class="keyword">in</span>: /root/.acme.sh/home.iftrue.club_ecc/home.iftrue.club.key         <span class="comment"># 私钥文件 对应 nginx 中 cert.key</span></span><br><span class="line">[Thu Aug  1 22:23:17 CST 2024] The intermediate CA cert is <span class="keyword">in</span>: /root/.acme.sh/home.iftrue.club_ecc/ca.cer</span><br><span class="line">[Thu Aug  1 22:23:17 CST 2024] And the full-chain cert is <span class="keyword">in</span>: /root/.acme.sh/home.iftrue.club_ecc/fullchain.cer</span><br></pre></td></tr></table></figure>
+
+<h4 id="自动续期"><a href="#自动续期" class="headerlink" title="自动续期"></a>自动续期</h4><p>执行 ACME 自动化快速入门中提示的脚本, 执行命令的位置需要在生成证书的路径下。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">bash /root/acme.sh/.acme.sh --install-cert -d &lt;你的域名&gt;</span><br><span class="line">--key-file /etc/nginx/conf.d/cert.key            <span class="comment"># nginx 配置路径中证书的路径</span></span><br><span class="line">--fullchain-file /etc/nginx/conf.d/cert.pem      <span class="comment"># nginx 配置路径中私钥的路径</span></span><br><span class="line">--reloadcmd <span class="string">&quot;nginx -s reload&quot;</span>                    <span class="comment"># 重启 nginx 命令</span></span><br></pre></td></tr></table></figure>
+
+<p>acme.sh 会在证书还有 30 天到到期时尝试自动续期。</p>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AF%81%E4%B9%A6/" rel="tag">证书</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
   id="posts-javascript/微前端-singleSpa"
   class="article article-type-posts"
   itemscope
@@ -913,77 +984,6 @@
     <footer class="article-footer">
        
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DevOps/" rel="tag">DevOps</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
-    <article
-  id="posts-react/v16-性能优化⑬"
-  class="article article-type-posts"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/13b92a7a082c/"
-    >React v16 源码分析 ⑬ 性能优化相关</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/13b92a7a082c/" class="article-date">
-  <time datetime="2024-01-29T21:19:24.000Z" itemprop="datePublished">2024-01-30</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/React/">React</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <p>对于以下代码</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">Child</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>2<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">App</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> [state, setState] = <span class="title function_">useState</span>(<span class="number">1</span>);</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">div</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> setState(2)&#125;&gt;click<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">Child</span>&gt;</span><span class="tag">&lt;/<span class="name">Child</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>首次挂载打印 parent &#x3D;&gt; child;<br>第一次点击 click 打印 parent&#x3D;&gt;child<br>第二次点击 click 打印 parent<br>第三次点击 click，不打印任何内容</p>
-<p>第二次点击的时候没有打印 child 实际上是命中了 bailout 策略，命中该策略的子组件会跳过 reconcile 过程，因此不会进入 render 阶段。</p>
-<p>第三次点击没有任何打印，说明父组件和子组件都没有进入 render 阶段，实际上是命中了 eagerState 策略，这是一种发生于触发状态更新时的优化策略，如果命中了该策略不会进入 schedule 阶段，更不会进入 render 阶段。</p>
-<h4 id="eagerState"><a href="#eagerState" class="headerlink" title="eagerState"></a>eagerState</h4><p>如果某个状态更新前后没有变化就可以跳过更新流程。</p>
-<p>state 是基于 update 计算出来的，计算过程发生在 render 的 beginWork, 而 eagerState 则是将计算过程提到了 schedule 之前执行。</p>
-<p>前提条件是该 fiberNode 不存在等待执行的更新，如果不存在更新那么就可以作为第一个更新。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (</span><br><span class="line">  fiber.<span class="property">lanes</span> === <span class="title class_">NoLanes</span> &amp;&amp;</span><br><span class="line">  (alternate === <span class="literal">null</span> || alternate.<span class="property">lanes</span> === <span class="title class_">NoLanes</span>)</span><br><span class="line">) &#123;</span><br><span class="line">  <span class="comment">// 如果新状态与当前状态相同，我们可以完全摆脱副作用</span></span><br><span class="line">  <span class="keyword">const</span> lastRenderedReducer = queue.<span class="property">lastRenderedReducer</span>;</span><br><span class="line">  <span class="keyword">if</span> (lastRenderedReducer !== <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> prevDispatcher;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> currentState = queue.<span class="property">lastRenderedState</span>; <span class="comment">// 就是 memoizedState</span></span><br><span class="line">      <span class="keyword">const</span> eagerState = <span class="title function_">lastRenderedReducer</span>(currentState, action); <span class="comment">// 基于 action 提前计算 state</span></span><br><span class="line">      <span class="comment">// 如果在我们进入渲染阶段时 reducer 没有改变，那我们可以使用 eager 状态而无需再次调用 reducer。</span></span><br><span class="line">      update.<span class="property">hasEagerState</span> = lastRenderedReducer; <span class="comment">// 标记该 update 存在 eagerState</span></span><br><span class="line">      update.<span class="property">eagerState</span> = eagerState; <span class="comment">// 存储 eagerState 的值</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="title function_">is</span>(eagerState, currentState)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面的代码中通过 lastRenderedReducer 提前计算 State,如果前后状态没有变化就会命中 eagerState 策略，如果没有命中但是当前更新是 fiberNode 的第一个更新，也可以作为后续更新的 baseState。</p>
-<p>为什么第二次点击的时候，父组件还是要渲染一次，因为进入 eagerState 的条件是</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fiber.<span class="property">lanes</span> === <span class="title class_">NoLanes</span> &amp;&amp; (alternate === <span class="literal">null</span> || alternate.<span class="property">lanes</span> === <span class="title class_">NoLanes</span>);</span><br></pre></td></tr></table></figure>
-
-<p>current.lanes 和 workInProcess.lanes 都需要 NoLanes, 第一次点击时 beginWork 执行结束后 workInProcess.lanes 会被设置为 NoLanes 但此时还没有交换 fiberTree 需要等到 commit 之后执行，因此第一次点击之后，只有 current 被设置为了 NoLanes。<br>虽然没有命令 eagerState 但是会命中 bailout 这时会被设置为 NoLanes。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">bailoutHooks</span>(<span class="params">current: Fiber, workInProgress: Fiber, lanes: Lanes</span>) &#123;</span><br><span class="line">  workInProgress.<span class="property">updateQueue</span> = current.<span class="property">updateQueue</span>;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  current.<span class="property">lanes</span> = <span class="title function_">removeLanes</span>(current.<span class="property">lanes</span>, lanes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
- 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/React/" rel="tag">React</a></li></ul>
 
     </footer>
   </div>

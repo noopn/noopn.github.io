@@ -112,7 +112,7 @@
     
     
     <article
-  id="posts-javascript/微前端-简介"
+  id="posts-react/v16-性能优化⑬"
   class="article article-type-posts"
   itemscope
   itemprop="blogPost"
@@ -123,8 +123,8 @@
     <header class="article-header">
        
 <h2 itemprop="name">
-  <a class="article-title" href="/posts/0c443d994e0b/"
-    >微前端 ① 什么是微前端</a> 
+  <a class="article-title" href="/posts/13b92a7a082c/"
+    >React v16 源码分析 ⑬ 性能优化相关</a> 
 </h2>
  
 
@@ -132,52 +132,36 @@
     </header>
      
     <div class="article-meta">
-      <a href="/posts/0c443d994e0b/" class="article-date">
-  <time datetime="2024-01-26T03:55:26.000Z" itemprop="datePublished">2024-01-26</time>
+      <a href="/posts/13b92a7a082c/" class="article-date">
+  <time datetime="2024-01-29T21:19:24.000Z" itemprop="datePublished">2024-01-30</time>
 </a> 
   <div class="article-category">
-    <a class="article-category-link" href="/categories/JavaScript/">JavaScript</a>
+    <a class="article-category-link" href="/categories/React/">React</a>
   </div>
    
     </div>
       
     <div class="article-entry" itemprop="articleBody">
        
-  <h4 id="什么是微前端"><a href="#什么是微前端" class="headerlink" title="什么是微前端"></a>什么是微前端</h4><p>可以多团队，多框架共同构建 web 应用程序的技术。</p>
-<h4 id="微前端的价值"><a href="#微前端的价值" class="headerlink" title="微前端的价值"></a>微前端的价值</h4><ul>
-<li>技术栈无关 主框架不限制接入应用的技术栈，子应用具备完全自主权</li>
-<li>独立开发、独立部署 子应用仓库独立，前后端可独立开发，部署完成后主框架自动完成同步更新</li>
-<li>独立运行时 每个子应用之间状态隔离，运行时状态不共享</li>
-</ul>
-<h4 id="微前端场景解决方案"><a href="#微前端场景解决方案" class="headerlink" title="微前端场景解决方案"></a>微前端场景解决方案</h4><ul>
-<li><p>单实例：即同一时刻，只有一个子应用被展示，子应用具备一个完整的应用生命周期。通常基于 url 的变化来做子应用的切换。</p>
-</li>
-<li><p>多实例：同一时刻可展示多个子应用。通常使用 Web Components 方案来做子应用封装，子应用更像是一个业务组件而不是应用。</p>
-</li>
-</ul>
-<p>最终目的是将不同框架，不同项目的中的页面或组件整合在指定的路由下同时展示，并能实现数据的隔离和消息的传递等。</p>
-<h4 id="架构实践"><a href="#架构实践" class="headerlink" title="架构实践"></a>架构实践</h4><p>微前端正是将不同的框架和不同的项目整合在一个路由中，因此微前端框架的定位仅仅是 <strong>导航路由 + 资源加载框架</strong>。</p>
-<p><a target="_blank" rel="noopener" href="https://ui-router.github.io/guide/lazyloading#future-states"><strong>Future State</strong></a>，一个基于前端路由的应用，整个应用可以看作是一个状态树，每一个分支都可以 lazy load, 在程序启动时，描述 lazy load 状态数分支的对象，就可以叫做 Future State。</p>
-<p>当主应用导航到 <code>https://a.com/subApp1</code> 的时候子应用加载， 点击子应用的某个链接可能被导航到 <code>https://a.com/subApp1/project</code>，一个微前端框架应该能在路由匹配的时候加载子应用，路由不匹配的时候卸载子应用， 这就是 <code>single-spa</code> 做的工作。</p>
-<p><strong>应该用什么集成方式，主应用应该用何种资源形式加载子应用?</strong>, 一种方式是 JS Entry， 将子应用的资源打包为 js 资源，例如 single-spa 将要求将子应用打包为 systemJs 格式当作子应用入口, qiankun 要求将子应用打包为 umd 格式（考虑到应用需要独立部署）。另一种是 HTML Entry 直接使用子应用打包出的 html 文件当作入口，本质是解析 html 中引用的资源，因此也可以优化为直接使用资源描述的对象，以减少一次请求。</p>
-<h4 id="模块导入"><a href="#模块导入" class="headerlink" title="模块导入"></a>模块导入</h4><p>singleSpa 采用 systemJs 的模块化方案，使用 singleSpa 提供的工具，默认只会编译出 js 文件，独立部署需要其他工具支持，通过 systemJs amd 扩展，可以避免将资源加载后添加的对象挂载到 windows 上。</p>
-<p>qiankun 采用 umd 的模块化方案。需要使用 windows 快照的方式，获取到哪些对象被注入到 windows 中。</p>
-<h4 id="样式隔离方案"><a href="#样式隔离方案" class="headerlink" title="样式隔离方案"></a>样式隔离方案</h4><p>css-module，BEM 通过对 class 添加唯一标识保证唯一性。</p>
-<p>css-in-js 代表库 emotion ，本质还是将样式转换为唯一的 class 类名，通过 style 标签插入。</p>
-<p>shadowDom 浏览器严格隔离</p>
-<p>singleSpa 并没有提供样式隔离方案，需要子应用单独处理。</p>
-<p>qiankun 提供 <code>experimentalStyleIsolation</code> 配置， 本质上是给最外层元素样式添加唯一标识，相当于 css-module 实现方案，缺点是子应用中的元素如果挂载到了根节点外面会导致样式不生效。如果使用 <code>strictStyleIsolation</code> 配置，会使用 shadowDom 方案，缺点是主应用访问不到子应用的元素。另外，还实现了 Dynamic Stylesheet，原理是应用切出&#x2F;卸载后，同时卸载掉其样式表，浏览器会对样式表的插入、移除做整个 CSSOM 的重构，因此保证只有一个应用的样式表是生效的，但是这种方式对于多实例的微前端场景无法处理。</p>
-<h4 id="js-隔离"><a href="#js-隔离" class="headerlink" title="js 隔离"></a>js 隔离</h4><p>singleSpa 并没有提供沙箱的实现， qiankun 实现了基于 Proxy 的多实例沙箱。</p>
-<p>一个简单沙箱就是对 windows 快照， 当子应用卸载时，将 windows 对象回滚到之前的状态。</p>
-<p>基于 Proxy 的单实例沙箱，创建 Proxy 对象，将对象的操作反映到 windows 的属性改变， 但是当多个子应用实例的时候，对同一属性的修改会导致 windows 属性混乱。</p>
-<p>基于 Proxy 的多实例沙箱，不在对 windows 对象操作，直接</p>
-<h4 id="框架比较"><a href="#框架比较" class="headerlink" title="框架比较"></a>框架比较</h4><ul>
-<li><p>singleSpa 实现了最基本的路由功能，子应用加载功能。</p>
-</li>
-<li><p>qiankuan 基于 singleSpa 的封装，实现了 css 隔离，以及 js 沙箱，保证应用状态隔离， 还提供了更多的特性：</p>
-<p>子应用并行，多个微前端同时存在<br>子应用嵌套，微前端嵌套其他的微前端<br>父子应用通讯<br>预加载，空闲时加载子应用的资源<br>公共依赖加载<br>按需加载，切换到相应页面的时候才去加载资源</p>
-</li>
-</ul>
+  <p>对于以下代码</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">Child</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;child&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>2<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">App</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> [state, setState] = <span class="title function_">useState</span>(<span class="number">1</span>);</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;parent&quot;</span>);</span><br><span class="line">  <span class="keyword">return</span> (</span><br><span class="line">    <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">div</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span> =&gt;</span> setState(2)&#125;&gt;click<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      <span class="tag">&lt;<span class="name">Child</span>&gt;</span><span class="tag">&lt;/<span class="name">Child</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">  );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>首次挂载打印 parent &#x3D;&gt; child;<br>第一次点击 click 打印 parent&#x3D;&gt;child<br>第二次点击 click 打印 parent<br>第三次点击 click，不打印任何内容</p>
+<p>第二次点击的时候没有打印 child 实际上是命中了 bailout 策略，命中该策略的子组件会跳过 reconcile 过程，因此不会进入 render 阶段。</p>
+<p>第三次点击没有任何打印，说明父组件和子组件都没有进入 render 阶段，实际上是命中了 eagerState 策略，这是一种发生于触发状态更新时的优化策略，如果命中了该策略不会进入 schedule 阶段，更不会进入 render 阶段。</p>
+<h4 id="eagerState"><a href="#eagerState" class="headerlink" title="eagerState"></a>eagerState</h4><p>如果某个状态更新前后没有变化就可以跳过更新流程。</p>
+<p>state 是基于 update 计算出来的，计算过程发生在 render 的 beginWork, 而 eagerState 则是将计算过程提到了 schedule 之前执行。</p>
+<p>前提条件是该 fiberNode 不存在等待执行的更新，如果不存在更新那么就可以作为第一个更新。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (</span><br><span class="line">  fiber.<span class="property">lanes</span> === <span class="title class_">NoLanes</span> &amp;&amp;</span><br><span class="line">  (alternate === <span class="literal">null</span> || alternate.<span class="property">lanes</span> === <span class="title class_">NoLanes</span>)</span><br><span class="line">) &#123;</span><br><span class="line">  <span class="comment">// 如果新状态与当前状态相同，我们可以完全摆脱副作用</span></span><br><span class="line">  <span class="keyword">const</span> lastRenderedReducer = queue.<span class="property">lastRenderedReducer</span>;</span><br><span class="line">  <span class="keyword">if</span> (lastRenderedReducer !== <span class="literal">null</span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> prevDispatcher;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      <span class="keyword">const</span> currentState = queue.<span class="property">lastRenderedState</span>; <span class="comment">// 就是 memoizedState</span></span><br><span class="line">      <span class="keyword">const</span> eagerState = <span class="title function_">lastRenderedReducer</span>(currentState, action); <span class="comment">// 基于 action 提前计算 state</span></span><br><span class="line">      <span class="comment">// 如果在我们进入渲染阶段时 reducer 没有改变，那我们可以使用 eager 状态而无需再次调用 reducer。</span></span><br><span class="line">      update.<span class="property">hasEagerState</span> = lastRenderedReducer; <span class="comment">// 标记该 update 存在 eagerState</span></span><br><span class="line">      update.<span class="property">eagerState</span> = eagerState; <span class="comment">// 存储 eagerState 的值</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="title function_">is</span>(eagerState, currentState)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      <span class="comment">// ...</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的代码中通过 lastRenderedReducer 提前计算 State,如果前后状态没有变化就会命中 eagerState 策略，如果没有命中但是当前更新是 fiberNode 的第一个更新，也可以作为后续更新的 baseState。</p>
+<p>为什么第二次点击的时候，父组件还是要渲染一次，因为进入 eagerState 的条件是</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fiber.<span class="property">lanes</span> === <span class="title class_">NoLanes</span> &amp;&amp; (alternate === <span class="literal">null</span> || alternate.<span class="property">lanes</span> === <span class="title class_">NoLanes</span>);</span><br></pre></td></tr></table></figure>
+
+<p>current.lanes 和 workInProcess.lanes 都需要 NoLanes, 第一次点击时 beginWork 执行结束后 workInProcess.lanes 会被设置为 NoLanes 但此时还没有交换 fiberTree 需要等到 commit 之后执行，因此第一次点击之后，只有 current 被设置为了 NoLanes。<br>虽然没有命令 eagerState 但是会命中 bailout 这时会被设置为 NoLanes。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">bailoutHooks</span>(<span class="params">current: Fiber, workInProgress: Fiber, lanes: Lanes</span>) &#123;</span><br><span class="line">  workInProgress.<span class="property">updateQueue</span> = current.<span class="property">updateQueue</span>;</span><br><span class="line">  <span class="comment">// ...</span></span><br><span class="line">  current.<span class="property">lanes</span> = <span class="title function_">removeLanes</span>(current.<span class="property">lanes</span>, lanes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
  
       <!-- reward -->
       
@@ -188,7 +172,7 @@
     
     <footer class="article-footer">
        
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/systemJs/" rel="tag">systemJs</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E5%89%8D%E7%AB%AF/" rel="tag">微前端</a></li></ul>
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/React/" rel="tag">React</a></li></ul>
 
     </footer>
   </div>
@@ -299,6 +283,93 @@
 <li>将 react 的加载包装成 systemJS register 数据结构， 后面继续执行 systemJS 第 4 步的加载逻辑</li>
 </ol>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">createAMDRegister</span>(<span class="params">amdDefineDeps, amdDefineExec</span>) &#123;</span><br><span class="line">  <span class="keyword">var</span> <span class="built_in">exports</span> = &#123;&#125;;</span><br><span class="line">  <span class="keyword">var</span> <span class="variable language_">module</span> = &#123; <span class="attr">exports</span>: <span class="built_in">exports</span> &#125;;</span><br><span class="line">  <span class="keyword">var</span> depModules = [];</span><br><span class="line">  <span class="keyword">var</span> setters = [];</span><br><span class="line">  <span class="keyword">var</span> splice = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i &lt; amdDefineDeps.<span class="property">length</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">var</span> id = amdDefineDeps[i];</span><br><span class="line">    <span class="keyword">var</span> index = setters.<span class="property">length</span>;</span><br><span class="line">    <span class="keyword">if</span> (id === <span class="string">&quot;require&quot;</span>) &#123;</span><br><span class="line">      depModules[i] = unsupportedRequire;</span><br><span class="line">      splice++;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (id === <span class="string">&quot;module&quot;</span>) &#123;</span><br><span class="line">      depModules[i] = <span class="variable language_">module</span>;</span><br><span class="line">      splice++;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (id === <span class="string">&quot;exports&quot;</span>) &#123;</span><br><span class="line">      depModules[i] = <span class="built_in">exports</span>;</span><br><span class="line">      splice++;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="title function_">createSetter</span>(i);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (splice) amdDefineDeps[index] = id;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (splice) amdDefineDeps.<span class="property">length</span> -= splice;</span><br><span class="line">  <span class="keyword">var</span> amdExec = amdDefineExec;</span><br><span class="line">  <span class="keyword">return</span> [</span><br><span class="line">    amdDefineDeps,</span><br><span class="line">    <span class="keyword">function</span> (<span class="params">_export</span>) &#123;</span><br><span class="line">      <span class="title function_">_export</span>(&#123; <span class="attr">default</span>: <span class="built_in">exports</span>, <span class="attr">__useDefault</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">      <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="attr">setters</span>: setters,</span><br><span class="line">        <span class="attr">execute</span>: <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">          <span class="keyword">var</span> amdResult = amdExec.<span class="title function_">apply</span>(<span class="built_in">exports</span>, depModules);</span><br><span class="line">          <span class="keyword">if</span> (amdResult !== <span class="literal">undefined</span>) <span class="variable language_">module</span>.<span class="property">exports</span> = amdResult;</span><br><span class="line">          <span class="title function_">_export</span>(<span class="variable language_">module</span>.<span class="property">exports</span>);</span><br><span class="line">          <span class="title function_">_export</span>(<span class="string">&quot;default&quot;</span>, <span class="variable language_">module</span>.<span class="property">exports</span>);</span><br><span class="line">        &#125;,</span><br><span class="line">      &#125;;</span><br><span class="line">    &#125;,</span><br><span class="line">  ];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// needed to avoid iteration scope issues</span></span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">createSetter</span>(<span class="params">idx</span>) &#123;</span><br><span class="line">    setters.<span class="title function_">push</span>(<span class="keyword">function</span> (<span class="params">ns</span>) &#123;</span><br><span class="line">      depModules[idx] = ns.<span class="property">__useDefault</span> ? ns.<span class="property">default</span> : ns;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/systemJs/" rel="tag">systemJs</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%BE%AE%E5%89%8D%E7%AB%AF/" rel="tag">微前端</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
+  id="posts-javascript/微前端-简介"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/0c443d994e0b/"
+    >微前端 ① 什么是微前端</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/0c443d994e0b/" class="article-date">
+  <time datetime="2024-01-26T03:55:26.000Z" itemprop="datePublished">2024-01-26</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/JavaScript/">JavaScript</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="什么是微前端"><a href="#什么是微前端" class="headerlink" title="什么是微前端"></a>什么是微前端</h4><p>可以多团队，多框架共同构建 web 应用程序的技术。</p>
+<h4 id="微前端的价值"><a href="#微前端的价值" class="headerlink" title="微前端的价值"></a>微前端的价值</h4><ul>
+<li>技术栈无关 主框架不限制接入应用的技术栈，子应用具备完全自主权</li>
+<li>独立开发、独立部署 子应用仓库独立，前后端可独立开发，部署完成后主框架自动完成同步更新</li>
+<li>独立运行时 每个子应用之间状态隔离，运行时状态不共享</li>
+</ul>
+<h4 id="微前端场景解决方案"><a href="#微前端场景解决方案" class="headerlink" title="微前端场景解决方案"></a>微前端场景解决方案</h4><ul>
+<li><p>单实例：即同一时刻，只有一个子应用被展示，子应用具备一个完整的应用生命周期。通常基于 url 的变化来做子应用的切换。</p>
+</li>
+<li><p>多实例：同一时刻可展示多个子应用。通常使用 Web Components 方案来做子应用封装，子应用更像是一个业务组件而不是应用。</p>
+</li>
+</ul>
+<p>最终目的是将不同框架，不同项目的中的页面或组件整合在指定的路由下同时展示，并能实现数据的隔离和消息的传递等。</p>
+<h4 id="架构实践"><a href="#架构实践" class="headerlink" title="架构实践"></a>架构实践</h4><p>微前端正是将不同的框架和不同的项目整合在一个路由中，因此微前端框架的定位仅仅是 <strong>导航路由 + 资源加载框架</strong>。</p>
+<p><a target="_blank" rel="noopener" href="https://ui-router.github.io/guide/lazyloading#future-states"><strong>Future State</strong></a>，一个基于前端路由的应用，整个应用可以看作是一个状态树，每一个分支都可以 lazy load, 在程序启动时，描述 lazy load 状态数分支的对象，就可以叫做 Future State。</p>
+<p>当主应用导航到 <code>https://a.com/subApp1</code> 的时候子应用加载， 点击子应用的某个链接可能被导航到 <code>https://a.com/subApp1/project</code>，一个微前端框架应该能在路由匹配的时候加载子应用，路由不匹配的时候卸载子应用， 这就是 <code>single-spa</code> 做的工作。</p>
+<p><strong>应该用什么集成方式，主应用应该用何种资源形式加载子应用?</strong>, 一种方式是 JS Entry， 将子应用的资源打包为 js 资源，例如 single-spa 将要求将子应用打包为 systemJs 格式当作子应用入口, qiankun 要求将子应用打包为 umd 格式（考虑到应用需要独立部署）。另一种是 HTML Entry 直接使用子应用打包出的 html 文件当作入口，本质是解析 html 中引用的资源，因此也可以优化为直接使用资源描述的对象，以减少一次请求。</p>
+<h4 id="模块导入"><a href="#模块导入" class="headerlink" title="模块导入"></a>模块导入</h4><p>singleSpa 采用 systemJs 的模块化方案，使用 singleSpa 提供的工具，默认只会编译出 js 文件，独立部署需要其他工具支持，通过 systemJs amd 扩展，可以避免将资源加载后添加的对象挂载到 windows 上。</p>
+<p>qiankun 采用 umd 的模块化方案。需要使用 windows 快照的方式，获取到哪些对象被注入到 windows 中。</p>
+<h4 id="样式隔离方案"><a href="#样式隔离方案" class="headerlink" title="样式隔离方案"></a>样式隔离方案</h4><p>css-module，BEM 通过对 class 添加唯一标识保证唯一性。</p>
+<p>css-in-js 代表库 emotion ，本质还是将样式转换为唯一的 class 类名，通过 style 标签插入。</p>
+<p>shadowDom 浏览器严格隔离</p>
+<p>singleSpa 并没有提供样式隔离方案，需要子应用单独处理。</p>
+<p>qiankun 提供 <code>experimentalStyleIsolation</code> 配置， 本质上是给最外层元素样式添加唯一标识，相当于 css-module 实现方案，缺点是子应用中的元素如果挂载到了根节点外面会导致样式不生效。如果使用 <code>strictStyleIsolation</code> 配置，会使用 shadowDom 方案，缺点是主应用访问不到子应用的元素。另外，还实现了 Dynamic Stylesheet，原理是应用切出&#x2F;卸载后，同时卸载掉其样式表，浏览器会对样式表的插入、移除做整个 CSSOM 的重构，因此保证只有一个应用的样式表是生效的，但是这种方式对于多实例的微前端场景无法处理。</p>
+<h4 id="js-隔离"><a href="#js-隔离" class="headerlink" title="js 隔离"></a>js 隔离</h4><p>singleSpa 并没有提供沙箱的实现， qiankun 实现了基于 Proxy 的多实例沙箱。</p>
+<p>一个简单沙箱就是对 windows 快照， 当子应用卸载时，将 windows 对象回滚到之前的状态。</p>
+<p>基于 Proxy 的单实例沙箱，创建 Proxy 对象，将对象的操作反映到 windows 的属性改变， 但是当多个子应用实例的时候，对同一属性的修改会导致 windows 属性混乱。</p>
+<p>基于 Proxy 的多实例沙箱，不在对 windows 对象操作，直接</p>
+<h4 id="框架比较"><a href="#框架比较" class="headerlink" title="框架比较"></a>框架比较</h4><ul>
+<li><p>singleSpa 实现了最基本的路由功能，子应用加载功能。</p>
+</li>
+<li><p>qiankuan 基于 singleSpa 的封装，实现了 css 隔离，以及 js 沙箱，保证应用状态隔离， 还提供了更多的特性：</p>
+<p>子应用并行，多个微前端同时存在<br>子应用嵌套，微前端嵌套其他的微前端<br>父子应用通讯<br>预加载，空闲时加载子应用的资源<br>公共依赖加载<br>按需加载，切换到相应页面的时候才去加载资源</p>
+</li>
+</ul>
  
       <!-- reward -->
       
@@ -1109,75 +1180,6 @@ sequenceDiagram
     <footer class="article-footer">
        
   <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/vue/" rel="tag">vue</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
-    <article
-  id="posts-javascript/隐式转换"
-  class="article article-type-posts"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/400347728533/"
-    >隐式转换</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/400347728533/" class="article-date">
-  <time datetime="2023-07-24T05:20:18.000Z" itemprop="datePublished">2023-07-24</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/JavaScript/">JavaScript</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <h4 id="一元操作符"><a href="#一元操作符" class="headerlink" title="一元操作符"></a>一元操作符</h4><p>一元操作符包括，<code>+</code>, <code>-</code>, <code>~</code>, <code>!</code>,其中 <code>+</code>, <code>-</code> 需要和加法运算符区分开。</p>
-<p>ECMA 规定了 <a target="_blank" rel="noopener" href="https://tc39.es/ecma262/#sec-typeof-operator">一元操作符</a> 求值过程。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(+<span class="literal">true</span>); <span class="comment">// 1</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(+[]); <span class="comment">// 0</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(+&#123;&#125;); <span class="comment">//NaN</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(+<span class="string">&quot;123&quot;</span>); <span class="comment">// 123</span></span><br></pre></td></tr></table></figure>
-
-<p>对于 <code>+</code> 一元表达式求值，需要首先对操作数（V）取值（<a target="_blank" rel="noopener" href="https://tc39.es/ecma262/#sec-getvalue">GetValue</a>, 对取值结果进行 <a target="_blank" rel="noopener" href="https://tc39.es/ecma262/#sec-tonumber">ToNumber</a> 操作。</p>
-<p><strong>ToNumber</strong>:</p>
-<ol>
-<li>如果 V 是 <code>Number</code>，返回 V</li>
-<li>如果 V 是 <code>Symbol</code> 或 <code>BigInt</code> 抛出错误 <code>TypeError</code></li>
-<li>如果 V <code>undefined</code>, 返回 <code>NaN</code></li>
-<li>如果 V 是 <code>null</code> 或 <code>false</code> 返回 <code>+0</code></li>
-<li>如果 V 是 <code>true</code> 返回 1 （案例 1）</li>
-<li>如果 V 是 <code>String</code> 返回 <a target="_blank" rel="noopener" href="https://tc39.es/ecma262/#sec-stringtonumber">StringToNumber(argument)</a> <code>StringToNumber</code> 规定如果不能转成数字，返回 <code>NaN</code> 如果可以则返回 <code>Number</code> （案例 4）</li>
-<li>V 如果是一个 <code>Object</code></li>
-<li>将 V 转换为原始值 <a target="_blank" rel="noopener" href="https://tc39.es/ecma262/#sec-toprimitive">ToPrimitive</a> 数组将会通过 <code>toString</code> 转换为 <code>&quot;&quot;</code>, 再次执行第 6 步，最终数组被转换为 <code>0</code> (案例 2)，对象在经过 <code>ToPrimitive</code> 转换为 <code>[Object object]</code>, 在执行 <code>StringToNumber</code> 由于不能转换为数字，最终返回 <code>NaN</code> (案例 3)</li>
-<li>原始值不是对象，再次执行 <code>ToNumber</code></li>
-</ol>
- 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/JavaScript/" rel="tag">JavaScript</a></li></ul>
 
     </footer>
   </div>
