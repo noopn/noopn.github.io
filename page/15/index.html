@@ -112,6 +112,62 @@
     
     
     <article
+  id="post-nginx/反向代理"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/b3dc92f3441f/"
+    >反向代理</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/b3dc92f3441f/" class="article-date">
+  <time datetime="2021-06-15T05:31:35.000Z" itemprop="datePublished">2021-06-15</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Nginx/">Nginx</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="简单反向代理"><a href="#简单反向代理" class="headerlink" title="简单反向代理"></a>简单反向代理</h4><p>把本机80端口的请求转发到其他的服务器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">http &#123;</span><br><span class="line">    include       mime.types;</span><br><span class="line">    default_type  application/octet-stream;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen       80;</span><br><span class="line">        server_name  xxx.xxx.xxx.xxx;</span><br><span class="line"></span><br><span class="line">        #charset koi8-r;</span><br><span class="line"></span><br><span class="line">        #access_log  logs/host.access.log  main;</span><br><span class="line"></span><br><span class="line">        location / &#123;</span><br><span class="line">            root   xxx.xxx.xxx.xxx:port;</span><br><span class="line">            index  index.html index.htm;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="通过正则匹配路径转发"><a href="#通过正则匹配路径转发" class="headerlink" title="通过正则匹配路径转发"></a>通过正则匹配路径转发</h4><p>根据路径中不同字段转，把80端口的请求，转发到不同的服务器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">http &#123;</span><br><span class="line">    include       mime.types;</span><br><span class="line">    default_type  application/octet-stream;</span><br><span class="line"></span><br><span class="line">    server &#123;</span><br><span class="line">        listen       80;</span><br><span class="line">        server_name  xxx.xxx.xxx.xxx;</span><br><span class="line"></span><br><span class="line">        location ~ /api/ &#123; </span><br><span class="line">            proxy_pass   xxx.xxx.xxx.xxx:port;</span><br><span class="line">        &#125;</span><br><span class="line">        location ~ /server/ &#123;</span><br><span class="line">            proxy_pass   xxx.xxx.xxx.xxx:port;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure> 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Nginx/" rel="tag">Nginx</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
   id="post-nginx/配置文件"
   class="article article-type-post"
   itemscope
@@ -954,90 +1010,13 @@
 </article>
 
     
-    <article
-  id="post-react/react-redux"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/395c5c698d67/"
-    >React Redux 解析</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/395c5c698d67/" class="article-date">
-  <time datetime="2021-04-07T09:56:50.000Z" itemprop="datePublished">2021-04-07</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/React/">React</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <h4 id="如何整合-UI-的更新"><a href="#如何整合-UI-的更新" class="headerlink" title="如何整合 UI 的更新"></a>如何整合 UI 的更新</h4><p>redux 只有简单的 subscribe 和 dispatch 的方法，而且 subscribe 执行的时候无法从回调函数中获取到数据的更新。</p>
-<p>因此需要将 render 方法添加监听，并在监听中获取 store, 解析出需要的数据用于 UI 渲染。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> store = <span class="title function_">createStore</span>(counter);</span><br><span class="line">store.<span class="title function_">subscribe</span>(render);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> state = store.<span class="title function_">getState</span>();</span><br><span class="line">  <span class="keyword">const</span> newValue = state.<span class="title function_">toString</span>();</span><br><span class="line">  <span class="keyword">const</span> valueEl = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;value&quot;</span>);</span><br><span class="line">  valueEl.<span class="property">innerHTML</span> = newValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>如果想要手动在 react 中集成，类似于以下的效果。但是这样存在的问题就是任何的 dispatch 都会触发 subscribe 订阅方法的执行，因此为了优化不必要的渲染，还需要做以下的事情</p>
-<ul>
-<li>从 store 中解构出需要的数据</li>
-<li>与上一次保存的数据对比, 只有在获取的数据和最后保存的数据不一致时才会更新 UI</li>
-<li>保存当前的数据为了下一次对比使用</li>
-</ul>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; store &#125; <span class="keyword">from</span> <span class="string">&quot;app/store&quot;</span>; <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TodoList</span> <span class="keyword">extends</span> <span class="title class_ inherited__">React.Component</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">props</span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>(props);</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">state</span> = &#123;</span><br><span class="line">      <span class="attr">todos</span>: store.<span class="title function_">getState</span>().<span class="property">todos</span>, <span class="comment">// 4</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    store.<span class="title function_">subscribe</span>(<span class="variable language_">this</span>.<span class="property">handleStoreUpdate</span>); <span class="comment">// 2</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  handleStoreUpdate = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; todos &#125; = store.<span class="title function_">getState</span>(); <span class="comment">// 3.1, 3.2</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">setState</span>(&#123; todos &#125;); <span class="comment">// 3.3</span></span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; todos &#125; = <span class="variable language_">this</span>.<span class="property">state</span>;</span><br><span class="line">    <span class="keyword">const</span> listItems = todos.<span class="title function_">map</span>(<span class="function">(<span class="params">todo</span>) =&gt;</span> <span class="language-xml"><span class="tag">&lt;<span class="name">TodoItem</span> <span class="attr">todo</span>=<span class="string">&#123;todo&#125;</span> /&gt;</span></span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;listItems&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这也就是 react-redux connect 方法产生的原因，它帮助解析并对比数据，只有在数据改变时才会更新 UI</p>
-<p>connect 接受 map 方法和组件，会将 map 之后的值和 dispatch 方法传递给组件，消费者只要简单的调用 dispatch 就会触发组件的更新。</p>
-<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">connect</span>(<span class="params">mapStateToProps, mapDispatchToProps</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span> (<span class="params">WrappedComponent</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">class</span> <span class="title class_">ConnectWrapper</span> <span class="keyword">extends</span> <span class="title class_ inherited__">React.Component</span> &#123;</span><br><span class="line">      <span class="title function_">componentDidMount</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">unsubscribe</span> = store.<span class="title function_">subscribe</span>(<span class="variable language_">this</span>.<span class="property">handleChange</span>);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="title function_">componentWillUnmount</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">unsubscribe</span>();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      handleChange = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">forceUpdate</span>();</span><br><span class="line">      &#125;;</span><br><span class="line"></span><br><span class="line">      <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (</span><br><span class="line">          <span class="language-xml"><span class="tag">&lt;<span class="name">WrappedComponent</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...this.props</span>&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            // <span class="attr">plus</span> <span class="attr">props</span> <span class="attr">calculated</span> <span class="attr">from</span> <span class="attr">Redux</span> <span class="attr">store</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...mapStateToProps</span>(<span class="attr">store.getState</span>(), <span class="attr">this.props</span>)&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...mapDispatchToProps</span>(<span class="attr">store.dispatch</span>, <span class="attr">this.props</span>)&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          /&gt;</span></span></span><br><span class="line">        );</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="4-x"><a href="#4-x" class="headerlink" title="4.x"></a>4.x</h4><p>每个执行 connect 的组件都会添加一个回调函数到 subscribe 中，第一次触发 action 所有的回调函数都会执行</p>
-<p>是否更新的判断依赖于 store 的不可变性, 会进行以下三个检查</p>
-<ul>
-<li>prevStoreState !&#x3D;&#x3D; store.getState()</li>
-<li>如果不相等，current &#x3D; mapState() 检查 prev &#x3D;&#x3D;&#x3D; current</li>
-<li>合并所有参数 mergeProps(ownProps,stateProps,dispatchProps)</li>
-</ul>
-<p>每次更新都会创建一个新组建，但是由于 React 的检查，只要完全相同的两个组件就会跳过更新，一定程度上避免子组件的渲染。</p>
-<h4 id="5-x"><a href="#5-x" class="headerlink" title="5.x"></a>5.x</h4><p>核心是优化了自顶向下的更新。下面的例子中点击父组件的按钮，子组件</p>
- 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/React/" rel="tag">React</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
   </article>
   
 
   
   <nav class="page-nav">
     
-    <a class="extend prev" rel="prev" href="/page/14/">上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="page-number" href="/page/14/">14</a><span class="page-number current">15</span><a class="page-number" href="/page/16/">16</a><a class="page-number" href="/page/17/">17</a><span class="space">&hellip;</span><a class="page-number" href="/page/28/">28</a><a class="extend next" rel="next" href="/page/16/">下一页</a>
+    <a class="extend prev" rel="prev" href="/page/14/">上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="page-number" href="/page/14/">14</a><span class="page-number current">15</span><a class="page-number" href="/page/16/">16</a><a class="page-number" href="/page/17/">17</a><span class="space">&hellip;</span><a class="page-number" href="/page/29/">29</a><a class="extend next" rel="next" href="/page/16/">下一页</a>
   </nav>
   
 </section>

@@ -112,6 +112,83 @@
     
     
     <article
+  id="post-react/react-redux"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/395c5c698d67/"
+    >React Redux 解析</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/395c5c698d67/" class="article-date">
+  <time datetime="2021-04-07T09:56:50.000Z" itemprop="datePublished">2021-04-07</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/React/">React</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="如何整合-UI-的更新"><a href="#如何整合-UI-的更新" class="headerlink" title="如何整合 UI 的更新"></a>如何整合 UI 的更新</h4><p>redux 只有简单的 subscribe 和 dispatch 的方法，而且 subscribe 执行的时候无法从回调函数中获取到数据的更新。</p>
+<p>因此需要将 render 方法添加监听，并在监听中获取 store, 解析出需要的数据用于 UI 渲染。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> store = <span class="title function_">createStore</span>(counter);</span><br><span class="line">store.<span class="title function_">subscribe</span>(render);</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> state = store.<span class="title function_">getState</span>();</span><br><span class="line">  <span class="keyword">const</span> newValue = state.<span class="title function_">toString</span>();</span><br><span class="line">  <span class="keyword">const</span> valueEl = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&quot;value&quot;</span>);</span><br><span class="line">  valueEl.<span class="property">innerHTML</span> = newValue;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果想要手动在 react 中集成，类似于以下的效果。但是这样存在的问题就是任何的 dispatch 都会触发 subscribe 订阅方法的执行，因此为了优化不必要的渲染，还需要做以下的事情</p>
+<ul>
+<li>从 store 中解构出需要的数据</li>
+<li>与上一次保存的数据对比, 只有在获取的数据和最后保存的数据不一致时才会更新 UI</li>
+<li>保存当前的数据为了下一次对比使用</li>
+</ul>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> &#123; store &#125; <span class="keyword">from</span> <span class="string">&quot;app/store&quot;</span>; <span class="comment">// 1</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TodoList</span> <span class="keyword">extends</span> <span class="title class_ inherited__">React.Component</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">props</span>) &#123;</span><br><span class="line">    <span class="variable language_">super</span>(props);</span><br><span class="line"></span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">state</span> = &#123;</span><br><span class="line">      <span class="attr">todos</span>: store.<span class="title function_">getState</span>().<span class="property">todos</span>, <span class="comment">// 4</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    store.<span class="title function_">subscribe</span>(<span class="variable language_">this</span>.<span class="property">handleStoreUpdate</span>); <span class="comment">// 2</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  handleStoreUpdate = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; todos &#125; = store.<span class="title function_">getState</span>(); <span class="comment">// 3.1, 3.2</span></span><br><span class="line">    <span class="variable language_">this</span>.<span class="title function_">setState</span>(&#123; todos &#125;); <span class="comment">// 3.3</span></span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; todos &#125; = <span class="variable language_">this</span>.<span class="property">state</span>;</span><br><span class="line">    <span class="keyword">const</span> listItems = todos.<span class="title function_">map</span>(<span class="function">(<span class="params">todo</span>) =&gt;</span> <span class="language-xml"><span class="tag">&lt;<span class="name">TodoItem</span> <span class="attr">todo</span>=<span class="string">&#123;todo&#125;</span> /&gt;</span></span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span>&gt;</span>&#123;listItems&#125;<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这也就是 react-redux connect 方法产生的原因，它帮助解析并对比数据，只有在数据改变时才会更新 UI</p>
+<p>connect 接受 map 方法和组件，会将 map 之后的值和 dispatch 方法传递给组件，消费者只要简单的调用 dispatch 就会触发组件的更新。</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">connect</span>(<span class="params">mapStateToProps, mapDispatchToProps</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span> (<span class="params">WrappedComponent</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">class</span> <span class="title class_">ConnectWrapper</span> <span class="keyword">extends</span> <span class="title class_ inherited__">React.Component</span> &#123;</span><br><span class="line">      <span class="title function_">componentDidMount</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">unsubscribe</span> = store.<span class="title function_">subscribe</span>(<span class="variable language_">this</span>.<span class="property">handleChange</span>);</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="title function_">componentWillUnmount</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">unsubscribe</span>();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      handleChange = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="title function_">forceUpdate</span>();</span><br><span class="line">      &#125;;</span><br><span class="line"></span><br><span class="line">      <span class="title function_">render</span>(<span class="params"></span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (</span><br><span class="line">          <span class="language-xml"><span class="tag">&lt;<span class="name">WrappedComponent</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...this.props</span>&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            // <span class="attr">plus</span> <span class="attr">props</span> <span class="attr">calculated</span> <span class="attr">from</span> <span class="attr">Redux</span> <span class="attr">store</span></span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...mapStateToProps</span>(<span class="attr">store.getState</span>(), <span class="attr">this.props</span>)&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">            &#123;<span class="attr">...mapDispatchToProps</span>(<span class="attr">store.dispatch</span>, <span class="attr">this.props</span>)&#125;</span></span></span><br><span class="line"><span class="tag"><span class="language-xml">          /&gt;</span></span></span><br><span class="line">        );</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-x"><a href="#4-x" class="headerlink" title="4.x"></a>4.x</h4><p>每个执行 connect 的组件都会添加一个回调函数到 subscribe 中，第一次触发 action 所有的回调函数都会执行</p>
+<p>是否更新的判断依赖于 store 的不可变性, 会进行以下三个检查</p>
+<ul>
+<li>prevStoreState !&#x3D;&#x3D; store.getState()</li>
+<li>如果不相等，current &#x3D; mapState() 检查 prev &#x3D;&#x3D;&#x3D; current</li>
+<li>合并所有参数 mergeProps(ownProps,stateProps,dispatchProps)</li>
+</ul>
+<p>每次更新都会创建一个新组建，但是由于 React 的检查，只要完全相同的两个组件就会跳过更新，一定程度上避免子组件的渲染。</p>
+<h4 id="5-x"><a href="#5-x" class="headerlink" title="5.x"></a>5.x</h4><p>核心是优化了自顶向下的更新。下面的例子中点击父组件的按钮，子组件</p>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/React/" rel="tag">React</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
   id="post-react/应用/react中的keep-alive"
   class="article article-type-post"
   itemscope
@@ -926,115 +1003,13 @@
 </article>
 
     
-    <article
-  id="post-typescript/TS案例总结"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/e40dc38116f7/"
-    >TypeScript 相关概念</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/e40dc38116f7/" class="article-date">
-  <time datetime="2021-02-24T10:28:21.000Z" itemprop="datePublished">2021-02-24</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/TypeScript/">TypeScript</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <h4 id="interface-vs-type"><a href="#interface-vs-type" class="headerlink" title="interface vs type"></a>interface vs type</h4><ul>
-<li><p>interface 可以使用 扩展（extends）来继承其他接口，并且支持 声明合并（Declaration Merging）<br>type 不能像接口那样直接进行声明合并，但它可以通过 交叉类型（&amp;）来合并类型。<strong>一般称作类型别名</strong></p>
-</li>
-<li><p>interface 更多地用于定义对象的结构，也可以用来定义类的形状（即类实现的接口）。<br>type 是更通用的类型别名，可以用于任何类型，包括基本类型、联合类型、交叉类型、元组等。</p>
-</li>
-<li><p>鼠标放在 interface 上会显示接口名称，但是放在 type 上显示的是对应的类型，因此 type 并不定义新的类型。</p>
-</li>
-</ul>
-<h4 id="const-vs-readonly"><a href="#const-vs-readonly" class="headerlink" title="const vs readonly"></a>const vs readonly</h4><p>不在同一个维度，一个是类型，一个是变量，如果描述一个类型不可变使用 readonly, 如果是变量不可变使用 const。</p>
-<h4 id="数字类型索引"><a href="#数字类型索引" class="headerlink" title="数字类型索引"></a>数字类型索引</h4><p>数字类型索引的类型必须是字符串索引的子类型。</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Animal</span> &#123;&#125;</span><br><span class="line"><span class="keyword">const</span> <span class="attr">a</span>: &#123;</span><br><span class="line">  [<span class="attr">k</span>: <span class="built_in">number</span>]: <span class="title class_">Dog</span>;</span><br><span class="line">  [<span class="attr">k</span>: <span class="built_in">string</span>]: <span class="title class_">Animal</span>;</span><br><span class="line">&#125; = &#123;</span><br><span class="line">  <span class="number">1</span>: <span class="keyword">new</span> <span class="title class_">Dog</span>(),</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h4 id="class-interface"><a href="#class-interface" class="headerlink" title="class interface"></a>class interface</h4><p><strong>class 具有静态部分类型，和实例类型。 不要用构造器签名去给类实现接口使用。</strong></p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> IA &#123;</span><br><span class="line">  <span class="title function_">todo</span>(): <span class="built_in">void</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">IACons</span> &#123;</span><br><span class="line">  <span class="keyword">new</span> (): <span class="variable constant_">IA</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> <span class="keyword">implements</span> <span class="variable constant_">IA</span> &#123;</span><br><span class="line">  <span class="title function_">todo</span>(<span class="params"></span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">create</span>(<span class="params">cons: IACons</span>): <span class="variable constant_">IA</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">cons</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="受保护的构造方法"><a href="#受保护的构造方法" class="headerlink" title="受保护的构造方法"></a>受保护的构造方法</h4><p>可以考虑用抽象类代替</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">  <span class="keyword">protected</span> <span class="title function_">constructor</span>(<span class="params"></span>) &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="类型断言"><a href="#类型断言" class="headerlink" title="类型断言"></a>类型断言</h4><figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="attr">a</span>: <span class="built_in">object</span> | <span class="built_in">any</span>[] = [];</span><br><span class="line"></span><br><span class="line">(a <span class="keyword">as</span> <span class="built_in">any</span>[]).<span class="title function_">push</span>(<span class="number">1</span>);</span><br><span class="line">(<span class="language-xml">&lt;any[]&gt;a).push(1);</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="类型保护"><a href="#类型保护" class="headerlink" title="类型保护"></a>类型保护</h4><ul>
-<li><p>使用类型谓词</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">Fish</span> &#123;</span><br><span class="line">  <span class="attr">swim</span>: <span class="function">() =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">  <span class="attr">name</span>: <span class="function">() =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">interface</span> <span class="title class_">Bird</span> &#123;</span><br><span class="line">  <span class="attr">fly</span>: <span class="function">() =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">  <span class="attr">name</span>: <span class="function">() =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">isFish</span>(<span class="params">obj: Fish | Bird</span>): obj is <span class="title class_">Fish</span> &#123;</span><br><span class="line">  <span class="comment">// 返回一个boolean</span></span><br><span class="line">  <span class="keyword">return</span> (obj <span class="keyword">as</span> <span class="title class_">Fish</span>).<span class="property">swim</span> !== <span class="literal">undefined</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fn</span>(<span class="params">obj: Fish | Bird</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="title function_">isFish</span>(obj)) obj.<span class="title function_">swim</span>();</span><br><span class="line">  <span class="keyword">else</span> obj.<span class="title function_">fly</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>typeof</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">fn</span>(<span class="params">obj: <span class="built_in">string</span> | <span class="built_in">number</span></span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">typeof</span> obj === <span class="string">&quot;string&quot;</span>) obj.<span class="property">substring</span>;</span><br><span class="line">  <span class="keyword">else</span> obj.<span class="property">toFixed</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>! 操作符</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在嵌套函数中无法正确推断数据类型</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">fn</span>(<span class="params">name: <span class="built_in">string</span> | <span class="literal">null</span> | <span class="literal">undefined</span></span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">    name!.<span class="property">substring</span>;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h4 id="类型约束"><a href="#类型约束" class="headerlink" title="类型约束"></a>类型约束</h4><ul>
-<li><strong>unknown 是 TypeScript 中的一个特殊类型，它表示任何类型</strong>。与 any 不同，unknown 类型的值不能直接操作，必须先进行某种类型的检查。</li>
-</ul>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="keyword">of</span> = [<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>] <span class="keyword">extends</span> unknown ? <span class="number">1</span> : <span class="number">2</span>; <span class="comment">// 1</span></span><br></pre></td></tr></table></figure>
-
-<h4 id="元组转为普通对象"><a href="#元组转为普通对象" class="headerlink" title="元组转为普通对象"></a>元组转为普通对象</h4><p>会移除,number 索引签名,所有数组方法, length 属性,所有可能的数字字符串索引</p>
-<p>保留元组特有的具体数字属性映射</p>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="title class_">ObjFromTuple</span> = <span class="title class_">Omit</span>&lt;<span class="title class_">Tuple</span>, keyof <span class="built_in">any</span>[]&gt;;</span><br></pre></td></tr></table></figure>
-
-<h4 id="逆变-协变"><a href="#逆变-协变" class="headerlink" title="逆变 协变"></a>逆变 协变</h4><ul>
-<li><p>协变通常表示同向，例如 A 是 B 的子类型，那么 Container<A> 也是 Container<B> 的子类型，类型会随着内部类型的变化而同向变化。</p>
-</li>
-<li><p>逆变通常表示逆向，例如 A 是 B 的子类型，那么 Container<B> 是 Container<A> 的子类型，类型会随着内部类型的变化而逆向变化。</p>
-</li>
-<li><p>换一种简单说法就是要永远保证类型的安全</p>
-</li>
-</ul>
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Cat</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Animal</span> &#123;</span><br><span class="line">  <span class="title class_">Cat</span>() &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Animal</span> &#123;</span><br><span class="line">  <span class="title class_">Dog</span>() &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">SmallDog</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Dog</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> name = <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 错误  参数类型不安全，定义的类型应该是参数类型的父类型，参数可以多出不使用，但是不能少</span></span><br><span class="line"><span class="keyword">const</span> <span class="attr">fn</span>: <span class="function">(<span class="params">v: Dog</span>) =&gt;</span> <span class="title class_">Dog</span> = <span class="function">(<span class="params">v: SmallDog</span>) =&gt;</span> <span class="keyword">new</span> <span class="title class_">SmallDog</span>();</span><br><span class="line"><span class="comment">// 错误</span></span><br><span class="line"><span class="keyword">const</span> <span class="attr">fn1</span>: <span class="function">(<span class="params">v: Dog</span>) =&gt;</span> <span class="title class_">Dog</span> = <span class="function">(<span class="params">v: SmallDog</span>) =&gt;</span> <span class="keyword">new</span> <span class="title class_">Animal</span>();</span><br><span class="line"><span class="keyword">const</span> <span class="attr">fn2</span>: <span class="function">(<span class="params">v: Dog</span>) =&gt;</span> <span class="title class_">Dog</span> = <span class="function">(<span class="params">v: Animal</span>) =&gt;</span> <span class="keyword">new</span> <span class="title class_">SmallDog</span>();</span><br><span class="line"><span class="comment">// 错误  返回值类型不安全，定义的类型应该是返回值类型的子类型，返回值可以返回当前有的类型，但是不能多返回</span></span><br><span class="line"><span class="keyword">const</span> <span class="attr">fn3</span>: <span class="function">(<span class="params">v: Dog</span>) =&gt;</span> <span class="title class_">Dog</span> = <span class="function">(<span class="params">v: Animal</span>) =&gt;</span> <span class="keyword">new</span> <span class="title class_">Animal</span>();</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> <span class="variable constant_">T1</span> = &#123; <span class="attr">name</span>: <span class="built_in">string</span> &#125;;</span><br><span class="line"><span class="keyword">type</span> <span class="variable constant_">T2</span> = &#123; <span class="attr">age</span>: <span class="built_in">number</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 参数协变，因此返回的是交叉类型</span></span><br><span class="line"><span class="keyword">type</span> <span class="title class_">UnionToIntersection</span>&lt;T&gt; = T <span class="keyword">extends</span> &#123;</span><br><span class="line">  <span class="attr">a</span>: <span class="function">(<span class="params">x: infer U</span>) =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">  <span class="attr">b</span>: <span class="function">(<span class="params">x: infer U</span>) =&gt;</span> <span class="built_in">void</span>;</span><br><span class="line">&#125;</span><br><span class="line">  ? U</span><br><span class="line">  : <span class="built_in">never</span>;</span><br><span class="line"><span class="keyword">type</span> <span class="variable constant_">T3</span> = <span class="title class_">UnionToIntersection</span>&lt;&#123; <span class="attr">a</span>: <span class="function">(<span class="params">x: T1</span>) =&gt;</span> <span class="built_in">void</span>; <span class="attr">b</span>: <span class="function">(<span class="params">x: T2</span>) =&gt;</span> <span class="built_in">void</span> &#125;&gt;; <span class="comment">// T1 &amp; T2</span></span><br></pre></td></tr></table></figure>
- 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/TypeScript/" rel="tag">TypeScript</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
   </article>
   
 
   
   <nav class="page-nav">
     
-    <a class="extend prev" rel="prev" href="/page/15/">上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="page-number" href="/page/15/">15</a><span class="page-number current">16</span><a class="page-number" href="/page/17/">17</a><a class="page-number" href="/page/18/">18</a><span class="space">&hellip;</span><a class="page-number" href="/page/28/">28</a><a class="extend next" rel="next" href="/page/17/">下一页</a>
+    <a class="extend prev" rel="prev" href="/page/15/">上一页</a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/14/">14</a><a class="page-number" href="/page/15/">15</a><span class="page-number current">16</span><a class="page-number" href="/page/17/">17</a><a class="page-number" href="/page/18/">18</a><span class="space">&hellip;</span><a class="page-number" href="/page/29/">29</a><a class="extend next" rel="next" href="/page/17/">下一页</a>
   </nav>
   
 </section>
