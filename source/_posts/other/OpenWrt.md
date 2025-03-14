@@ -375,3 +375,39 @@ Nginx 配置参考[MinIO 配置文档](https://min.io/docs/minio/linux/integrati
 - Database Password 注意不要有 `#@?&` 等特殊符号
 - Certificate ID 选择默认证书，避免 nextCloud 提示警告，如果前端有 nginx 代理，需要使用 https
 - 在 config/config.php 中添加 [maintenance_window_start](https://docs.nextcloud.com/server/30/admin_manual/configuration_server/background_jobs_configuration.html#parameters) 消除调度任务的警告
+
+#### OpenVPN
+
+软件包中安装 luci-app-openvpn-server
+
+- 协议 udp ipv4
+- 端口 1194
+- 客户端网段： 自动
+- 客户端推送配置
+  comp-lzo adaptive
+  redirect-gateway def1 bypass-dhcp
+  dhcp-option DNS 192.168.48.1 （填写 openWrt 的 IP）
+  route 192.168.48.0 255.255.255.0 （填写 openWrt 的 网段，最后一位需要是 0）
+- 下载客户端配置文件，客户端安装 openvpn, 配置存放在 user/openvpn/client.opvn
+
+> 可以重新生成证书文件，时间比较长，需要等待浏览器加载结束
+
+点击网络接口，重新加载会多出一个 vpn0 的接口
+
+编辑配置文件，允许多个客户端链接
+
+```bash
+vi /etc/config/openvpn
+
+# 添加配置
+option duplicate_cn "1"
+```
+
+配置 NAT 转发规则，允许访问内网设备，网络 => 防火墙 => NAT 规则
+
+> openWrt 23.05.4 以及以后版本不需要配置
+
+```bash
+# 使用 POSTROUTING 进行规则转发
+iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE
+```

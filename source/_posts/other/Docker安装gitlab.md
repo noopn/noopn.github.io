@@ -140,7 +140,7 @@ docker compose pull
 docker compose up -d
 ```
 
-#### 获取/修改 初始密码
+获取/修改 初始密码
 
 ```bash
 docker exec -it  gitlab /bin/bash
@@ -162,7 +162,7 @@ u.password_confirmation='12345678'     # 确认密码
 u.save                                 # 保存配置
 ```
 
-#### nginx 配置
+nginx 配置
 
 ```yml
 server {
