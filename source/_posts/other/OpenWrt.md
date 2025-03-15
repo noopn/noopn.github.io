@@ -411,3 +411,7 @@ option duplicate_cn "1"
 # 使用 POSTROUTING 进行规则转发
 iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE
 ```
+
+#### Jellyfin
+
+nginx 代理按照[官方文档](https://jellyfin.org/docs/general/networking/nginx/)操作
