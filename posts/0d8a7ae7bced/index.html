@@ -269,6 +269,8 @@
 <p>openWrt 23.05.4 以及以后版本不需要配置</p>
 </blockquote>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 POSTROUTING 进行规则转发</span></span><br><span class="line">iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<h4 id="Jellyfin"><a href="#Jellyfin" class="headerlink" title="Jellyfin"></a>Jellyfin</h4><p>nginx 代理按照<a target="_blank" rel="noopener" href="https://jellyfin.org/docs/general/networking/nginx/">官方文档</a>操作</p>
  
       <!-- reward -->
       
