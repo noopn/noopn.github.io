@@ -34,8 +34,31 @@ sudo apt install postgresql postgresql-contrib
 sudo --login --user postgres
 psql
 
-CREATE DATABASE boards;
-CREATE USER your-db-user WITH PASSWORD 'your-password';
+CREATE DATABASE <your-db-user>;
+CREATE USER <your-db-user> WITH PASSWORD <'your-password'>;
+
+# 查看schema列表
+\dn
+
+# 查看用户列表
+\du
+
+# 查看数据库列表
+
+\l+
+
+# 赋予用于操作数据库的所有权限
+GRANT ALL PRIVILEGES ON DATABASE <your-db> TO <your-db-user>;
+
+GRANT ALL ON SCHEMA public TO <your-db-user>;
+
+\c <your-db-user> postgres
+# You are now connected to database "your-db-user" as user "postgres".
+
+# 赋予有用操作public schema的权限
+GRANT ALL ON SCHEMA public TO <your-db-user>;
+
+# 退出 postgres 用户
 \q
 
 exit
@@ -47,7 +70,7 @@ exit
 vi /opt/focalboard/config.json
 
 "dbtype": "postgres",
-"dbconfig": "postgres://boardsuser:boardsuser-password@localhost/boards?sslmode=disable&connect_timeout=10"
+"dbconfig": "postgres://your-db-user:your-db-password@localhost/boards?sslmode=disable&connect_timeout=10"
 ```
 
 #### 启动服务
@@ -125,3 +148,11 @@ server {
    }
 }
 ```
+
+#### FAQ
+
+- error [2025-03-17 04:28:23.400 Z] Table creation / migration failed caller="sqlstore/sqlstore.go:75" error="pq: permission denied for schema public"
+
+  参照数据库配置步骤，需要赋予用户操作 public schema 的权限
+
+

@@ -1,6 +1,6 @@
 ---
 layout: posts
-title: Gitlab 部署
+title: Gitlab 私有化部署
 date: 2022-03-04 22:17:00
 categories:
   - 其他
@@ -90,6 +90,24 @@ SuccessExitStatus=143
 WantedBy=multi-user.target
 ```
 
+修改配置文件 `/etc/gitlab/gitlab.rb`
+
+```bash
+# 修改外部访问地址，用于项目的下载地址，需要有完整的协议和端口号
+external_url "https://gitlab.iftrue.club:9348"
+
+# 修改ssh端口，用于 ssh 克隆项目
+
+gitlab_rails['gitlab_shell_ssh_port'] = 24922
+
+# 保存后应用配置
+sudo gitlab-ctl stop
+sudo gitlab-ctl reconfigure
+sudo gitlab-ctl start
+```
+
+nginx 配置参照 docker 的配置
+
 #### Docker 方式安装
 
 只需要准备好证书文件，配置.yml 文件即可使用
@@ -112,7 +130,7 @@ services:
         # 即使通过nginx代理访问gitlab, 协议也必须相同
         external_url 'https://gitlab.iftrue.com:9348'
         # 首次登录时的免密
-        gitlab_rails['initial_root_password']='w.521@@ong.COM'
+        gitlab_rails['initial_root_password']='xxxx'
         # ssh 端口
         gitlab_rails['gitlab_shell_ssh_port'] = 24922
     ports:

@@ -35,12 +35,6 @@ const HEADER_KEYS_TO_IGNORE = new Set([
   "expect",
 ]);
 
-const img = fs.readFileSync("./authCode.jpg");
-const imgBase64 = img.toString("base64");
-
-const body = new URLSearchParams();
-body.append("image_base64", imgBase64);
-
 // do request example
 function request(signParams) {
   signParams.headers = {
