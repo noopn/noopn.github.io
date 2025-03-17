@@ -112,6 +112,58 @@
     
     
     <article
+  id="post-javascript/Ramda_Relation方法"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/4b3e617e083b/"
+    >Ramda Relation 方法源码分析</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/4b3e617e083b/" class="article-date">
+  <time datetime="2021-01-16T08:14:44.000Z" itemprop="datePublished">2021-01-16</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/JavaScript/">JavaScript</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+   
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Ramda/" rel="tag">Ramda</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%87%BD%E6%95%B0%E5%BC%8F%E7%BC%96%E7%A8%8B/" rel="tag">函数式编程</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
   id="post-javascript/Ramda_Math方法"
   class="article article-type-post"
   itemscope
@@ -918,60 +970,6 @@
     <div class="article-entry" itemprop="articleBody">
        
   <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> fs = <span class="built_in">require</span>(<span class="string">&quot;fs&quot;</span>);</span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&quot;path&quot;</span>);</span><br><span class="line"><span class="keyword">const</span> vm = <span class="built_in">require</span>(<span class="string">&quot;vm&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> handlerMap = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> hotsPath = path.<span class="title function_">join</span>(__dirname, <span class="string">&quot;hots&quot;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 加载文件代码 并 监听指定文件夹目录文件内容变动</span></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">loadHandlers</span> = <span class="keyword">async</span> (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// 遍历出指定文件夹下的所有文件</span></span><br><span class="line">  <span class="keyword">const</span> files = <span class="keyword">await</span> <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//https://nodejs.org/dist/latest-v14.x/docs/api/fs.html#fs_fs_readdir_path_options_callback</span></span><br><span class="line">    <span class="comment">//异步读取指定目录下的文件和文件夹，返回一个数组</span></span><br><span class="line">    fs.<span class="title function_">readdir</span>(hotsPath, <span class="function">(<span class="params">err, files</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (err) &#123;</span><br><span class="line">        <span class="title function_">reject</span>(err);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="title function_">resolve</span>(files);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="comment">// 初始化加载所有文件 把每个文件结果缓存到handlerMap变量当中</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> f <span class="keyword">in</span> files) &#123;</span><br><span class="line">    handlerMap[files[f]] = <span class="keyword">await</span> <span class="title function_">loadHandler</span>(path.<span class="title function_">join</span>(hotsPath, files[f]));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 监听指定文件夹的文件内容变动</span></span><br><span class="line">  <span class="keyword">await</span> <span class="title function_">watchHandlers</span>();</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 监视指定文件夹下的文件变动</span></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">watchHandlers</span> = <span class="keyword">async</span> (<span class="params"></span>) =&gt; &#123;</span><br><span class="line">  <span class="comment">// 这里建议用chokidar的npm包代替文件夹监听 </span></span><br><span class="line">  <span class="comment">// 监听所有子文件夹</span></span><br><span class="line">  fs.<span class="title function_">watch</span>(hotsPath, &#123; <span class="attr">recursive</span>: <span class="literal">true</span> &#125;, <span class="keyword">async</span> (eventType, filename) =&gt; &#123;</span><br><span class="line">    <span class="comment">// 获取到每个文件的绝对路径 </span></span><br><span class="line">    <span class="comment">// 包一层require.resolve的原因，拼接好路径以后，它会主动去帮你判断这个路径下的文件是否存在</span></span><br><span class="line">    <span class="comment">//使用require.resolve函数查询模块文件名时并不会加载该模块。</span></span><br><span class="line">    <span class="keyword">const</span> targetFile = <span class="built_in">require</span>.<span class="title function_">resolve</span>(path.<span class="title function_">join</span>(hotsPath, filename));</span><br><span class="line">    <span class="comment">// 使用require加载一个模块后，模块的数据就会缓存到require.cache中，下次再加载相同模块，就会直接走require.cache</span></span><br><span class="line">    <span class="comment">// 所以我们热加载部署，首要做的就是清除require.cache中对应文件的缓存</span></span><br><span class="line">    <span class="keyword">const</span> cacheModule = <span class="built_in">require</span>.<span class="property">cache</span>[targetFile];</span><br><span class="line">    <span class="comment">// 去除掉在require.cache缓存中parent对当前模块的引用，否则会引起内存泄露，具体解释可以看下面的文章</span></span><br><span class="line">	<span class="comment">// 《记录一次由一行代码引发的“血案”》https://cnodejs.org/topic/5aaba2dc19b2e3db18959e63</span></span><br><span class="line">	<span class="comment">// 《一行 delete require.cache 引发的内存泄漏血案》https://zhuanlan.zhihu.com/p/34702356</span></span><br><span class="line">    <span class="keyword">if</span> (cacheModule.<span class="property">parent</span>) &#123;    </span><br><span class="line">        cacheModule.<span class="property">parent</span>.<span class="property">children</span>.<span class="title function_">splice</span>(cacheModule.<span class="property">parent</span>.<span class="property">children</span>.<span class="title function_">indexOf</span>(cacheModule), <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 清除指定路径对应模块的require.cache缓存</span></span><br><span class="line">    <span class="built_in">require</span>.<span class="property">cache</span>[targetFile] = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 重新加载发生变动后的模块文件，实现热加载部署效果，并将重新加载后的结果，更新到handlerMap变量当中</span></span><br><span class="line">    <span class="keyword">const</span> code = <span class="keyword">await</span> <span class="title function_">loadHandler</span>(targetFile)</span><br><span class="line">    handlerMap[filename] = code;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;热部署文件：&quot;</span>, filename, <span class="string">&quot;，执行结果：&quot;</span>, handlerMap);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 加载指定文件的代码</span></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">loadHandler</span> = filename =&gt; &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function">(<span class="params">resolve, reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="comment">//https://nodejs.org/dist/latest-v14.x/docs/api/fs.html#fs_fs_readfile_path_options_callback</span></span><br><span class="line">    <span class="comment">//读取文件中的内容 默认返回buffer</span></span><br><span class="line">    <span class="comment">//当目录为文件夹时抛出错误</span></span><br><span class="line">    fs.<span class="title function_">readFile</span>(filename, <span class="function">(<span class="params">err, data</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (err) &#123;</span><br><span class="line">        <span class="title function_">resolve</span>(<span class="literal">null</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="comment">// 使用vm模块的Script方法来预编译发生变化后的文件代码，检查语法错误，提前发现是否存在语法错误等报错</span></span><br><span class="line">          <span class="keyword">new</span> vm.<span class="title class_">Script</span>(data);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">          <span class="comment">// 语法错误,编译失败</span></span><br><span class="line">          <span class="title function_">reject</span>(e);</span><br><span class="line">          <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 编译通过后，重新require加载最新的代码</span></span><br><span class="line">        <span class="title function_">resolve</span>(<span class="built_in">require</span>(filename));</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="title function_">loadHandlers</span>()</span><br></pre></td></tr></table></figure> 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DevOps/" rel="tag">DevOps</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E5%B7%A5%E7%A8%8B%E5%8C%96/" rel="tag">工程化</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
-    <article
-  id="post-devops/文件自动同步服务器"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/db8fc5f7ed73/"
-    >文件自动同步服务器</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/db8fc5f7ed73/" class="article-date">
-  <time datetime="2020-12-26T13:20:25.000Z" itemprop="datePublished">2020-12-26</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/DevOps/">DevOps</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <h4 id="index-js"><a href="#index-js" class="headerlink" title="index.js"></a>index.js</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/usr/bin/env node</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> shell = <span class="built_in">require</span>(<span class="string">&#x27;shelljs&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> chokidar = <span class="built_in">require</span>(<span class="string">&#x27;chokidar&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> home = <span class="built_in">require</span>(<span class="string">&#x27;user-home&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> path = <span class="built_in">require</span>(<span class="string">&#x27;path&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="variable constant_">WORKSPACE_PATH</span> = path.<span class="title function_">resolve</span>(home, <span class="string">&#x27;Workspace&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> expectPath = path.<span class="title function_">join</span>(__dirname, <span class="string">&#x27;./expect.exp&#x27;</span>)</span><br><span class="line"><span class="keyword">const</span> to = <span class="string">&#x27;root@144.xxx.xxx.92:/home/backup&#x27;</span></span><br><span class="line"></span><br><span class="line">chokidar</span><br><span class="line">  .<span class="title function_">watch</span>(<span class="string">&#x27;./index.js&#x27;</span>, &#123;</span><br><span class="line">    <span class="attr">ignored</span>: <span class="function">(<span class="params">path</span>) =&gt;</span> path.<span class="title function_">includes</span>(<span class="string">&#x27;node_modules&#x27;</span>) || path.<span class="title function_">includes</span>(<span class="string">&#x27;.git&#x27;</span>)</span><br><span class="line">  &#125;)</span><br><span class="line">  .<span class="title function_">on</span>(<span class="string">&#x27;all&#x27;</span>, <span class="function">(<span class="params">event, path</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(event, path);</span><br><span class="line">    shell.<span class="title function_">exec</span>(<span class="string">`expect <span class="subst">$&#123;expectPath&#125;</span> <span class="subst">$&#123;path&#125;</span> <span class="subst">$&#123;to&#125;</span>`</span>)</span><br><span class="line">  &#125;); </span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h4 id="expect-exp"><a href="#expect-exp" class="headerlink" title="expect.exp"></a>expect.exp</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#expect 不能写错</span></span><br><span class="line"><span class="comment">#!/usr/bin/expect</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> from [lindex <span class="variable">$argv</span> 0]</span><br><span class="line"><span class="built_in">set</span> to [lindex <span class="variable">$argv</span> 1]</span><br><span class="line"></span><br><span class="line"><span class="built_in">set</span> <span class="built_in">timeout</span> 30</span><br><span class="line"></span><br><span class="line">spawn bash -c <span class="string">&quot;scp <span class="variable">$from</span> <span class="variable">$to</span>&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 特殊符号需要转移 回车符号不需要</span></span><br><span class="line"><span class="comment"># \ 需转义为 \\\</span></span><br><span class="line"><span class="comment"># &#125; 需转义为 \&#125;</span></span><br><span class="line"><span class="comment"># [ 需转义为 \[</span></span><br><span class="line"><span class="comment"># $ 需转义为 \\\$</span></span><br><span class="line"><span class="comment"># ` 需转义为 \`</span></span><br><span class="line"><span class="comment"># &quot; 需转义为 \\\&quot;</span></span><br><span class="line"><span class="comment"># ( 需转义为 \(</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">expect &#123;</span><br><span class="line">  <span class="string">&quot;*password:&quot;</span> &#123; send -- <span class="string">&quot;j\(S7?xx#ky6\[0n=R\r&quot;</span> &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 必须要加这一句，在执行完毕后把持交互状态，把控制台，这时候就可以进行你想要进行的操作了。如果没有这一句，在登陆完成之后就会退出，而不是留在远程终端上。</span></span><br><span class="line">interact</span><br></pre></td></tr></table></figure> 
       <!-- reward -->
       
     </div>

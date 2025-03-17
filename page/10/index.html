@@ -112,6 +112,113 @@
     
     
     <article
+  id="posts-pattern/③装饰者模式"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h2 itemprop="name">
+  <a class="article-title" href="/posts/3e1242dd4c72/"
+    >③悄无声息的扩展-装饰者模式</a> 
+</h2>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/3e1242dd4c72/" class="article-date">
+  <time datetime="2022-01-03T04:49:16.000Z" itemprop="datePublished">2022-01-03</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a>
+  </div>
+   
+    </div>
+      
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>简单说装饰可以让你不用修改底层代码给对象赋予新的职责。</p>
+<h4 id="从分离改变，更进一步"><a href="#从分离改变，更进一步" class="headerlink" title="从分离改变，更进一步"></a>从分离改变，更进一步</h4><p>看了前两个设计模式，相信你一定感觉到继承只能解决静态时对类的扩展，如果想动态的对类的行为扩展就需要用到组合。</p>
+<p>既然我们已经可以用策略模式分离改变的部分，还有什么做不到的么？ 看看下面一个问题：</p>
+<ul>
+<li>奶茶店有几十种品种的饮料，他们都需要继承自一个抽象类 Beverage，因为每种饮料有自己的产品说明，并且各自实现了一个计算金额的方法 cost。</li>
+<li>每种奶茶除了自己特有的配料外，还可以额外付费添加配料，比如加两份的珍珠，加一份椰果，并且需要计算总价。</li>
+</ul>
+<p>如果想枚举出店内的每一种产品是不现实的，那时非常庞大的一个排列组合，因为不可能知道客户要加那些配料。并且严重的违反了设计中的两个原则：</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">BeverageAbstract</span> &#123;</span><br><span class="line">  description = <span class="string">&quot;some description&quot;</span>;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 果茶加牛奶</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FruitTeaWithMilk</span> <span class="keyword">extends</span> <span class="title class_ inherited__">BeverageAbstract</span> &#123;&#125;</span><br><span class="line"><span class="comment">// 柠檬茶加两份珍珠</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">LemonTeaWith2Pearls</span> <span class="keyword">extends</span> <span class="title class_ inherited__">BeverageAbstract</span> &#123;&#125;</span><br><span class="line"><span class="comment">//...</span></span><br></pre></td></tr></table></figure>
+
+<p>既然不能枚举考虑是不是应该有一个统一的 Beverage 类，用于实现抽象类 BeverageAbstract，并且把所有的配料都添加在 Beverage 上，并记录配料的数量。<br>子类会调用父类 cost 方法计算所有配料，并加上自己品种的价格。</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="keyword">class</span> <span class="title class_">BeverageAbstract</span> &#123;</span><br><span class="line">  description = <span class="string">&quot;some description&quot;</span>;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Beverage</span> <span class="keyword">extends</span> <span class="title class_ inherited__">BeverageAbstract</span> &#123;</span><br><span class="line">  milk = <span class="number">2</span>;</span><br><span class="line">  milkCount = <span class="number">0</span>;</span><br><span class="line">  <span class="title function_">setMilk</span>(<span class="params">count: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">milkCount</span> = count;</span><br><span class="line">  &#125;</span><br><span class="line">  coffee = <span class="number">5</span>;</span><br><span class="line">  coffeeCount = <span class="number">0</span>;</span><br><span class="line">  <span class="title function_">setCoffee</span>(<span class="params">count: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">coffeeCount</span> = count;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">let</span> total = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">milkCount</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      total += <span class="variable language_">this</span>.<span class="property">milkCount</span> * <span class="variable language_">this</span>.<span class="property">milk</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">coffeeCount</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      total += <span class="variable language_">this</span>.<span class="property">coffeeCount</span> * <span class="variable language_">this</span>.<span class="property">coffee</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> total;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FruitTea</span> <span class="keyword">extends</span> <span class="title class_ inherited__">Beverage</span> &#123;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">10</span> + <span class="variable language_">super</span>.<span class="title function_">cost</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fruitTea = <span class="keyword">new</span> <span class="title class_">FruitTea</span>();</span><br><span class="line">fruitTea.<span class="title function_">setMilk</span>(<span class="number">2</span>);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(fruitTea.<span class="title function_">cost</span>());</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> fruitTea2 = <span class="keyword">new</span> <span class="title class_">FruitTea</span>();</span><br><span class="line">fruitTea2.<span class="title function_">setMilk</span>(<span class="number">1</span>);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(fruitTea.<span class="title function_">cost</span>());</span><br></pre></td></tr></table></figure>
+
+<p>这样的设计还有一些问题：</p>
+<ul>
+<li>并不是所有的配料都需要继承，每种饮料都有自己特有的配料。</li>
+<li>一但需要新的配料或新的品种或价钱的改变，就需要修改父类。</li>
+<li>当有新的品种出现的时候，他可能继承了不必要的方法。</li>
+</ul>
+<h4 id="定义装饰者"><a href="#定义装饰者" class="headerlink" title="定义装饰者"></a>定义装饰者</h4><p>设计类的一个原则是 <strong>❤‍🔥 类应该对扩展开放，对修改关闭，也就是类设计中提到的开放关闭原则</strong>。</p>
+<p>开放且关闭并不冲突，想想观察中模式中的案例，可以通过调用类的方法添加观察者，而不改变原有的类的方法。并不需要每一个类都遵循开放关闭原则，避免过度设计，只需要针对可能经常会发生变化的类应用开发-关闭原则。</p>
+<p><strong>装饰者模式：动态的将责任附加到对象上，若要扩展功能，装饰者提供了比继承更有弹性的替代方案</strong>。</p>
+<p>对于上面的问题，按以下的方式思考：</p>
+<ul>
+<li>我们已经有一个果茶类 FruitTea</li>
+<li>需要加两份额外的牛奶，用两个牛奶配料的类去修饰它</li>
+<li>需要加一份额外的咖啡，用一个咖啡配料的类去修饰它</li>
+<li>依赖修饰者的 cost 方法计算价格</li>
+<li>在编码的时候为了明确修饰者和被修饰者的关系，<strong>需要让修饰者和被修饰者继承同样的类或实现相同的接口，因为被修饰的类仍然被视作原有的类，它的属性以及方法的作用不应该发生变化，只是扩展了方法实现。</strong></li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  <span class="attr">description</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="title function_">cost</span>(): <span class="built_in">number</span>;</span><br><span class="line">  <span class="title function_">getDescription</span>(): <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MilkDecorator</span> <span class="keyword">implements</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  <span class="attr">beverage</span>: <span class="title class_">BeverageInterface</span>;</span><br><span class="line">  description = <span class="string">&quot;MilkDecorator&quot;</span>;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">beverage: BeverageInterface</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">beverage</span> = beverage;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">getDescription</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">description</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">2</span> + <span class="variable language_">this</span>.<span class="property">beverage</span>.<span class="title function_">cost</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">CoffeeDecorator</span> <span class="keyword">implements</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  <span class="attr">beverage</span>: <span class="title class_">BeverageInterface</span>;</span><br><span class="line">  description = <span class="string">&quot;CoffeeDecorator&quot;</span>;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">beverage: BeverageInterface</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">beverage</span> = beverage;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">getDescription</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">description</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">5</span> + <span class="variable language_">this</span>.<span class="property">beverage</span>.<span class="title function_">cost</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FruitTea</span> <span class="keyword">implements</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  description = <span class="string">&quot;FruitTea&quot;</span>;</span><br><span class="line">  <span class="title function_">getDescription</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">description</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">10</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> fruitTea = <span class="keyword">new</span> <span class="title class_">FruitTea</span>();</span><br><span class="line"><span class="comment">// 原价fruitTea</span></span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(fruitTea.<span class="title function_">cost</span>());</span><br><span class="line"><span class="comment">// 添加配料一份牛奶 一份咖啡</span></span><br><span class="line">fruitTea = <span class="keyword">new</span> <span class="title class_">MilkDecorator</span>(fruitTea);</span><br><span class="line">fruitTea = <span class="keyword">new</span> <span class="title class_">CoffeeDecorator</span>(fruitTea);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(fruitTea.<span class="title function_">cost</span>());</span><br></pre></td></tr></table></figure>
+
+<p>现在已经分离了装饰着对象,但是使用装饰者模式是基于一下几个前提：</p>
+<ul>
+<li>被修饰的对象是可以抽象的，也就是说被修饰的对象不会轻易改变，这样针对它的修饰类才有意义</li>
+<li>修饰对象是不关心外部状态的，它只关心被修饰的对象，因为你想让他控制修饰链中的每个节点，需要更好的设计。</li>
+<li><strong>被装饰的对象可能拥有特定的类型，在使用装饰的时候需要小心，避免功能或类型丢失。</strong></li>
+</ul>
+<h4 id="与-ES6-修饰器的区别"><a href="#与-ES6-修饰器的区别" class="headerlink" title="与 ES6 修饰器的区别"></a>与 ES6 修饰器的区别</h4><p>ES6 提供修饰器方提案，在 babel 转译后支持，可以修饰类或类的属性和方法，但并不是一种设计模式。</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  <span class="attr">description</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="title function_">cost</span>(): <span class="built_in">number</span>;</span><br><span class="line">  <span class="title function_">getDescription</span>(): <span class="built_in">string</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">function</span> <span class="title function_">milkDecorator</span>(<span class="params">target: () =&gt; <span class="built_in">number</span></span>): <span class="function">() =&gt;</span> <span class="built_in">number</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="function">() =&gt;</span> <span class="number">2</span> + <span class="title function_">target</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FruitTea</span> <span class="keyword">implements</span> <span class="title class_">BeverageInterface</span> &#123;</span><br><span class="line">  description = <span class="string">&quot;FruitTea&quot;</span>;</span><br><span class="line">  <span class="title function_">getDescription</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">description</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="title function_">cost</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">10</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">FruitTeaWithMilk</span> <span class="keyword">extends</span> <span class="title class_ inherited__">FruitTea</span> &#123;</span><br><span class="line">  <span class="meta">@milkDecorator</span></span><br><span class="line">  <span class="title function_">cost</span>(): <span class="built_in">number</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">super</span>.<span class="title function_">cost</span>();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">let</span> fruitTea = <span class="keyword">new</span> <span class="title class_">FruitTeaWithMilk</span>();</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(fruitTea.<span class="title function_">cost</span>());</span><br></pre></td></tr></table></figure>
+
+
+<ul>
+<li>继承属于扩展形式之一，但不见得是达到弹性设计的最佳方式。</li>
+<li>在我们的设计中，应该允许行为可以被扩展，而无须修改现有的代码。</li>
+<li>组合和委托可用于在运行时动态地加上新的行为。</li>
+<li>除了继承，装饰者模式也可以让我们扩展行为。</li>
+<li>装饰者模式意味着一群装饰者类，这些类用来包装具体组件。</li>
+<li>开放一关闭原则</li>
+<li>装饰者类反映出被装饰的组件类型(事实上，他们具有相同的类型，都经过接口或继承实)</li>
+<li>装饰者可以在被装饰者的行为前面与&#x2F;或后面加上自己的行为，甚至将被装饰者的行为整个取代掉，而达到特定的目的。</li>
+<li>你可以用无数个装饰者包装一个组件。</li>
+<li>装饰者一般对组件的客户是透明的，除非客户程序依赖于组件的具体类型。</li>
+<li>装饰者会导致设计中出现许多小对象，如果过度使用，会让程序变得很复杂。</li>
+</ul>
+ 
+      <!-- reward -->
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+    
+</article>
+
+    
+    <article
   id="post-db/DQL语言"
   class="article article-type-post"
   itemscope
@@ -1217,97 +1324,6 @@
 </blockquote>
 <p>需要添加root元素，并匹配所有路径</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">Router</span> <span class="keyword">from</span> <span class="string">&#x27;@koa/router&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">ReactDOMServer</span> <span class="keyword">from</span> <span class="string">&#x27;react-dom/server&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./router&#x27;</span>;</span><br><span class="line"><span class="keyword">const</span> router = <span class="keyword">new</span> <span class="title class_">Router</span>();</span><br><span class="line"></span><br><span class="line">router.<span class="title function_">get</span>(<span class="string">&quot;/(.*)&quot;</span>,<span class="keyword">async</span> (ctx,next)=&gt;&#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(ctx);</span><br><span class="line">    ctx.<span class="property">body</span>=<span class="string">`</span></span><br><span class="line"><span class="string">    &lt;!DOCTYPE html&gt;</span></span><br><span class="line"><span class="string">        &lt;html lang=&quot;en&quot;&gt;</span></span><br><span class="line"><span class="string">        &lt;head&gt;</span></span><br><span class="line"><span class="string">            &lt;meta charset=&quot;UTF-8&quot;&gt;</span></span><br><span class="line"><span class="string">            &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;IE=edge&quot;&gt;</span></span><br><span class="line"><span class="string">            &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;</span></span><br><span class="line"><span class="string">            &lt;title&gt;Document&lt;/title&gt;</span></span><br><span class="line"><span class="string">        &lt;/head&gt;</span></span><br><span class="line"><span class="string">        &lt;body&gt;</span></span><br><span class="line"><span class="string">            &lt;div id=&#x27;root&#x27;&gt;<span class="subst">$&#123;ReactDOMServer.renderToString(&lt;App &#123;...&#123;ctx&#125;&#125;/&gt;)&#125;</span>&lt;/div&gt;</span></span><br><span class="line"><span class="string">            &lt;script src=&#x27;/index.js&#x27;&gt;&lt;/script&gt;</span></span><br><span class="line"><span class="string">        &lt;/body&gt;</span></span><br><span class="line"><span class="string">        &lt;/html&gt;</span></span><br><span class="line"><span class="string">    `</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> router;</span><br></pre></td></tr></table></figure> 
-      <!-- reward -->
-      
-    </div>
-    
-
-    <!-- copyright -->
-    
-    <footer class="article-footer">
-       
-  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/React/" rel="tag">React</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/SSR/" rel="tag">SSR</a></li></ul>
-
-    </footer>
-  </div>
-
-   
-    
-</article>
-
-    
-    <article
-  id="post-react/②(SSR)最简单的同构"
-  class="article article-type-post"
-  itemscope
-  itemprop="blogPost"
-  data-scroll-reveal
->
-  <div class="article-inner">
-    
-    <header class="article-header">
-       
-<h2 itemprop="name">
-  <a class="article-title" href="/posts/6192ec0d02ae/"
-    >② ReactSSR 最简单的同构</a> 
-</h2>
- 
-
-      
-    </header>
-     
-    <div class="article-meta">
-      <a href="/posts/6192ec0d02ae/" class="article-date">
-  <time datetime="2021-10-15T01:42:38.000Z" itemprop="datePublished">2021-10-15</time>
-</a> 
-  <div class="article-category">
-    <a class="article-category-link" href="/categories/React/">React</a>
-  </div>
-   
-    </div>
-      
-    <div class="article-entry" itemprop="articleBody">
-       
-  <h4 id="什么是同构"><a href="#什么是同构" class="headerlink" title="什么是同构"></a>什么是同构</h4><p>简单说同构就是前后端公用一套代码。</p>
-<p>首先需要明确的是同构是SSR的一种实现方式，同构也是通过服务端渲染，将生成的HTML返回给浏览器展示，但是在React组件中绑定的事件会丢失，因为同构只返回了HTML字符串，并没有返回JavaScript文件。</p>
-<p>所以可以把组件打包成JavaScript文件浏览器中在执行一次，用于绑定交互事件。真实的场景中还会有路由，和数据状态管理工具（redux等）的同步。</p>
-<p>打包的组件也用于在服务端生成HTML字符串，它们公用一套代码这也是同构的本质。</p>
-<h4 id="打包组件"><a href="#打包组件" class="headerlink" title="打包组件"></a>打包组件</h4><p>把组件打包成一个单独的文件，放在static静态资源目录下面，当浏览器访问的时候会从静态资源文件夹读取文件</p>
-<blockquote>
-<p>webpack.config.ts</p>
-</blockquote>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> path <span class="keyword">from</span> <span class="string">&#x27;path&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> * <span class="keyword">as</span> webpack <span class="keyword">from</span> <span class="string">&#x27;webpack&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="attr">config</span>: webpack.<span class="property">Configuration</span> = &#123;</span><br><span class="line">    <span class="attr">entry</span>:<span class="string">&#x27;./src/components/hello.tsx&#x27;</span>,</span><br><span class="line">    <span class="attr">output</span>:&#123;</span><br><span class="line">        <span class="attr">filename</span>:<span class="string">&#x27;index.js&#x27;</span>,</span><br><span class="line">        <span class="attr">path</span>:path.<span class="title function_">resolve</span>(__dirname,<span class="string">&#x27;static&#x27;</span>)</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">module</span>:&#123;</span><br><span class="line">        <span class="attr">rules</span>:[</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="attr">test</span>:<span class="regexp">/\.tsx?$/</span>,</span><br><span class="line">                <span class="attr">use</span>:[<span class="string">&#x27;babel-loader&#x27;</span>]</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">resolve</span>: &#123;</span><br><span class="line">        <span class="attr">extensions</span>: [<span class="string">&#x27;.tsx&#x27;</span>, <span class="string">&#x27;.ts&#x27;</span>, <span class="string">&#x27;.js&#x27;</span>],</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">mode</span>:<span class="string">&#x27;development&#x27;</span>,</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> config;</span><br></pre></td></tr></table></figure>
-
-<h4 id="静态资源访问"><a href="#静态资源访问" class="headerlink" title="静态资源访问"></a>静态资源访问</h4><p>koa提供了一个中间件 <code>koa-static</code> 用于静态资源访问</p>
-<p>注意路径是否正确，如果是在打包好的文件夹中执行，可以通过PWD获取Node进程执行时候的位置</p>
-<p>static 用于指定静态资源文件夹的名称，如果想访问static中的文件不需要在路径中添加static, 例如静态资源路径为 <code>static/js/index.js</code>,script 标签中的src路径为 <code>/js/index.js</code></p>
-<p>最后在返回的HTML中添加打包好的JS文件</p>
-<blockquote>
-<p>src&#x2F;server.ts</p>
-</blockquote>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> koaStatic <span class="keyword">from</span> <span class="string">&#x27;koa-static&#x27;</span>;</span><br><span class="line"></span><br><span class="line">router.<span class="title function_">get</span>(<span class="string">&#x27;/&#x27;</span>,<span class="keyword">async</span> (ctx,next)=&gt;&#123;</span><br><span class="line">    ctx.<span class="property">body</span>=<span class="string">`</span></span><br><span class="line"><span class="string">        &lt;html lang=&quot;en&quot;&gt;</span></span><br><span class="line"><span class="string">            &lt;body&gt;</span></span><br><span class="line"><span class="string">                <span class="subst">$&#123;ReactDOMServer.renderToString(&lt;Home /&gt;)&#125;</span></span></span><br><span class="line"><span class="string">                &lt;script src=&#x27;/index.js&#x27;&gt;&lt;/script&gt;</span></span><br><span class="line"><span class="string">            &lt;/body&gt;</span></span><br><span class="line"><span class="string">        &lt;/html&gt;</span></span><br><span class="line"><span class="string">    `</span></span><br><span class="line">&#125;)</span><br><span class="line"></span><br><span class="line">app</span><br><span class="line">.<span class="title function_">use</span>(<span class="title function_">koaStatic</span>(path.<span class="title function_">join</span>((process.<span class="property">env</span> <span class="keyword">as</span> any).<span class="property">PWD</span>,<span class="string">&#x27;./static&#x27;</span>)))</span><br><span class="line">.<span class="title function_">use</span>(router.<span class="title function_">routes</span>())</span><br><span class="line">.<span class="title function_">use</span>(router.<span class="title function_">allowedMethods</span>())</span><br><span class="line"></span><br><span class="line">app.<span class="title function_">listen</span>(conf.<span class="property">PORT</span>,<span class="function">()=&gt;</span>&#123;</span><br><span class="line">    <span class="string">`server is running in port 3000`</span></span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-
-<h4 id="点击无效？-请把组件放在root中"><a href="#点击无效？-请把组件放在root中" class="headerlink" title="点击无效？ 请把组件放在root中"></a>点击无效？ 请把组件放在root中</h4><p>按照上面的步骤已经可以在页面中加载 <code>index.js</code> 的文件，但是点击事件并没有生效,这是因为还没有将组件插入到root节点中</p>
-<p>虽然服务端通过HTML直接返回给浏览器可以展示组件，但是在浏览器中执行React打包好的文件的时候需要将节点挂载在元素上，通常为 <code>&lt;div id=&#39;root&#39;&gt;&lt;/div&gt;</code></p>
-<p>所以尝试添加这样的逻辑</p>
-<blockquote>
-<p>src&#x2F;components&#x2F;hello.ts</p>
-</blockquote>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="title class_">Hello</span>:<span class="title class_">React</span>.<span class="property">FC</span> = <span class="function">() =&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="language-xml"><span class="tag">&lt;<span class="name">div</span> <span class="attr">onClick</span>=<span class="string">&#123;()</span>=&gt;</span>&#123;alert(&quot;hello&quot;)&#125;&#125;&gt;Hello<span class="tag">&lt;/<span class="name">div</span>&gt;</span></span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title class_">ReactDom</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">Hello</span>/&gt;</span></span>, <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>));</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> <span class="title class_">Hello</span>;</span><br></pre></td></tr></table></figure>
-
-<p>很不幸会提示一个错误，<code>document</code>没有定义，因为这个组件用于生成HTML字符串，当他被执行的时候node环境中并没有<code>document</code> 这个全局变量</p>
-<p>所以我们把他放到一个新的文件中</p>
-<blockquote>
-<p>src&#x2F;component&#x2F;index.ts</p>
-</blockquote>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="title class_">ReactDom</span> <span class="keyword">from</span> <span class="string">&#x27;react-dom&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">React</span> <span class="keyword">from</span> <span class="string">&#x27;react&#x27;</span>;</span><br><span class="line"><span class="keyword">import</span> <span class="title class_">Home</span> <span class="keyword">from</span> <span class="string">&#x27;./home&#x27;</span></span><br><span class="line"></span><br><span class="line"><span class="title class_">ReactDom</span>.<span class="title function_">render</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">Home</span>/&gt;</span></span>, <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>));</span><br></pre></td></tr></table></figure>
-
-<p>这时没有再报错，但是收到了一个警告 </p>
-<blockquote>
-<p>Warning: render(): Calling ReactDOM.render() to hydrate server-rendered markup will stop working in React v18. Replace the ReactDOM.render() call with ReactDOM.hydrate() if you want React to attach to the server HTML</p>
-</blockquote>
-<p>需要把<code>ReactDOM.render()</code> 替换为 <code>ReactDOM.hydrate()</code></p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">ReactDom</span>.<span class="title function_">hydrate</span>(<span class="language-xml"><span class="tag">&lt;<span class="name">Home</span>/&gt;</span></span>, <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;root&#x27;</span>));</span><br></pre></td></tr></table></figure> 
       <!-- reward -->
       
     </div>
