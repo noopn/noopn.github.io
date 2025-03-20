@@ -106,6 +106,16 @@ sudo gitlab-ctl reconfigure
 sudo gitlab-ctl start
 ```
 
+如果在 Gitlab 前面有统一的反向代理，无需 Gitlab 本身处理 SSL 证书，可以将 Gitlab 的 nginx 配置为 80 端口。[\[文档\]](https://docs.gitlab.com/omnibus/settings/ssl/#configure-a-reverse-proxy-or-load-balancer-ssl-termination)
+
+```bash
+nginx['enable'] = true
+nginx['listen_port'] = 80
+nginx['listen_https'] = false
+
+sudo gitlab-ctl reconfigure
+```
+
 nginx 配置参照 docker 的配置
 
 #### Docker 方式安装
