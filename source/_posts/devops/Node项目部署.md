@@ -462,7 +462,7 @@ pm2 show [appName]
       // 需要指定环境变量 export NODE_ENV=production deploy.env 只会在 deploy 阶段加载
       "post-setup": "source ~/.nvm/nvm.sh && npm install && export NODE_ENV=production && npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all",
 
-      "post-deploy": "source ~/.nvm/nvm.sh && npm install && pm2 startOrReload ecosystem.json --env production",
+      "post-deploy": "source ~/.nvm/nvm.sh && npm install && pm2 startOrRestart ecosystem.json --env production",
       "env": {
         "NODE_ENV": "production"
       }
