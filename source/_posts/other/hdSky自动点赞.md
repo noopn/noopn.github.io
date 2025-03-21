@@ -364,3 +364,16 @@ const request = require("./request");
   // await browser.close();
 })();
 ```
+
+#### debian 执行任务报错
+
+Failed to launch the browser process: error while loading shared libraries: libnss3.so: cannot open shared object file
+
+可能是没想相关的执行环境安装以下依赖
+
+```bash
+sudo apt-get install libpangocairo-1.0-0 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libasound2 libatk1.0-0 libgtk-3-0
+
+sudo apt-get install -y libgbm-dev
+```
+
