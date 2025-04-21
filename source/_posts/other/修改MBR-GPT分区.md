@@ -38,4 +38,3 @@ Device     Boot   Start      End Sectors  Size Id Type
 /dev/sda5       8486912 10483711 1996800  975M 82 Linux swap / Solaris
 ```
 
-#### Pending Next
