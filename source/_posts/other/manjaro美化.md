@@ -9,7 +9,7 @@ tags:
   - Manajro
 ---
 
-## 添加 archlinux 源
+#### 添加 archlinux 源
 
 [mirrorlist-repo](https://github.com/archlinuxcn/mirrorlist-repo) 官方仓库地址
 
@@ -20,7 +20,7 @@ tags:
 Server = https://repo.archlinuxcn.org/$arch
 ```
 
-## 设置源
+#### 设置源
 
 - 软件仓库中选择 Preferences, use mirrors 选择指定源
 
@@ -34,19 +34,19 @@ Server = https://repo.archlinuxcn.org/$arch
   sudo pacman-mirrors -c China -g
   ```
 
-## 更新系统
+#### 更新系统
 
 ```bash
 sudo pacman -Syyu
 ```
 
-## 安装 yay 助手
+#### 安装 yay 助手
 
 ```bash
 sudo pacman -S yay
 ```
 
-## 输入法
+#### 输入法
 
 [Fcitx5](https://wiki.archlinuxcn.org/wiki/Fcitx5)
 
@@ -78,18 +78,49 @@ XMODIFIERS=@im=fcitx
 
   点击 configure addons, 选择 PinYin, 开启云拼音，并选择 Baidu
 
-## oh-my-zsh
+#### oh-my-zsh
 
 [oh-my-zsh](https://ohmyz.sh/#install)
 
-## Desktop Effect
+#### SSH 
 
-- Blur : noise 0, blur 适当调整。
+[GNOME/Keyring](https://wiki.archlinux.org/title/GNOME/Keyring#SSH_keys)
 
-## latte-dock
+如果安装的是 KDE 桌面等桌面环境的版本，可能无法自动获取 SSH Key 的密码，导致每次使用都会提示输入密钥密码
 
-代替系统自带 task manager 组件，
+安装 Cinnamon 它是一个独立的桌面环境，包含了 Keyring 所需要的工具包，首次认证会弹出一个 GUI 窗口填写密码，后续可以免密登录
 
 ```bash
-pamac build latte-dock-git
+yay cinnamon
+```
+
+开启 gcr 守护进程
+
+```bash
+systemctl --user enable --now gcr-ssh-agent.service
+```
+
+添加环境变量
+
+```bash
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/gcr/ssh"
+```
+
+
+#### 虚拟化环境配置显卡直通
+
+X11 环境中强制 Xorg 使用 NVIDIA GPU, 需要注意 PCI设备不要填错， 通过命令`lspci | grep -i nvidia` 查看
+
+
+```bash
+sudo rm /etc/X11/xorg.conf
+sudo nvidia-xconfig --busid=PCI:1:0:0 --force-generate
+```
+
+设置环境变量
+
+```bash
+echo 'export __NV_PRIME_RENDER_OFFLOAD=1' >> ~/.zshrc
+echo 'export __GLX_VENDOR_LIBRARY_NAME=nvidia' >> ~/.zshrc
+source ~/.zshrc
 ```
