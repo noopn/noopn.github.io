@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>OpenWrt 安装与设置 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="https://cdn.staticfile.org/mermaid/8.14.0/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-other/OpenWrt"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  OpenWrt 安装与设置
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/0d8a7ae7bced/" class="article-date">
+  <time datetime="2024-11-04T05:59:26.000Z" itemprop="datePublished">2024-11-04</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">21 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="下载固件"><a href="#下载固件" class="headerlink" title="下载固件"></a>下载固件</h4><p><a target="_blank" rel="noopener" href="https://openwrt.org/">OpenWrt</a> 官方版本，所有的第三方版本都是基于官方的自定义编译，<br><a target="_blank" rel="noopener" href="https://downloads.immortalwrt.org/">immortalwrt</a> 是针对国内用户编译的第三方版本，推荐优先使用。<a target="_blank" rel="noopener" href="https://github.com/immortalwrt/immortalwrt">[GitHub]</a></p>
+<p>点击 All Downloads</p>
+<p><img src="/posts/0d8a7ae7bced/001.png"></p>
+<p>选择适配的 x86 版本</p>
+<blockquote>
+<p>SquashFS 和 Ext4 是两种不同的文件系统，各自有不同的特点和应用场景：</p>
+<ul>
+<li>SquashFS 只读的文件系统，经过压缩后可以节省存储空间。默认情况下不支持直接写入，因此需要将可写数据放在单独的 Overlay 文件系统上。</li>
+<li>Ext4 一种常用的可读写文件系统，支持动态修改。</li>
+</ul>
+</blockquote>
+<p><img src="/posts/0d8a7ae7bced/002.png"></p>
+<p>由于 OpenWrt 并不会将所有硬盘剩余空间作为根路径，因此不同的文件格式对应不同的磁盘组成，在安装后需要对根分区扩容。</p>
+<ul>
+<li>Ext4: <code>/boot</code> + <code>/</code>根分区(读写) + 剩余未分区磁盘</li>
+<li>SquashFS： <code>/boot</code> + <code>/rom</code>(只读) + <code>/</code>根分区(读写) + 剩余未分区磁盘 (优先选择此版本，方便迁移和系统恢复)</li>
+</ul>
+<h4 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h4><p>参考<a target="_blank" rel="noopener" href="https://openwrt.org/docs/guide-user/installation/openwrt_x86#installation">官方安装文档</a>，采用写入镜像文件方式，由于 OpenWrt 没有提供安装引导，所以需要用 <a target="_blank" rel="noopener" href="https://www.wepe.com.cn/">微 PE</a> 或 老毛桃[<a target="_blank" rel="noopener" href="https://www.laomaotao.net/]">https://www.laomaotao.net/]</a> 等工具制作一个 WinPE 启动盘, 将用到的固件，和固件写入工具保存到启动盘中，当进入 WinPE 系统后是用写入工具写入镜像。</p>
+<blockquote>
+<p>Windows Preinstallation Environment（Windows PE），Windows 预安装环境，是带有有限服务的最小 Win32 子系统，基于以完整 Windows 环境或者保护模式运行的 Windows 3.x 及以上内核。这类系统一般很小。它包括了运行 Windows 安装程序及脚本、连接网络共享、自动化基本过程以及执行硬件验证所需的最小功能。</p>
+</blockquote>
+<p>另外需要下载一个镜像写入工具 <a target="_blank" rel="noopener" href="https://win32diskimager.org/">Win32 Disk Imager</a> 或 <a target="_blank" rel="noopener" href="https://etcher.balena.io/">balenaEtcher</a></p>
+<p>将镜像写入工具, 解压出的 OpenWrt 镜像(.iso)文件, 复制到制作好的 WinPE 启动 U 盘中。</p>
+<p><img src="/posts/0d8a7ae7bced/003.png"></p>
+<p>将 U 盘插入到软路由中(软路由需要接上鼠标，键盘，显示器)，开机时入到软路由的 BIOS，将默认的固态硬盘启动改为 U 盘启动。</p>
+<p><img src="/posts/0d8a7ae7bced/004.png"></p>
+<p>保存重启后，进入 WinPE 系统，首先使用 WinPE 自带的 DiskGenius 工具，删除软路由硬盘的所有分区并保存。打开写入工具，选择磁盘和镜像并写入。</p>
+<p><img src="/posts/0d8a7ae7bced/005.png"></p>
+<p>写入成功后，重启系统再次进入 BIOS,将 U 盘启动修改回硬盘启动，保存并再次重启。</p>
+<p>启动成功后，会看见有命令行信息，如果卡住不动，尝试按一下回车键，这样会进入 OpenWrt 系统。</p>
+<p>首次登录提示修改密码，执行 <code>passwd</code> 命令，修改 root 账户密码，此密码也是网页登录的密码。</p>
+<p><img src="/posts/0d8a7ae7bced/006.png"></p>
+<p>修改网络配置信息，执行命令 <code>vi /etc/config/network</code>,</p>
+<p>将 config device 的 list_ports 修改为 eth1<br>将 interface lan 的 option ipaddr 修改为内网不会冲突的 IP 地址例如 <code>192.168.100.1</code> 或 <code>10.10.0.1</code><br>将 interface wan 和 interface wan6 的 option device 修改为 eth0</p>
+<blockquote>
+<p>wan 口表示外网，也就是网络运营商的网线，通常更习惯将第一个网口作为插入外网网线，后面插入的都是内网设备，这样更有条理性</p>
+</blockquote>
+<p><img src="/posts/0d8a7ae7bced/007.png"></p>
+<p>保存后重启设备,访问前需要重新连接一下设备：</p>
+<ul>
+<li>软路由插入电源并开机</li>
+<li>运营商光猫的网线，链接到软路由的 eth0 网口。</li>
+<li>wifi 路由器需要在管理后台，设置为 AP 有线中继模式，用一个网线将软路由的 eth1 网口，链接到路由器的第一个网口。</li>
+<li>其他内网设备可以通过网线连接软路由或路由器，也可以直接通过 wifi 网络链接.</li>
+</ul>
+<p>这是虽然不能上网，单已经可以通过内网中其他设备访问 <code>/etc/config/network</code> 中设置的 lan 口的 ipaddr 访问到 OpenWrt 的 UI 界面。</p>
+<h4 id="pve-虚拟机安装"><a href="#pve-虚拟机安装" class="headerlink" title="pve 虚拟机安装"></a>pve 虚拟机安装</h4><p>上传镜像文件到 pve， 创建虚拟机， 删除虚拟机的默认磁盘</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">qm importdisk [虚拟机ID] [镜像路径] [磁盘]</span><br><span class="line"></span><br><span class="line">qm importdisk 4444 /var/lib/vz/template/iso/immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img storage</span><br></pre></td></tr></table></figure>
+
+<p>虚拟机 &#x3D;&gt; 硬件 添加未启用的磁盘<br>虚拟机 &#x3D;&gt; 选线 修改刚刚添加的磁盘为第一启动项</p>
+<h4 id="wan-口配置"><a href="#wan-口配置" class="headerlink" title="wan 口配置"></a>wan 口配置</h4><p>最先的配置一定是软路由可以上网，输入账号密码进入到软路由的 UI 界面，点击菜单 <strong>网络</strong> &#x3D;&gt; <strong>接口</strong> 点击 wan 口的编辑按钮，协议切换为 PPPoE ，输入账号密码，即可上网。</p>
+<blockquote>
+<p>此方式是通过 PPPoE 拨号上网，需要致电运营商，将网络改为桥接模式，并提供账号密码。</p>
+</blockquote>
+<p><img src="/posts/0d8a7ae7bced/008.png"></p>
+<h4 id="lan-口配置"><a href="#lan-口配置" class="headerlink" title="lan 口配置"></a>lan 口配置</h4><p>网络 &#x3D;&gt; 接口 &#x3D;&gt; 设备 选择 br_lan, 在网桥端口中将其他的端口都添加到 br_lan 这个网桥中，方便让局域网中的设备互相访问</p>
+<h4 id="磁盘扩容"><a href="#磁盘扩容" class="headerlink" title="磁盘扩容"></a>磁盘扩容</h4><p>在菜单 <strong>状态</strong> &#x3D;&gt; <strong>概览</strong> 中可以看到，磁盘空间只有几百 M, 这是因为 OpenWrt 默认不会将剩余空间作为根节点。</p>
+<p>官方 openwrt 参考 <a target="_blank" rel="noopener" href="https://openwrt.org/docs/guide-user/installation/openwrt_x86#expanding_root_partition">官方的扩容操作</a></p>
+<p>immortalwrt 在安装前可以使用以下命令修改镜像的分区大小</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将镜像文件扩容</span></span><br><span class="line"><span class="built_in">dd</span> <span class="keyword">if</span>=/dev/zero bs=1M count=98304 &gt;&gt; immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img</span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用parted扩容文件系统</span></span><br><span class="line"></span><br><span class="line">parted immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img</span><br><span class="line">GNU Parted 3.5</span><br><span class="line">Using /var/lib/vz/template/iso/immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img</span><br><span class="line">Welcome to GNU Parted! Type <span class="string">&#x27;help&#x27;</span> to view a list of commands.</span><br><span class="line">(parted) p</span><br><span class="line">Error: The backup GPT table is corrupt, but the primary appears OK, so that will be used.</span><br><span class="line">OK/Cancel? OK</span><br><span class="line">Warning: Not all of the space available to</span><br><span class="line">/var/lib/vz/template/iso/immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img appears to be used, you can fix the GPT</span><br><span class="line">to use all of the space (an extra 30 blocks) or <span class="built_in">continue</span> with the current setting?</span><br><span class="line">Fix/Ignore? Fix</span><br><span class="line">Model:  (file)</span><br><span class="line">Disk /var/lib/vz/template/iso/immortalwrt-24.10.3-x86-64-generic-squashfs-combined-efi__1_.img: 348MB</span><br><span class="line">Sector size (logical/physical): 512B/512B</span><br><span class="line">Partition Table: gpt</span><br><span class="line">Disk Flags:</span><br><span class="line"></span><br><span class="line">Number  Start   End     Size    File system  Name  Flags</span><br><span class="line">128     17.4kB  262kB   245kB                      bios_grub</span><br><span class="line"> 1      262kB   33.8MB  33.6MB  fat16              legacy_boot</span><br><span class="line"> 2      33.8MB  348MB   315MB</span><br><span class="line"></span><br><span class="line">(parted) resizepart 2 100%</span><br><span class="line">(parted) q</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>immortalwrt 也可以安装后扩容</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">opkg update</span><br><span class="line"></span><br><span class="line">opkg install fdisk lsblk losetup f2fs-toolsopkg install lsblk fdisk resize2fs losetup blkid f2fs-tools tree</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看磁盘信息</span></span><br><span class="line"><span class="comment"># df -h</span></span><br><span class="line"><span class="comment"># fdisk -l</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 替换为自己的磁盘</span></span><br><span class="line">fdisk /dev/sda</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看磁盘</span></span><br><span class="line">Command (m <span class="keyword">for</span> <span class="built_in">help</span>): p</span><br><span class="line"></span><br><span class="line">Device         Boot  Start    End Sectors  Size Id Type</span><br><span class="line">/dev/sda1            65536  98303   32768   16M 83 Linux</span><br><span class="line">/dev/sda2            131072 745471  614400  300M 83 Linux</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除</span></span><br><span class="line">Command (m <span class="keyword">for</span> <span class="built_in">help</span>): d</span><br><span class="line">Partition number (1,2, default 2): 2</span><br><span class="line"></span><br><span class="line">Partition 2 has been deleted.</span><br><span class="line"></span><br><span class="line"><span class="comment"># 新建磁盘 需要注意 sector 起始位置一定要与原有磁盘信息中 start 大小相同</span></span><br><span class="line">Command (m <span class="keyword">for</span> <span class="built_in">help</span>): n</span><br><span class="line">Partition <span class="built_in">type</span></span><br><span class="line">   p   primary (1 primary, 0 extended, 3 free)</span><br><span class="line">   e   extended (container <span class="keyword">for</span> logical partitions)</span><br><span class="line">Select (default p): p</span><br><span class="line">Partition number (2-4, default 2): 2</span><br><span class="line">First sector (2048-31268863, default 2048): 131072</span><br><span class="line">Last sector, +/-sectors or +/-size&#123;K,M,G,T,P&#125; (131072-31268863, default 31268863):</span><br><span class="line"></span><br><span class="line">Created a new partition 2 of <span class="built_in">type</span> <span class="string">&#x27;Linux&#x27;</span> and of size 14.8 GiB.</span><br><span class="line">Partition <span class="comment">#2 contains a squashfs signature.</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 一定要选 n ，不要修改标识符</span></span><br><span class="line">Do you want to remove the signature? [Y]es/[N]o: n</span><br><span class="line"></span><br><span class="line"><span class="comment"># 保存</span></span><br><span class="line">Command (m <span class="keyword">for</span> <span class="built_in">help</span>): w</span><br><span class="line">The partition table has been altered.</span><br></pre></td></tr></table></figure>
+
+<p>对文件系统扩容</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">losetup</span><br><span class="line"><span class="comment"># 记录 offset 的值</span></span><br><span class="line"><span class="comment"># NAME       SIZELIMIT  OFFSET AUTOCLEAR RO BACK-FILE  DIO LOG-SEC</span></span><br><span class="line"><span class="comment"># /dev/loop0         0 6291456         1  0 /mmcblk0p2   0     512</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 使用相同的 offset 创建一个临时的 循环设备</span></span><br><span class="line">losetup -f -o 6291456 /dev/sda2</span><br><span class="line"></span><br><span class="line"><span class="comment"># 挂在这个设备以便于记录日志， 如果不挂在会导致不能访问</span></span><br><span class="line">mount /dev/loop1 /mnt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 卸载设备后可以执行扩容</span></span><br><span class="line">umount /dev/loop1</span><br><span class="line"></span><br><span class="line">resize.f2fs /dev/loop1</span><br></pre></td></tr></table></figure>
+
+<p>修改分区大小后会导致磁盘 UUID 改变，需要更新</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">blkid</span><br><span class="line"><span class="comment"># /dev/loop0: LABEL=&quot;rootfs_data&quot; UUID=&quot;b32ce334-3193-428b-9ae3-2a156379ecc8&quot; BLOCK_SIZE=&quot;4096&quot; TYPE=&quot;f2fs&quot;</span></span><br><span class="line"><span class="comment"># 记录 sda2 的新的 PARTUUID</span></span><br><span class="line"><span class="comment"># /dev/sda2: BLOCK_SIZE=&quot;262144&quot; TYPE=&quot;squashfs&quot; PARTUUID=&quot;ff2d03b0-3d06-4001-bb97-367a0265a03f&quot;</span></span><br><span class="line"></span><br><span class="line">vi /boot/grub/grub.cfg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改对应的 PARTUUID 为最新值</span></span><br><span class="line"><span class="comment"># menuentry &quot;ImmortalWrt&quot; &#123;</span></span><br><span class="line"><span class="comment">#         linux /boot/vmlinuz root=PARTUUID=484c7fc2-ae74-a97d-23da-c3b75cf79602 rootwait  console=tty1 console=ttyS0,115200n8 noinit</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br><span class="line"><span class="comment"># menuentry &quot;ImmortalWrt (failsafe)&quot; &#123;</span></span><br><span class="line"><span class="comment">#         linux /boot/vmlinuz failsafe=true root=PARTUUID=484c7fc2-ae74-a97d-23da-c3b75cf79602 rootwait  console=tty1 console=ttyS0,1</span></span><br><span class="line"><span class="comment"># &#125;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment"># 或者使用以下脚本更新</span></span><br><span class="line">ROOT_BLK=<span class="string">&quot;<span class="subst">$(readlink -f /sys/dev/block/<span class="string">&quot;<span class="subst">$(awk -e \</span></span></span></span></span><br><span class="line"><span class="subst"><span class="string"><span class="subst"><span class="string">&#x27;$9==<span class="string">&quot;/dev/root&quot;</span>&#123;print $3&#125;&#x27; /proc/self/mountinfo)</span>&quot;</span>)</span>&quot;</span></span><br><span class="line">ROOT_DISK=<span class="string">&quot;/dev/<span class="subst">$(basename <span class="string">&quot;<span class="variable">$&#123;ROOT_BLK%/*&#125;</span>&quot;</span>)</span>&quot;</span></span><br><span class="line">ROOT_DEV=<span class="string">&quot;/dev/<span class="variable">$&#123;ROOT_BLK##*/&#125;</span>&quot;</span></span><br><span class="line">ROOT_UUID=<span class="string">&quot;<span class="subst">$(partx -g -o UUID <span class="string">&quot;<span class="variable">$&#123;ROOT_DEV&#125;</span>&quot;</span> <span class="string">&quot;<span class="variable">$&#123;ROOT_DISK&#125;</span>&quot;</span>)</span>&quot;</span></span><br><span class="line">sed -i -r -e <span class="string">&quot;s|(PARTUUID=)\S+|\1<span class="variable">$&#123;ROOT_UUID&#125;</span>|g&quot;</span> /boot/grub/grub.cfg</span><br><span class="line"></span><br><span class="line"><span class="comment"># 最后重启</span></span><br><span class="line">reboot</span><br></pre></td></tr></table></figure>
+
+<h3 id="软件安装"><a href="#软件安装" class="headerlink" title="软件安装"></a>软件安装</h3><h4 id="docker"><a href="#docker" class="headerlink" title="docker"></a>docker</h4><p>安装后菜单不显示，尝试退出系统重新登陆</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">opkg update</span><br><span class="line">opkg install docker dockerd luci-app-dockerman</span><br></pre></td></tr></table></figure>
+
+<p>将 docker 区域设置为 lan 区域的目标区域，以便于可以在局域网中访问 docker 应用</p>
+<p><img src="/posts/0d8a7ae7bced/0014.png"></p>
+<h4 id="ttyd"><a href="#ttyd" class="headerlink" title="ttyd"></a>ttyd</h4><p>ttyd 是一个在线的命令行工具，安装 luci-i18n-ttyd-zh-cn 中文版本，会显示在系统菜单中，如果不显示重启设备。</p>
+<h4 id="passwall"><a href="#passwall" class="headerlink" title="passwall"></a>passwall</h4><p>安装 passwall 插件， <strong>如果安装时提示 无法执行 opkg install 命令:SyntaxError: Unexpected end of JSON input 尝试更换其他的软件源再次尝试</strong></p>
+<p>导入 x2ray 分享链接后，<strong>一定要把节点配置中 [域名] 和 [WebSocket Host] 都设置为分享链接中的域名，并在基本设置中开启主开关，选择节点后才能使用</strong>。如果配置正确还是不能使用，重新启动后再次使用。</p>
+<p><img src="/posts/0d8a7ae7bced/0010.png"></p>
+<h4 id="DDns"><a href="#DDns" class="headerlink" title="DDns"></a>DDns</h4><p>由于家庭网络等外界因素，导致 IP 会不定时的修改，如果想要无论何时都能让 绑定的域名解析到当前 IP 上就需要 DDns 服务。</p>
+<p>DDns 服务会定时在后台检测当前 IP 是否修改，如果 IP 已经发生变动，DDns 服务会发送请求通知域名服务商，重新绑定域名解析的 IP 地址，从而实现动态域名解析。</p>
+<p>在 OpenWrt 软件库中安装 ddns-go 和 luci-i18n-ddns-go-zh-cn 软件包, 可以方便的选择常用的运营商进行配置。</p>
+<p>启用 ddns-go 服务并打开 web 界面， 跳转到 <a target="_blank" rel="noopener" href="https://console.dnspod.cn/account/token/apikey">腾讯云 DNDSPOD</a> 创建密钥。</p>
+<p>IPv4 中选择通过网卡获取 IP， 并添加域名。</p>
+<p><img src="/posts/0d8a7ae7bced/0011.png"></p>
+<p>在运营商的域名解析页面，添加一条记录，先默认填入软路由的内网地址。</p>
+<p><img src="/posts/0d8a7ae7bced/0012.png"></p>
+<p>点击保存可以看到域名已经被正确的解析</p>
+<p><img src="/posts/0d8a7ae7bced/0013.png"></p>
+<h4 id="外网访问内网应用"><a href="#外网访问内网应用" class="headerlink" title="外网访问内网应用"></a>外网访问内网应用</h4><p>本设置的目的是使用不同的二级域名访问内网的各个应用，由于 OpenWrt 的防火墙只提供网络层的接口转发，而域名访问属于应用层，需要使用 nginx 作为反向代理工具代理域名请求并指向内网地址.<a target="_blank" rel="noopener" href="https://openwrt.org/docs/guide-user/services/webserver/nginx">[说明文档]</a></p>
+<p>完整的请求过程是，外网的 https 请求进入防火墙，防火墙放行 &#x3D;&gt; 软路由配置 nginx 监听指定域名和端口的请求 &#x3D;&gt; 转发请求到内网的其他服务器</p>
+<ul>
+<li><p>在 <strong>系统</strong> &#x3D;&gt; <strong>软件包</strong> 中安装 luci-nginx , 由于 luci-nginx 默认配置中包括强制将 http 重定向为 https 所以在软件安装后 OpenWrt 需要重新刷新登录。</p>
+<blockquote>
+<p>如果使用 ssh 工具登录时提示以下错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[user@hostname ~]$ ssh root@pong</span><br><span class="line">@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</span><br><span class="line">@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @</span><br><span class="line">@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@</span><br><span class="line">IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!</span><br><span class="line">Someone could be eavesdropping on you right now (man-in-the-middle attack)!</span><br><span class="line">It is also possible that a host key has just been changed.</span><br><span class="line">The fingerprint <span class="keyword">for</span> the RSA key sent by the remote host is</span><br><span class="line">6e:45:f9:a8:af:38:3d:a1:a5:c7:76:1d:02:f8:77:00.</span><br><span class="line">Please contact your system administrator.</span><br><span class="line">Add correct host key <span class="keyword">in</span> /home/hostname /.ssh/known_hosts to get rid of this message.</span><br><span class="line">Offending RSA key <span class="keyword">in</span> /var/lib/sss/pubconf/known_hosts:4</span><br><span class="line">RSA host key <span class="keyword">for</span> pong has changed and you have requested strict checking.</span><br><span class="line">Host key verification failed.</span><br></pre></td></tr></table></figure>
+
+<p>可以使用以下命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 移除 known_hosts 此 ip 的所有记录值</span></span><br><span class="line">ssh-keygen -R 192.168.3.10</span><br><span class="line"><span class="comment"># 也可以使用</span></span><br><span class="line"><span class="built_in">rm</span> ~/.ssh/known_hosts</span><br></pre></td></tr></table></figure>
+
+<p>如果使用的是 ttyd 插件，可以在 ttyd 配置中开启 ssl, 证书的默认路径是</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/etc/nginx/conf.d/_lan.crt</span><br><span class="line">/etc/nginx/conf.d/_lan.key</span><br></pre></td></tr></table></figure>
+</blockquote>
+<p>luci-nginx 使用 cui 统一了系统的配置，会通过 <code>/etc/config/nginx</code> 配置文件和模板文件(<code>/etc/nginx/uci.conf.template</code>) 生成 <code>/etc/nginx/uci.conf</code> 文件， <code>uci.conf</code> 文件最终会被 nginx 使用，并且 nginx 每次重启前都会重新生成此文件，因此不要手动更改生成的 <code>/etc/nginx/uci.conf</code> 文件中的内容。</p>
+<p>如果想要保持 http 访问可以修改 <code>/etc/config/nginx</code> 配置文件中的内容，注释掉 _lan 和 _redirect2ssl 添加一个新的配置 http_lan</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">config main global</span><br><span class="line">      option uci_enable &#x27;true&#x27;</span><br><span class="line"></span><br><span class="line">#config server &#x27;_lan&#x27;</span><br><span class="line">#       list listen &#x27;443 ssl default_server&#x27;</span><br><span class="line">#       list listen &#x27;[::]:443 ssl default_server&#x27;</span><br><span class="line">#       option server_name &#x27;_lan&#x27;</span><br><span class="line">#       list include &#x27;restrict_locally&#x27;</span><br><span class="line">#       list include &#x27;conf.d/*.locations&#x27;</span><br><span class="line">#       option uci_manage_ssl &#x27;self-signed&#x27;</span><br><span class="line">#       option ssl_certificate &#x27;/etc/nginx/conf.d/_lan.crt&#x27;</span><br><span class="line">#       option ssl_certificate_key &#x27;/etc/nginx/conf.d/_lan.key&#x27;</span><br><span class="line">#       option ssl_session_cache &#x27;shared:SSL:32k&#x27;</span><br><span class="line">#       option ssl_session_timeout &#x27;64m&#x27;</span><br><span class="line">#       option access_log &#x27;off; # logd openwrt&#x27;</span><br><span class="line"></span><br><span class="line">#config server &#x27;_redirect2ssl&#x27;</span><br><span class="line">#       list listen &#x27;80&#x27;</span><br><span class="line">#       list listen &#x27;[::]:80&#x27;</span><br><span class="line">#       option server_name &#x27;_redirect2ssl&#x27;</span><br><span class="line">#       option return &#x27;302 https://$host$request_uri&#x27;</span><br><span class="line"></span><br><span class="line">config server &#x27;http_lan&#x27;</span><br><span class="line">        list listen &#x27;80&#x27;</span><br><span class="line">        list listen &#x27;[::]:80&#x27;</span><br><span class="line">        #注意不要添加这个配置规则</span><br><span class="line">        #因为限制了对nginx的访问地址为内网设备，会导致外网访问失效。</span><br><span class="line">        #list include &#x27;restrict_locally&#x27;</span><br><span class="line">        list include &#x27;conf.d/*.locations&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>使用命令 <code>service nginx reload</code> 重启 nginx, 这样就恢复了 http 访问</p>
+<blockquote>
+<p>重启过程中会提示错误, 可以按照提示使用 nginx -T -c ‘&#x2F;etc&#x2F;nginx&#x2F;uci.conf’ 命令测试配置文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@ImmortalWrt:~# service nginx reload</span><br><span class="line">nginx_init: NOT using conf file!</span><br><span class="line">show config to be used by: nginx -T -c <span class="string">&#x27;/etc/nginx/uci.conf&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>如果文件报错会提示具体错误，并指明所在位置</p>
+</blockquote>
+</li>
+<li><p>外网使用域名访问</p>
+<p>目前的网络环境是，外网使用 _.iftrue.me 访问， 内网使用 _.iftrue.me 访问， 因此配置好外网的访问端口后，可以直接把内网的请求转发到外网的监听端口</p>
+<p>首先配置外网域名解析， 在 cloudflare 选中域名 &#x3D;》 DNS 添加一条 AAAA 解析， Name 填入 * 表示泛域名， Content 地址临时填入一个 192.168.48.1 本地地址</p>
+<p>添加 DDNS GO 解析将域名同步到 cloudflare ， 需要添加一个 cloudflare Api token ， Overview &#x3D;》Get your Api token &#x3D;》create token &#x3D;》 Edit zone DNS &#x3D;》选择对应的域名， 在 DDNS GO 中添加 token, 并解析域名</p>
+<p>添加 cloudflare 规则， Rules &#x3D;》 Overview &#x3D;》 添加 Origin Rules &#x3D;》 可以将对域名的请求转发到特定的端口</p>
+<p>创建一个 Origin Certificates 用于 Origin server 和 cloudflare 之间的验证， SSL&#x2F;TSL &#x3D;&gt; Origin Certificates, 保存 PEM 和 KEY</p>
+<p>修改 uci 模板 <code>/etc/nginx/uci.conf.template</code>,在 http 模块中添加 ssl 通用配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ssl_certificate /etc/nginx/conf.d/_lan.crt;</span><br><span class="line">ssl_certificate_key /etc/nginx/conf.d/_lan.key;</span><br><span class="line"></span><br><span class="line">ssl_protocols TLSv1.2 TLSv1.3;</span><br><span class="line">ssl_prefer_server_ciphers on;</span><br><span class="line">ssl_session_cache shared:SSL:10m;</span><br><span class="line">ssl_session_timeout 10m;</span><br></pre></td></tr></table></figure>
+
+<p>将证书传到服务器的执行目录下</p>
+<blockquote>
+<p>如果使用 scp 命令包错 <code>ash: /usr/libexec/sftp-server: not found</code>, 需要在软件包中安装 sftp-server</p>
+</blockquote>
+<p>配置一个反向代理的案例，&#x2F;etc&#x2F;nginx&#x2F;conf.d&#x2F;openwrt.conf</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">server &#123;</span><br><span class="line">    listen      9348 ssl;</span><br><span class="line">    listen [::]:9348 ssl;</span><br><span class="line"></span><br><span class="line">    # qb.iftrue.me 用于内网域名的请求</span><br><span class="line">    server_name qb.iftrue.me qb.iftrue.me;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_pass http://192.168.48.189:10095;</span><br><span class="line">        proxy_set_header Host $host;</span><br><span class="line">        proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        proxy_set_header X-Forwarded-Proto $scheme;</span><br><span class="line"></span><br><span class="line">        proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">        proxy_set_header Connection &quot;upgrade&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后需要防火墙放行外网请求，Incoming <strong>Ipv6</strong> from <strong>Wan</strong> to <strong>this device</strong> ,port <strong>9348</strong></p>
+</li>
+<li><p>内网使用域名访问</p>
+<p><del>给 openwrt lan 配置一个额外的 ip 用于转发，将 内网域名全部解析到此 ip， nginx 监听 443 端口，并将所有请求转发到外网的反向代理配置中</del></p>
+<p>Network &#x3D;》 DHCP DNS &#x3D;》 添加地址 &#x2F;iftrue.me&#x2F;192.168.48.3 把 *.iftrue.me 解析到 192.168.48.3</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"># 添加一个默认规则，如果所有的都没有匹配走404</span><br><span class="line">server &#123;</span><br><span class="line">  listen 9348 default_server;</span><br><span class="line">  listen [::]:9348 default_server;</span><br><span class="line">  server_name _;</span><br><span class="line"></span><br><span class="line">  return 404;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">server &#123;</span><br><span class="line">    listen      443 ssl;</span><br><span class="line">    listen [::]:443 ssl;</span><br><span class="line">    server_name *.iftrue.me;</span><br><span class="line"></span><br><span class="line">    ssl_certificate /etc/nginx/conf.d/_club.crt;</span><br><span class="line">    ssl_certificate_key /etc/nginx/conf.d/_club.key;</span><br><span class="line"></span><br><span class="line">    ssl_protocols TLSv1.2 TLSv1.3;</span><br><span class="line">    ssl_prefer_server_ciphers on;</span><br><span class="line">    ssl_session_cache shared:SSL:10m;</span><br><span class="line">    ssl_session_timeout 10m;</span><br><span class="line"></span><br><span class="line">    location / &#123;</span><br><span class="line">        proxy_pass https://192.168.48.1:9348;</span><br><span class="line">        proxy_set_header Host $host;</span><br><span class="line">        proxy_set_header X-Real-IP $remote_addr;</span><br><span class="line">        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;</span><br><span class="line">        proxy_set_header X-Forwarded-Proto $scheme;</span><br><span class="line"></span><br><span class="line">        proxy_http_version 1.1;</span><br><span class="line">        proxy_set_header Upgrade $http_upgrade;</span><br><span class="line">        proxy_set_header Connection &quot;upgrade&quot;;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="OpenVPN"><a href="#OpenVPN" class="headerlink" title="OpenVPN"></a>OpenVPN</h4><p>软件包中安装 luci-app-openvpn-server</p>
+<ul>
+<li>协议 udp ipv4</li>
+<li>端口 1194</li>
+<li>客户端网段： 自动</li>
+<li>客户端推送配置<br>comp-lzo adaptive<br>redirect-gateway def1 bypass-dhcp<br>dhcp-option DNS 192.168.48.1 （填写 openWrt 的 IP）<br>route 192.168.48.0 255.255.255.0 （填写 openWrt 的 网段，最后一位需要是 0）</li>
+<li>下载客户端配置文件，客户端安装 openvpn, 配置存放在 user&#x2F;openvpn&#x2F;client.opvn</li>
+</ul>
+<blockquote>
+<p>可以重新生成证书文件，时间比较长，需要等待浏览器加载结束</p>
+</blockquote>
+<p>点击网络接口，重新加载会多出一个 vpn0 的接口</p>
+<p>编辑配置文件，允许多个客户端链接</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">vi /etc/config/openvpn</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加配置</span></span><br><span class="line">option duplicate_cn <span class="string">&quot;1&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>配置 NAT 转发规则，允许访问内网设备，网络 &#x3D;&gt; 防火墙 &#x3D;&gt; NAT 规则</p>
+<blockquote>
+<p>openWrt 23.05.4 以及以后版本不需要配置</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 POSTROUTING 进行规则转发</span></span><br><span class="line">iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE</span><br></pre></td></tr></table></figure>
+
+<h4 id="HomeProxy-自定义路由"><a href="#HomeProxy-自定义路由" class="headerlink" title="HomeProxy 自定义路由"></a>HomeProxy 自定义路由</h4><ul>
+<li><p>创建路由节点，可以定义流量使用哪个 vpn 代理，一定要先设置，因为默认出站会用到这些节点。<br>节点的出站选择<strong>直接出站</strong></p>
+</li>
+<li><p>创建 DNS 服务</p>
+<p>标签: Google</p>
+<p>类型: HTTPS</p>
+<p>地址: dns.google</p>
+<p>路径: &#x2F;dns-query</p>
+<p>端口: 443</p>
+<p>出站: 选择路由节点中最稳定的节点（BWG）</p>
+</li>
+<li><p>DNS 设置</p>
+<p>默认策略: 仅 IPV4</p>
+<p>默认 DNS 服务器: Google</p>
+<p>缓存: 关闭</p>
+<p>EDNS 客户端子网： （202.101.172.36 浙江） 选择一个距离当前宽带运营商最近的一个 IP 地址，这可以让 Google DNS 查询的时候选择一个离运营商最近的服务器</p>
+</li>
+<li><p>路由设置</p>
+<p>路由模式: 自定义路由</p>
+<p>绕过国内流量: 开启，可以在防火墙就直接转发国内流量，性能更好</p>
+<p>复写目标地址: 一般用于视频网站解锁，Google DNS 获取到了目标 IP，sing-box 通过嗅探获取到了 netflix 域名，发送的目标是代理服务器，发送数据中的内容为请求 netflix 的 IP 以及 netflix 网站的域名，当代理受到这个请求后发现当前服务器不支持解锁，导致访问失败<br>开启复写后，发送数据中的目标地址变为 netflix 域名，当发送到代理服务器后会在代理服务器的环境中做 DNS 解析， 它获取到的不是真实 IP, 而是专门的反代服务器 IP 用于解锁。</p>
+<p>默认出站: 选择路由节点中最稳定的节点（BWG）</p>
+<p>默认 DNS 出站： Google</p>
+</li>
+<li><p>规则集</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geoip/cn.srs">https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geoip/cn.srs</a> 国内 ip<br><a target="_blank" rel="noopener" href="https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geosite/cn.srs">https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/sing/geo-lite/geosite/cn.srs</a> 国内网址<br><a target="_blank" rel="noopener" href="https://raw.githubusercontent.com/xmdhs/sing-box-ruleset/rule-set/AdGuardSDNSFilterSingBox.srs">https://raw.githubusercontent.com/xmdhs/sing-box-ruleset/rule-set/AdGuardSDNSFilterSingBox.srs</a> 广告网址</p>
+<p>出站选择默认，这会使用路由设置中的默认出站用于访问这些资源。</p>
+</li>
+<li><p>路由规则</p>
+<p>直连，选择国内的两个规则集<br>内网设备，可以通过 IP 来指定一个路由规则，以便于在出站时使用其他的代理 vpn</p>
+</li>
+<li><p>DNS 规则</p>
+<p>Block，选择广告的资源集，在 DNS 解析的时候就禁止访问<br>直连，选择国内的域名规则集，DNS 服务器选择 WAN 自动下发的 DNS 服务，这样当请求一个国内的域名时，可以直接用运营商的 DNS 解析</p>
+</li>
+</ul>
+<h4 id="WireGuard"><a href="#WireGuard" class="headerlink" title="WireGuard"></a>WireGuard</h4><p>安装 luci-proto-wireguard  qrencode</p>
+<p>Netword &#x3D;》 Interfaces &#x3D;》新建协议 Wireguard Vpn</p>
+<p>通用设置 &#x3D;》 生成新的密钥对 &#x3D;》 添加监听端口 &#x3D;》Ip 地址选择一个与内网不冲突的网段 10.0.6.0</p>
+<p>防火墙设置 &#x3D;》 加入 lan 区域</p>
+<p>对端设置 &#x3D;》 创建新的密钥对 &#x3D;》ip 地址选择一个网段内的 ip &#x3D;》生成二维码 &#x3D;》修改链接地址为配置了 DDNS 的域名 &#x3D;》扫描二维码或复制配置添加</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/OpenWrt/" rel="tag">OpenWrt</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/c106a03ba7c5/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Babel 源码与插件
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/682c074451f7/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">O2OA 私有化部署</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2025
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>
