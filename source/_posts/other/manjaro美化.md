@@ -32,12 +32,30 @@ Server = https://repo.archlinuxcn.org/$arch
 
   # 自动生成配置列表 -g 表示从活动池中选择镜像列表
   sudo pacman-mirrors -c China -g
+
+  # -c United_States: 指定美国源
+  # --fasttrack 5: 自动测速并取最快的 5 个
+  sudo pacman-mirrors -c United_States
+  sudo pacman-mirrors -f 5
   ```
 
 #### 更新系统
 
 ```bash
 sudo pacman -Syyu
+```
+
+更新 Manjaro 的 keyring（密钥环）通常是为了解决在更新系统或安装软件时遇到的 GPGME error、invalid or corrupted package 或 signature is unknown trust 等报错。
+
+```bash
+sudo pacman -Sy archlinux-keyring manjaro-keyring
+```
+
+忽略某些安装包更新
+
+```bash
+# 修改 IgnorePkgs 列表
+sudo nano /etc/pacman.conf
 ```
 
 #### 安装 yay 助手
@@ -125,3 +143,27 @@ echo 'export __GLX_VENDOR_LIBRARY_NAME=nvidia' >> ~/.zshrc
 source ~/.zshrc
 ```
 
+
+#### 980Ti 删除 video-nvidia 驱动并安装官方驱动
+
+nvidia-prime 是为了处理双显卡切换（通常是笔记本）的工具，它依赖于 nvidia-utils，而 mhwd 在尝试移除旧驱动时无法自动处理这个三方依赖。
+
+```bash
+sudo pacman -R nvidia-prime
+```
+
+移除驱动 
+
+```bash
+sudo mhwd -r pci video-nvidia
+```
+
+安装驱动
+
+```bash
+# 1. 确保系统是最新的且有头文件（非常重要！）
+sudo pacman -Syu $(basename $(pacman -Qq linux | grep "^linux[0-9]*$"))-headers
+
+# 2. 安装指定的驱动
+sudo mhwd -a pci nonfree 0300
+```

@@ -36,58 +36,42 @@ curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.de
 安装, 填写需要访问的域名
 
 ```bash
-sudo EXTERNAL_URL="https://gitlab.example.com" apt-get install gitlab-ee
+sudo apt-get install gitlab-ee
 ```
 
-nginx 配置
+前置nginx 配置， 非 gitlab 内部 nginx
 
-```bash
-server {
-    listen      80  ssl;
-    listen [::]:443  ssl;
-    server_name gitlab.iftrue.me;
+```conf
+stream {
+  server {
+      listen 24922;
+      proxy_pass 192.168.48.227:22;
+  }
+}
+
+http {
+  server {
+    listen      9348 ssl;
+    listen [::]:9348 ssl;
+    http2 on;
+    server_name gitlab.iftrue.club gitlab.iftrue.me;
 
     location / {
-        proxy_pass http://192.168.48.160; # 按照 gitlab.rb 是否开启了 https 访问，选择 http 或 https    
-        proxy_set_header X-Forwarded-Host $host:$server_port;
-        proxy_set_header Host $host;
+        proxy_pass http://192.168.48.227;
+
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 300s;
+        proxy_redirect off;
+
+        # Pass along essential headers
+        proxy_set_header Host $http_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-   }
+        proxy_set_header X-Forwarded-Ssl on; #
+    }
+  }
 }
-```
-
-配置自动启动
-
-```bash
-[Unit]
-Description=SonarQube service
-After=syslog.target network.target
-
-[Service]
-Type=simple
-User=sonar
-Group=sonar
-PermissionsStartOnly=true
-
-# java 路径使用 whereis java 插卡
-# /opt/sonarqube/lib/sonar-application-<sonar-version>.jar
-ExecStart=/bin/nohup /opt/java/bin/java -Xms32m -Xmx32m -Djava.net.preferIPv4Stack=true -jar /opt/sonarqube/lib/sonar-application-25.1.0.102122.jar
-
-StandardOutput=journal
-LimitNOFILE=131072
-LimitNPROC=8192
-TimeoutStartSec=5
-Restart=always
-SuccessExitStatus=143
-
-[Install]
-WantedBy=multi-user.target
 ```
 
 修改配置文件 `/etc/gitlab/gitlab.rb`
@@ -116,7 +100,6 @@ nginx['listen_https'] = false
 sudo gitlab-ctl reconfigure
 ```
 
-nginx 配置参照 docker 的配置
 
 #### Docker 方式安装
 

@@ -158,7 +158,7 @@ katex:
 # mermaid流程图 三个选项缺一不可(https://mermaid-js.github.io/mermaid/)
 mermaid:
   enable: true
-  cdn: https://cdn.staticfile.org/mermaid/8.14.0/mermaid.min.js
+  cdn: /js/mermaid.min.js
   theme: default
 
 # 网站成立年份(默认为 2019，若填入年份小于当前年份，则显示为 2018-2019 类似的格式)

@@ -400,8 +400,6 @@ git log --graph origin/master master
 
 从分支上可以看出，主分支并没有 fff 的提交，最终合并在本地的 master 分支
 
-![](001.png)
-
 #### 取消上次提交中的某个文件
 
 一次提交中包括， `a.txt`, `b.txt` 现在想取消 `a.txt` 的提交，也就是恢复为上一次的状态

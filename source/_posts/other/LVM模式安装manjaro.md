@@ -109,12 +109,33 @@ sudo blkid /dev/sda1
 
 - 扩容虚拟磁盘， vmware 磁盘设置中增加磁盘容量。
   
-- 使用 gdisk 为剩余磁盘创建分区，创建成功后磁盘可能无法使用，使用以下命令刷新分区表
+- 使用 gdisk 为剩余磁盘创建分区
+  
+  或者给已有的磁盘扩展分区, 2 表示扩展分区， 100% 表示扩展到剩余的全部空间
+
+  ```bash
+
+  # GPT 分区表为了安全，会在磁盘的 开头 和 末尾 各保存一份分区表备份。
+  # 当你通过 PVE 调整了虚拟磁盘的大小（从 512G 增加到 1T）后，原先位于磁盘 512G 处的“末尾备份”现在处于磁盘的“中间”位置了。
+  # Warning: Not all of the space available...：系统检测到磁盘变大了，但 GPT 的备份头（Backup Header）还在旧的位置。
+  # Fix/Ignore?：如果你选 Fix，parted 会把备份头移动到新的 1T 磁盘末尾，这样你才能使用新增的那 500G 空间。
+  
+  sudo parted /dev/sda resizepart 2 100%
+  ```
+
+  创建成功后磁盘可能无法使用，使用以下命令刷新分区表
   
   ```bash
   sudo partprobe
   ```
+
 - 使用 pvcreate 将新的分区创建为新的pv
+  
+  或者为已有的分区扩展 pv
+  
+  ```bash
+  sudo pvresize /dev/sda2
+  ```
 
 - 扩容 vg 将新的 pv 添加至 指定卷组
   

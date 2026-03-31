@@ -10,7 +10,7 @@ tags:
 
 #### flex 弹性布局
 
-可以设置元素 display 属性为 `flex` 或 `inline-flex`, `inline-flex` 可以让 flex 元素保持内联的特性。[\[CSS 新世界中相关章节\]](https://minioo.iftrue.me:9348/docs/CSS%E6%96%B0%E4%B8%96%E7%95%8C.pdf#page=347)
+可以设置元素 display 属性为 `flex` 或 `inline-flex`, `inline-flex` 可以让 flex 元素保持内联的特性。[\[CSS 新世界中相关章节\]](https://minioo.iftrue.me/docs/CSS%E6%96%B0%E4%B8%96%E7%95%8C.pdf#page=347)
 
 ##### 弹性设置
 
