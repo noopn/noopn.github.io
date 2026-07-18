@@ -7,3 +7,10 @@ public/
 .deploy*/
 _multiconfig.yml
 passwd
+
+.obsidian/workspace.json
+
+
+
+# Ignore Smart Environment folder
+.smart-env
