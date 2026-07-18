@@ -354,6 +354,36 @@
       "provider": "github-copilot",
       "enabled": true,
       "apiKey": ""
+    },
+    {
+      "name": "gpt-4o",
+      "provider": "github-copilot",
+      "enabled": true,
+      "apiKey": ""
+    },
+    {
+      "name": "gemini-2.5-pro",
+      "provider": "github-copilot",
+      "enabled": true,
+      "apiKey": ""
+    },
+    {
+      "name": "gpt-4o-mini",
+      "provider": "github-copilot",
+      "enabled": true,
+      "apiKey": ""
+    },
+    {
+      "name": "gemini-pro-latest",
+      "provider": "google",
+      "enabled": true,
+      "apiKey": ""
+    },
+    {
+      "name": "gemini-flash-latest",
+      "provider": "google",
+      "enabled": true,
+      "apiKey": ""
     }
   ],
   "activeEmbeddingModels": [

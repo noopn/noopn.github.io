@@ -1,12 +1,9 @@
 ---
 epoch: 1784365415141
-modelKey: "gemini-flash-latest|google"
-topic: "Failed Model Version Requests"
-
-
-
+modelKey: gemini-flash-latest|google
 tags:
   - copilot-conversation
+topic: Failed Model Version Requests
 ---
 
 **user**: 你的gpt 版本是多少
@@ -44,19 +41,3 @@ Please retry in 4.187573354s. [{"@type":"type.googleapis.com/google.rpc.Help","l
 
 **user**: 你是z
 [Timestamp: 2026/07/18 17:13:15]
-
-**ai**: 我是 Obsidian Copilot，您的 Obsidian 智能笔记助手。
-
-请问有什么我可以帮您的吗？无论是关于 Obsidian 的使用技巧、整理笔记，还是解答其他问题，我都会尽力协助您。
-[Timestamp: 2026/07/18 17:13:17]
-
-**user**: 你是最新的版本么
-[Timestamp: 2026/07/18 17:13:27]
-
-**ai**: 作为您的 Obsidian Copilot 助手，我的“版本”其实由两部分决定：
-
-- **插件版本**：这是您在 Obsidian 中安装的 Copilot 插件。您可以前往 Obsidian 的“设置” -> “社区插件” -> “检查更新”，来确保您使用的是最新版本的 Copilot 插件。
-- **AI 模型版本**：我背后的 AI 模型和知识库是由云端驱动的，会定期进行更新和优化，以确保为您提供最智能、最准确的回答。
-
-如果您在使用过程中遇到任何问题，或者需要某些新功能，建议您检查并更新一下 Obsidian 的 Copilot 插件。有什么我可以帮您的吗？
-[Timestamp: 2026/07/18 17:13:29]
