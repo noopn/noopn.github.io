@@ -511,3 +511,49 @@ git stash --keep-index
 # 如果有文件还没有git add添加过，想要stash这些文件
 git stash -u
 ```
+
+#### 解决控制台中文路径乱码
+
+```bash
+git config --global core.quotepath false
+```
+
+#### 清除不同环境换行符报错
+
+```bash
+warning: in the working copy of 'source/_posts/css/flex.md', LF will be replaced by CRLF the next time Git touches it
+```
+Linux 拉下来的原始状态：那些在 Linux 上创建的文件，被 git pull 到你的 Windows 电脑时，安静地躺在硬盘上。
+
+首次打开这个文件时，哪怕你没有敲任何字，（或者某个自动保存、格式化插件）会对其进行一次“静默更新”。它可能会摸一下文件的元数据，或者按照 Windows 的习惯把文件的换行符物理重写了一遍。
+
+Git 的反应：Git 发现硬盘上的物理文件被摸过了，时间戳或底层字节变了，于是立刻标为 modified。但因为文字内容没变，diff 又是空的。
+
+第一步：改回最严格的跨平台规则
+在 Linux 服务器上永远不报错，.gitattributes 还是应该保持最严格的 LF 规则。
+
+确保你的 .gitattributes 文件内容是这一行（如果不是，请手动改回这个）：
+
+```bash
+* text=auto eol=lf
+```
+
+提交文件
+
+```bash
+git add .gitattributes
+git commit -m "chore: enforce LF for cross-platform compatibility"
+```
+
+清空 Git 的本地缓存
+把所有文件暂时从 Git 的追踪视线里拿掉
+
+```bash
+git rm --cached -r .
+```
+
+强制重写本地物理文件,请你完全按照 .gitattributes 的标准规则，把我本地的所有文件重新生成一遍
+
+```bash
+git reset --hard HEAD
+```

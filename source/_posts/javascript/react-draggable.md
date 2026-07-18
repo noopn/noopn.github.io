@@ -4,7 +4,7 @@ title: react-draggable 源码分析
 mathjax: true
 date: 2022-05-19 14:07:27
 categories:
-  - Javascript
+  - JavaScript
 tags:
   - React
 ---

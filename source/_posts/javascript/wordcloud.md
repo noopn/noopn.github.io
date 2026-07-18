@@ -4,7 +4,7 @@ title: wordcloud2 源码分析
 mathjax: true
 date: 2022-04-27 13:36:43
 categories:
-  - Javascript
+  - JavaScript
 tags:
   - wordcloud
 ---

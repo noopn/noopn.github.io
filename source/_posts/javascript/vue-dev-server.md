@@ -3,7 +3,7 @@ layout: posts
 title: vue/dev-server
 date: 2023-08-05 14:42:41
 categories:
-  - Javascript
+  - JavaScript
 tags:
   - vue
 ---
