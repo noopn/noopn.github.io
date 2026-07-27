@@ -93,16 +93,17 @@ Shared Folder: 设置一个保持备份的天数， 高级里面选择 Maintenan
 @echo off
 chcp 65001 > nul
 
-echo [1] 正在静默暂停 PrimoCache 任务 1...
-echo "C:\Program Files\PrimoCache\rxpcc.exe" pause -c 1 -s
+echo [%date% %time:~0,8%] [1] 正在静默暂停 PrimoCache 任务 1...
+echo [%date% %time:~0,8%] 执行命令: "C:\Program Files\PrimoCache\rxpcc.exe" pause -c 1 -s
+"C:\Program Files\PrimoCache\rxpcc.exe" pause -c 1 -s
 
-echo [2] 触发 Veeam 后台无感备份...
+echo [%date% %time:~0,8%] [2] 触发 Veeam 后台无感备份...
 start /b "" "C:\Program Files\Veeam\Endpoint Backup\Veeam.EndPoint.Manager.exe" /backup
 
-echo [3] 等待 60 秒让备份服务启动...
+echo [%date% %time:~0,8%] [3] 等待 60 秒让备份服务启动...
 timeout /t 60 > nul
 
-echo [4] 正在监控后台备份状态 (每 60 秒刷新)...
+echo [%date% %time:~0,8%] [4] 正在监控后台备份状态 (每 60 秒刷新)...
 
 :CHECK_LOOP
 :: 检查是否存在 VeeamAgent 进程
@@ -111,19 +112,20 @@ tasklist /NH /FI "IMAGENAME eq VeeamAgent.exe" | find /i "VeeamAgent.exe" > nul
 :: 如果找不到进程，说明备份结束，跳出循环
 if %errorlevel% neq 0 goto BACKUP_DONE
 
-echo [%time:~0,8%] VeeamAgent.exe 正在后台辛勤工作，请耐心等待...
+echo [%date% %time:~0,8%] VeeamAgent.exe 正在后台辛勤工作，请耐心等待...
 timeout /t 60 > nul
 goto CHECK_LOOP
 
 :BACKUP_DONE
-echo [%time:~0,8%] 检测到备份进程已退出，备份圆满结束！
+echo [%date% %time:~0,8%] 检测到备份进程已退出，备份圆满结束！
 
-echo [5] 正在静默恢复 PrimoCache...
-echo "C:\Program Files\PrimoCache\rxpcc.exe" resume -c 1 -s
+echo [%date% %time:~0,8%] [5] 正在静默恢复 PrimoCache...
+echo [%date% %time:~0,8%] 执行命令: "C:\Program Files\PrimoCache\rxpcc.exe" resume -c 1 -s
+"C:\Program Files\PrimoCache\rxpcc.exe" resume -c 1 -s
 
-echo ==========================
-echo 任务全自动执行完毕！
-echo ==========================
+echo [%date% %time:~0,8%] ==========================
+echo [%date% %time:~0,8%] 任务全自动执行完毕！
+echo [%date% %time:~0,8%] ==========================
 ```
 
 win + R 输入 taskschd.msc， 创建一个新的计划任务。 **选择 Create Task 不要选择 Create Basic Task**。
@@ -132,7 +134,8 @@ win + R 输入 taskschd.msc， 创建一个新的计划任务。 **选择 Create
 
 勾选 Run with highest privileges 保证一管理员权限执行。
 
-Action 标签中添加脚本路径，Start in 设置为脚本文件所在的文件夹路径。
+Action 标签中添加脚本路径 `cmd.exe` , Add arguments 填写 `/c ""C:\Program Files\PrimoCache\scripts\AutoBackup.bat" >> "C:\Program Files\PrimoCache\scripts\backup_log.txt" 2>&1"`
+
 
 
 #### windows 通过桌面小组件显示内网服务器（pve）的磁盘状态信息
@@ -370,3 +373,40 @@ W=190
 H=14
 Text="%1"
 ```
+
+#### .exe 和 .msi 区别
+
+.exe 和 .msi 都是常见的可执行/安装包格式，但它们的本质定位、运行机制和管理方式有着巨大的区别。
+
+简而言之：.msi 是标准的“数据配置包”，依赖系统服务来安装；而 .exe 是“独立的可执行程序”，安装逻辑全由开发人员自己写。
+
+
+| 特性                 | `.msi` (Microsoft Installer)                                                     | `.exe` (Executable)                                                                      |
+| :------------------- | :------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------- |
+| **本质类型**         | **数据库/配置文件**（包含文件列表、注册表项及安装指令）                          | **二进制可执行程序**（引导程序、独立应用或自定义安装包）                                 |
+| **执行引擎**         | 由 Windows 内置的 **Windows Installer 服务** (`msiexec.exe`) 统一解析和执行      | 操作系统直接创建进程运行，内部逻辑由开发商自行编写（如 Inno Setup, NSIS, InstallShield） |
+| **标准与规范**       | 极度标准统一，遵守微软严格的安装包规范                                           | 没有统一标准，界面、安装逻辑和卸载行为完全由开发者决定                                   |
+| **静默安装支持**     | **原生统一**（通用命令 `msiexec /i package.msi /quiet`）                         | 依赖开发者的实现（命令参差不齐，如 `/S`, `/silent`, `/q` 等）                            |
+| **卸载与修复**       | 原生支持**回滚（Rollback）**、修复（Repair）和干净卸载，系统会自动记录状态       | 依赖开发者编写的卸载程序（`uninstall.exe`），若没写好容易留有残留                        |
+| **企业运维（域控）** | **原生支持**，可通过 Windows Group Policy (GPO) 或 Active Directory 批量静默部署 | 无法直接通过 GPO 原生推送，通常需要包装成 `.msi` 或借助第三方工具 (SCCM/Intune)          |
+
+**.msi 像是一张“安装指南与零件清单”**
+
+.msi 本质上是一个使用微软 OLE 复合文档格式存储的关系型数据库。
+
+当你双击 .msi 时，实际上是系统自带的 Windows Installer 服务（msiexec.exe）读取了这个数据库。msiexec 负责创建目录、解压文件、写入注册表。
+
+安全与回滚机制：如果在安装过程中出现错误（如断电、磁盘空间不足），msiexec 可以利用事务机制自动回滚，将系统还原到安装之前的状态，不会留下垃圾文件。
+
+**.exe 像是“自带所有工具的自定义工程队”**
+
+.exe 是真正的 Windows PE（可执行）文件。如果它是一个安装包，通常是开发者使用 NSIS、Inno Setup 或 Advanced Installer 等打包工具生成的。
+
+当你双击 .exe 安装包时，它会运行开发者写好的代码逻辑：可能包含自定义的炫酷 UI 界面、解压进度条、甚至在后台安装其他捆绑软件。
+
+灵活性与风险：.exe 非常灵活，可以做任何系统允许的事（比如安装前检查复杂的网络环境、预装驱动等）。但也正因如此，它缺乏统一规范，一旦安装过程崩溃，可能无法自动清理临时文件。
+
+如果你要为企业/域控环境部署软件，或者需要标准的静默安装/干净卸载，优先选择 .msi。
+
+如果软件需要复杂的预检逻辑、自定义界面，或者它本身就是一个无需安装的绿色单文件工具，则选择 .exe。
+
