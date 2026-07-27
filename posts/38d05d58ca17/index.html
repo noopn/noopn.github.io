@@ -89,7 +89,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">3.2k</span>
+            <span class="post-count">3.6k</span>
         </span>
     </span>
 
@@ -98,7 +98,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-book-open-line"></i>
             <span class="post-meta-item-text"> 阅读时长≈</span>
-            <span class="post-count">13 分钟</span>
+            <span class="post-count">14 分钟</span>
         </span>
     </span>
 </div>
@@ -252,7 +252,25 @@
 <h4 id="有临时工作又不想提交当前的修改"><a href="#有临时工作又不想提交当前的修改" class="headerlink" title="有临时工作又不想提交当前的修改"></a>有临时工作又不想提交当前的修改</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 stash 命令暂存当前修改</span></span><br><span class="line">git stash</span><br><span class="line">git stash push -m <span class="string">&quot;描述&quot;</span> <span class="comment">#为stash添加描述</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 切换到需要工作的分支进行开发</span></span><br><span class="line">git checkout [branch]</span><br><span class="line"><span class="comment"># 在当前分支中想要合并最新的主分支，也可以使用暂存功能</span></span><br><span class="line">git pull</span><br><span class="line"></span><br><span class="line"><span class="comment"># 工作结束后切换回原来的分支，并从暂存中取出内容</span></span><br><span class="line">git checkout [main branch]</span><br><span class="line">git stash pop</span><br></pre></td></tr></table></figure>
 
 <h4 id="仅-stash-未暂存的更改，而保留暂存区的内容"><a href="#仅-stash-未暂存的更改，而保留暂存区的内容" class="headerlink" title="仅 stash 未暂存的更改，而保留暂存区的内容"></a>仅 stash 未暂存的更改，而保留暂存区的内容</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 已经git add 的内容不想放到stash中</span></span><br><span class="line"><span class="comment"># 只把刚在工作区修改的内容放到stash中</span></span><br><span class="line">git stash --keep-index</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果有文件还没有git add添加过，想要stash这些文件</span></span><br><span class="line">git stash -u</span><br></pre></td></tr></table></figure>
- 
+
+<h4 id="解决控制台中文路径乱码"><a href="#解决控制台中文路径乱码" class="headerlink" title="解决控制台中文路径乱码"></a>解决控制台中文路径乱码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global core.quotepath <span class="literal">false</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="清除不同环境换行符报错"><a href="#清除不同环境换行符报错" class="headerlink" title="清除不同环境换行符报错"></a>清除不同环境换行符报错</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">warning: <span class="keyword">in</span> the working copy of <span class="string">&#x27;source/_posts/css/flex.md&#x27;</span>, LF will be replaced by CRLF the next <span class="keyword">time</span> Git touches it</span><br></pre></td></tr></table></figure>
+<p>Linux 拉下来的原始状态：那些在 Linux 上创建的文件，被 git pull 到你的 Windows 电脑时，安静地躺在硬盘上。</p>
+<p>首次打开这个文件时，哪怕你没有敲任何字，（或者某个自动保存、格式化插件）会对其进行一次“静默更新”。它可能会摸一下文件的元数据，或者按照 Windows 的习惯把文件的换行符物理重写了一遍。</p>
+<p>Git 的反应：Git 发现硬盘上的物理文件被摸过了，时间戳或底层字节变了，于是立刻标为 modified。但因为文字内容没变，diff 又是空的。</p>
+<p>第一步：改回最严格的跨平台规则<br>在 Linux 服务器上永远不报错，.gitattributes 还是应该保持最严格的 LF 规则。</p>
+<p>确保你的 .gitattributes 文件内容是这一行（如果不是，请手动改回这个）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">* text=auto eol=lf</span><br></pre></td></tr></table></figure>
+
+<p>提交文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add .gitattributes</span><br><span class="line">git commit -m <span class="string">&quot;chore: enforce LF for cross-platform compatibility&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>清空 Git 的本地缓存<br>把所有文件暂时从 Git 的追踪视线里拿掉</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">rm</span> --cached -r .</span><br></pre></td></tr></table></figure>
+
+<p>强制重写本地物理文件,请你完全按照 .gitattributes 的标准规则，把我本地的所有文件重新生成一遍</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git reset --hard HEAD</span><br></pre></td></tr></table></figure> 
       <!-- reward -->
       
       <div id="reword-out">
@@ -699,6 +717,8 @@
     mermaid.initialize({ theme: "default" });
   }
 </script>
+
+<script src="/js/replace-drawio-domain.js"></script>
 
 
     

@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Window 常见问题 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-other/window常见问题"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Window 常见问题
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/31a5cba4c9d2/" class="article-date">
+  <time datetime="2024-09-12T00:12:33.000Z" itemprop="datePublished">2024-09-12</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">17 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="Windows-10-搜索框一直是白色"><a href="#Windows-10-搜索框一直是白色" class="headerlink" title="Windows 10 搜索框一直是白色"></a>Windows 10 搜索框一直是白色</h4><p>这通常是因为 Windows 10 的搜索框内嵌了必应 (Bing) 网络搜索的网页组件，而这个网页组件的加载卡在了亮色模式，导致它无视了你系统的本地主题设置。</p>
+<p>你可以通过以下几个专门针对 Win10 的方法来彻底解决这个问题：</p>
+<p>方法一：切断搜索框的网络连接（最有效的终极修复）<br>既然是网络搜索组件导致的白屏 Bug，我们可以通过注册表直接关闭搜索框的“网络搜索建议”功能。这不仅能 100% 解决白色背景问题，还能让本地搜索（搜文件、搜软件）变得非常快。</p>
+<p>按 Win + R 打开运行窗口，输入 cmd，然后按 Ctrl + Shift + Enter 以管理员身份运行。</p>
+<p>复制并粘贴以下命令（直接在黑框里右键即可粘贴），然后按回车：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">reg add <span class="string">&quot;HKCU\Software\Policies\Microsoft\Windows\Explorer&quot;</span> /v DisableSearchBoxSuggestions /t REG_DWORD /d 1 /f</span><br></pre></td></tr></table></figure>
+
+<p>提示“操作成功完成”后，再次复制并运行以下命令来重启资源管理器：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">taskkill /f /im explorer.exe &amp; start explorer.exe</span><br></pre></td></tr></table></figure>
+
+<p>此时你的任务栏会刷新，再次点击搜索框，它应该已经强制恢复成与系统一致的深色背景了。</p>
+<h4 id="win10输入法变成繁体中文"><a href="#win10输入法变成繁体中文" class="headerlink" title="win10输入法变成繁体中文"></a>win10输入法变成繁体中文</h4><p>通常是因为你不小心误触了 Windows 10 微软拼音输入法自带的简繁切换快捷键。</p>
+<p>确保当前处于中文输入状态，然后直接在键盘上按下 <code>Ctrl + Shift + F</code></p>
+<p>如何永久关闭这个快捷键（防止再次误触）如果你平时完全不需要打繁体字，建议直接把这个快捷键关掉，一劳永逸：</p>
+<p>1.进入语言设置:按 Win + I 打开 Windows 设置。点击 时间和语言。在左侧菜单栏选择 语言。<br>2.打开微软拼音选项:在右侧找到“首选语言”下的 中文(简体，中国)，点击它。点击展开后出现的 选项 按钮。向下滚动找到“键盘”列表下的 微软拼音，点击它。再次点击展开后出现的 选项 按钮。<br>3.关闭简繁切换快捷键:在微软拼音的设置页面，点击 按键。向下滚动到底部，找到“热键”部分。找到 简繁体中文输入切换。将后面的快捷键下拉菜单设置为 无，或者直接关闭开关（取决于你的 Win10 具体小版本号）。</p>
+<h4 id="在-Windows-任务管理器里看到同一个-iSCSI-硬盘被显示成了三四个"><a href="#在-Windows-任务管理器里看到同一个-iSCSI-硬盘被显示成了三四个" class="headerlink" title="在 Windows 任务管理器里看到同一个 iSCSI 硬盘被显示成了三四个"></a>在 Windows 任务管理器里看到同一个 iSCSI 硬盘被显示成了三四个</h4><p>在 Windows 任务管理器里看到同一个 iSCSI 硬盘被显示成了三四个，这通常是因为 “多路径重影” (Multiple Sessions &#x2F; Multi-pathing) 造成的。</p>
+<p>当你把底层的存储（比如 TrueNAS 分配的块存储或游戏盘）通过 iSCSI 映射到 Windows 时，如果出现了以下两种情况，Windows 就会把同一个硬盘认成多个独立的物理硬盘：</p>
+<p>重复点击了连接：在 Windows 的 iSCSI 发起程序中，你可能对同一个目标 (Target) 多次点击了“连接”，导致系统建立了多个独立的会话。</p>
+<p>多网卡&#x2F;多 IP 路径：你的电脑或 NAS 有多个 IP 地址，Windows 通过不同的网络路径都连上了这个 iSCSI 目标，但你没有在 Windows 中启用并配置 MPIO (多路径 I&#x2F;O) 来把它们合并成一个盘。</p>
+<p>1.在磁盘管理中让硬盘“脱机”:解除 Windows 对硬盘的文件占用.右键点击任务栏的开始菜单图标（或按 Win + X），在弹出的菜单中选择 磁盘管理。在下方的列表中找到你的 iSCSI 硬盘。由于现在的重复连接问题，你可能会看到好几个容量完全相同的盘（其中一些可能会提示“签名冲突”或已经处于脱机状态）。找到那个状态为 联机 的 iSCSI 硬盘，在其左侧写着“磁盘 1”、“磁盘 2”等字样的灰色方块区域上点击右键。选择 脱机。这一步会安全地卸载文件系统，解除所有的占用锁定。你的盘符会暂时消失，这是正常的。</p>
+<p>2.断开多余的 iSCSI 会话:回到 iSCSI 发起程序操作.再次回到 iSCSI 发起程序的窗口。在“目标”选项卡中，选中你的目标，点击 属性。在“会话”列表中，选中多余的会话点击 断开连接。此时因为硬盘已经脱机，系统不会再提示“正在使用”。依次断开，请务必保留 1 个会话不要断开，维持基础连接。</p>
+<p>3.重新上线硬盘:恢复正常使用.回到 磁盘管理 窗口。在刚刚脱机的硬盘灰色方块区域再次点击右键。选择 联机。此时你的盘符会重新出现，你可以打开任务管理器确认，现在应该只剩下一个物理硬盘的图表了。</p>
+<p>4.清理“收藏的目标”缓存:防止每次开机又变出几个盘.为了防止你下次重启电脑时，系统又按之前的错误记忆去连接三四次：在 iSCSI 发起程序的主界面，切换到上方的 收藏的目标 (Favorite Targets) 选项卡。如果这里的列表中出现了好几个完全相同的目标名称，选中那些多余的，点击 删除 (Remove)。列表里只保留一条该目标的记录即可。</p>
+<h4 id="windows-定时备份"><a href="#windows-定时备份" class="headerlink" title="windows 定时备份"></a>windows 定时备份</h4><p>下载 <a target="_blank" rel="noopener" href="https://www.veeam.com/products/free/microsoft-windows.html">Veeam Agent for Microsoft Windows FREE</a> 安装后创建一个备份任务：</p>
+<p>BackupMode: Entire computer 选择整机备份在恢复的时候可以选择恢复任何磁盘，或是文件</p>
+<p>Destination: Shared folder 选择 Truenas 的 SMB 共享文件夹 </p>
+<blockquote>
+<p><strong>永远向前增量</strong>，取消勾选 Create active full backups periodically<br>  第 1 天（周一）： 生成唯一的全量文件 [全量 VBK-周一]。<br>  第 2 到 7 天： 每天只生成几十 MB 的增量文件 [增量 VIB]。到了第 7 天（周日）晚上，你的文件夹里有 1 个全量 + 6 个增量（正好 7 个点）。<br>  第 8 天（下周一）的动作极其精妙：<br>  Veeam 首先照常做一个新的增量备份：[增量 VIB-第8天]。此时链条暂时变成了 8 个点。<br>  接着，合并（Merge）开始！ Veeam 会在你的 NAS 后台，把最老的那个 [增量 VIB-第2天] 的数据，直接注入（Inject）到 [全量 VBK-周一] 里面去。<br>  注入完成后，原本那个老全量文件的时间戳和内容，就自动“进化”成了周二的状态。<br>  然后，Veeam 把那个没用的 [增量 VIB-第2天] 物理删除。<br>  整个链条再次恢复成 1 个（进化的）全量 + 6 个增量，依然维持 7 个点。</p>
+</blockquote>
+<p>Shared Folder: 设置一个保持备份的天数， 高级里面选择 Maintenance 标签，勾选 Perform backup files health check 设置时间为每周6，健康检查任务不会独自执行，当有备份任务执行后，他会顺势检查是否当日有健康检查任务，然后执行。</p>
+<p>最后不要设置任何的定时任务，需要通过windows 定时任务来调度。</p>
+<p>创建一个 <code>AutoBackup.bat</code> 文件, 保存为 UTF-8 的编码格式。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">@echo off</span><br><span class="line">chcp 65001 &gt; nul</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] [1] 正在静默暂停 PrimoCache 任务 1...</span><br><span class="line">echo [%date% %time:~0,8%] 执行命令: &quot;C:\Program Files\PrimoCache\rxpcc.exe&quot; pause -c 1 -s</span><br><span class="line">&quot;C:\Program Files\PrimoCache\rxpcc.exe&quot; pause -c 1 -s</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] [2] 触发 Veeam 后台无感备份...</span><br><span class="line">start /b &quot;&quot; &quot;C:\Program Files\Veeam\Endpoint Backup\Veeam.EndPoint.Manager.exe&quot; /backup</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] [3] 等待 60 秒让备份服务启动...</span><br><span class="line">timeout /t 60 &gt; nul</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] [4] 正在监控后台备份状态 (每 60 秒刷新)...</span><br><span class="line"></span><br><span class="line">:CHECK_LOOP</span><br><span class="line">:: 检查是否存在 VeeamAgent 进程</span><br><span class="line">tasklist /NH /FI &quot;IMAGENAME eq VeeamAgent.exe&quot; | find /i &quot;VeeamAgent.exe&quot; &gt; nul</span><br><span class="line"></span><br><span class="line">:: 如果找不到进程，说明备份结束，跳出循环</span><br><span class="line">if %errorlevel% neq 0 goto BACKUP_DONE</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] VeeamAgent.exe 正在后台辛勤工作，请耐心等待...</span><br><span class="line">timeout /t 60 &gt; nul</span><br><span class="line">goto CHECK_LOOP</span><br><span class="line"></span><br><span class="line">:BACKUP_DONE</span><br><span class="line">echo [%date% %time:~0,8%] 检测到备份进程已退出，备份圆满结束！</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] [5] 正在静默恢复 PrimoCache...</span><br><span class="line">echo [%date% %time:~0,8%] 执行命令: &quot;C:\Program Files\PrimoCache\rxpcc.exe&quot; resume -c 1 -s</span><br><span class="line">&quot;C:\Program Files\PrimoCache\rxpcc.exe&quot; resume -c 1 -s</span><br><span class="line"></span><br><span class="line">echo [%date% %time:~0,8%] ==========================</span><br><span class="line">echo [%date% %time:~0,8%] 任务全自动执行完毕！</span><br><span class="line">echo [%date% %time:~0,8%] ==========================</span><br></pre></td></tr></table></figure>
+
+<p>win + R 输入 taskschd.msc， 创建一个新的计划任务。 <strong>选择 Create Task 不要选择 Create Basic Task</strong>。</p>
+<p>勾选 Run whether user is logged on or not 和 Do not sotre password 这样可以保证任务在后台静默执行。</p>
+<p>勾选 Run with highest privileges 保证一管理员权限执行。</p>
+<p>Action 标签中添加脚本路径 <code>cmd.exe</code> , Add arguments 填写 <code>/c &quot;&quot;C:\Program Files\PrimoCache\scripts\AutoBackup.bat&quot; &gt;&gt; &quot;C:\Program Files\PrimoCache\scripts\backup_log.txt&quot; 2&gt;&amp;1&quot;</code></p>
+<h4 id="windows-通过桌面小组件显示内网服务器（pve）的磁盘状态信息"><a href="#windows-通过桌面小组件显示内网服务器（pve）的磁盘状态信息" class="headerlink" title="windows 通过桌面小组件显示内网服务器（pve）的磁盘状态信息"></a>windows 通过桌面小组件显示内网服务器（pve）的磁盘状态信息</h4><p>安装 <a target="_blank" rel="noopener" href="https://www.rainmeter.net/">Rainmeter</a> 通过 vscode 打开 skins 所在的文件夹路径</p>
+<p>创建新的 skins 文件夹作为根路径，创建二级文件夹作为组件，内部创建一个 <code>.ini</code> 文件 ,<strong>编码格式选为UTF-16LE</strong></p>
+<p>选择  refreash 重新加载组件， 通过 About Rainmeter 可以看见日志信息。</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Rainmeter]</span></span><br><span class="line"><span class="comment">; This section contains general settings that can be used to change how Rainmeter behaves.</span></span><br><span class="line"><span class="comment">; 这是组件的全局刷新频率，单位是毫秒 (ms)。</span></span><br><span class="line"><span class="attr">Update</span>=<span class="number">1000</span></span><br><span class="line"><span class="comment">; 这是为整个小组件设置一张底层背景图片。</span></span><br><span class="line"><span class="comment">; 需要特别注意的是前面的 #@#：这是 Rainmeter 的一个内置魔法变量。它代表了当前组件的资源目录（通常路径是 你的组件文件夹\@Resources）。所以这行代码的意思是：去 @Resources 文件夹里读取一张叫 Background.png 的图片作为整体背景。</span></span><br><span class="line">Background=<span class="comment">#@#Background.png</span></span><br><span class="line"><span class="comment">; 这决定了背景图片的拉伸和缩放模式。</span></span><br><span class="line"><span class="comment">; 在 Rainmeter 中，3 代表开启“九宫格缩放”（Scale with Margins）模式。这意味着当你的组件内容变多、尺寸变大时，背景图片不会像普通的图片那样直接被拉伸到变形，而是配合下面的 BackgroundMargins 来智能缩放。</span></span><br><span class="line"><span class="attr">BackgroundMode</span>=<span class="number">3</span></span><br><span class="line"><span class="comment">; 这个设置是专门配合 BackgroundMode=3 使用的，它定义了背景图片的“保护边缘”（也就是九宫格缩放的边界）。</span></span><br><span class="line"><span class="comment">; 这四个数字分别代表：左, 上, 右, 下 的像素距离。</span></span><br><span class="line"><span class="comment">; 0,34,0,14 的意思是：背景图片的顶部 34 个像素、底部 14 个像素在任何情况下都不参与拉伸变形，只有中间的部分会被拉长去填满空间。这通常用来保证圆角背景框的四角和边框边缘永远保持清晰，不会因为内容变长而变得模糊或被拉长。</span></span><br><span class="line"><span class="attr">BackgroundMargins</span>=<span class="number">0</span>,<span class="number">34</span>,<span class="number">0</span>,<span class="number">14</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 1. 全局变量配置区</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[Variables]</span></span><br><span class="line"><span class="comment">; Variables declared here can be used later on between two # characters (e.g. #MyVariable#).</span></span><br><span class="line"><span class="attr">fontName</span>=Trebuchet MS</span><br><span class="line"><span class="attr">textSize</span>=<span class="number">8</span></span><br><span class="line"><span class="attr">colorBar</span>=<span class="number">235</span>,<span class="number">170</span>,<span class="number">0</span>,<span class="number">255</span></span><br><span class="line"><span class="attr">colorText</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">205</span></span><br><span class="line"><span class="comment">; 你的 PVE IP 地址</span></span><br><span class="line"><span class="attr">PveIP</span>=pve.if<span class="literal">true</span>.club</span><br><span class="line"><span class="comment">; 节点名称</span></span><br><span class="line"><span class="attr">Node</span>=pve</span><br><span class="line"><span class="comment">; 你要监控的物理磁盘名称（如 sda, nvme0n1）</span></span><br><span class="line"><span class="attr">Disk</span>=/dev/sdc</span><br><span class="line"><span class="comment">; 在这里填入你的完整 API Token 凭证</span></span><br><span class="line"><span class="attr">Token</span>=root@pam!pveAPIToken=<span class="number">4</span>d7c041b-<span class="number">3</span>a49-<span class="number">46</span>c2-b3df-<span class="number">46</span>d7e011cdd5</span><br><span class="line"></span><br><span class="line"><span class="comment">; 字体与背景颜色设置</span></span><br><span class="line"><span class="attr">FontName</span>=Microsoft YaHei</span><br><span class="line"><span class="attr">BgColor</span>=<span class="number">20</span>,<span class="number">20</span>,<span class="number">20</span>,<span class="number">220</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 2. 数据源提取 (Measures)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 2. 数据源提取 (Measures)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[MeasureSmartAPI]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=<span class="string">&quot;https://#PveIP#/api2/json/nodes/#Node#/disks/smart?disk=#Disk#&quot;</span></span><br><span class="line"><span class="attr">Header</span>=<span class="string">&quot;Authorization: PVEAPIToken=#Token#&quot;</span></span><br><span class="line"><span class="comment">; 使用正向预查并且修复了空白符匹配 (\s*)，防止吞掉温度数字。</span></span><br><span class="line"><span class="comment">; 强制按这个顺序抓取数据：1.温度 2.坏道 3.健康状态</span></span><br><span class="line"><span class="attr">RegExp</span>=<span class="string">&quot;(?si)(?=.*?Current Drive Temperature:\s*(\d+))(?=.*?Elements in grown defect list:\s*(\d+))(?=.*?\&quot;health\&quot;\s*:\s*\&quot;(.*?)\&quot;)&quot;</span></span><br><span class="line"><span class="attr">UpdateRate</span>=<span class="number">60</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureTemp]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 1 个括号：温度</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureDefects]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 2 个括号：坏道</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureHealth]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 3 个括号：健康状态</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ; ==================================</span></span><br><span class="line"><span class="comment">; ; 3. 动态颜色告警逻辑 (Calc)</span></span><br><span class="line"><span class="comment">; ; ==================================</span></span><br><span class="line"><span class="section">[MeasureDefectColor]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 去掉方括号，避免初始加载时因空值报错</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureDefects</span><br><span class="line"><span class="comment">; 如果坏道数大于 0，数字变红；等于 0，保持绿色</span></span><br><span class="line"><span class="attr">IfAboveValue</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">IfAboveAction</span>=[!SetOption MeterDefectValue FontColor <span class="string">&quot;255,70,70,255&quot;</span>]</span><br><span class="line"><span class="attr">IfEqualValue</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">IfEqualAction</span>=[!SetOption MeterDefectValue FontColor <span class="string">&quot;100,255,100,255&quot;</span>]</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 温度动态颜色 (超过 50 度变黄，超过 60 度变红)</span></span><br><span class="line"><span class="section">[MeasureTempColor]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 去掉方括号，直接引用 Measure 名称</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureTemp</span><br><span class="line"><span class="attr">IfAboveValue</span>=<span class="number">60</span></span><br><span class="line"><span class="attr">IfAboveAction</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,70,70,255&quot;</span>]</span><br><span class="line"><span class="comment">; 去掉方括号，避免空值报错</span></span><br><span class="line"><span class="attr">IfCondition</span>=(MeasureTemp &gt; <span class="number">50</span>) &amp;&amp; (MeasureTemp &lt;= <span class="number">60</span>)</span><br><span class="line"><span class="attr">IfTrueAction</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,200,50,255&quot;</span>]</span><br><span class="line"><span class="attr">IfCondition2</span>=MeasureTemp &lt;= <span class="number">50</span></span><br><span class="line"><span class="attr">IfTrueAction2</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,255,255,255&quot;</span>]</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"><span class="comment">; STYLES are used to &quot;centralize&quot; options</span></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleTitle]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Center</span><br><span class="line"><span class="attr">StringCase</span>=Upper</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">50</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="attr">FontSize</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleLeftText]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Left</span><br><span class="line"><span class="comment">; Meters using styleLeftText will be left-aligned.</span></span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleRightText]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Right</span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleBar]</span></span><br><span class="line">BarColor=<span class="comment">#colorBar#</span></span><br><span class="line"><span class="attr">BarOrientation</span>=HORIZONTAL</span><br><span class="line"><span class="attr">SolidColor</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">15</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 4. UI 界面渲染 (Meters)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 标题栏</span></span><br><span class="line"><span class="section">[MeterTitle]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleTitle</span><br><span class="line"><span class="comment">; Using MeterStyle=styleTitle will basically &quot;copy&quot; the</span></span><br><span class="line"><span class="comment">; contents of the [styleTitle] section here during runtime.</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">100</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">12</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">18</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;iSCSI Monitor (#Disk#)&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 健康状态 ---</span></span><br><span class="line"><span class="section">[MeterHealthLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">40</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Health:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterHealthValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureHealth</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="comment">; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels</span></span><br><span class="line"><span class="comment">; below the Y value of the previous meter (i.e it&#x27;s the same as in meterLabelCPU).</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1&quot;</span></span><br><span class="line"><span class="attr">AutoScale</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 硬盘温度 ---</span></span><br><span class="line"><span class="section">[MeterTempLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">58</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Temperature:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterTempValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureTemp</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="comment">; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels</span></span><br><span class="line"><span class="comment">; below the Y value of the previous meter (i.e it&#x27;s the same as in meterLabelCPU).</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1 °C&quot;</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 增长缺陷列表 (坏道) ---</span></span><br><span class="line"><span class="section">[MeterDefectLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">76</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Grown Defects:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterDefectValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureDefects</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="exe-和-msi-区别"><a href="#exe-和-msi-区别" class="headerlink" title=".exe 和 .msi 区别"></a>.exe 和 .msi 区别</h4><p>.exe 和 .msi 都是常见的可执行&#x2F;安装包格式，但它们的本质定位、运行机制和管理方式有着巨大的区别。</p>
+<p>简而言之：.msi 是标准的“数据配置包”，依赖系统服务来安装；而 .exe 是“独立的可执行程序”，安装逻辑全由开发人员自己写。</p>
+<table>
+<thead>
+<tr>
+<th align="left">特性</th>
+<th align="left"><code>.msi</code> (Microsoft Installer)</th>
+<th align="left"><code>.exe</code> (Executable)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>本质类型</strong></td>
+<td align="left"><strong>数据库&#x2F;配置文件</strong>（包含文件列表、注册表项及安装指令）</td>
+<td align="left"><strong>二进制可执行程序</strong>（引导程序、独立应用或自定义安装包）</td>
+</tr>
+<tr>
+<td align="left"><strong>执行引擎</strong></td>
+<td align="left">由 Windows 内置的 <strong>Windows Installer 服务</strong> (<code>msiexec.exe</code>) 统一解析和执行</td>
+<td align="left">操作系统直接创建进程运行，内部逻辑由开发商自行编写（如 Inno Setup, NSIS, InstallShield）</td>
+</tr>
+<tr>
+<td align="left"><strong>标准与规范</strong></td>
+<td align="left">极度标准统一，遵守微软严格的安装包规范</td>
+<td align="left">没有统一标准，界面、安装逻辑和卸载行为完全由开发者决定</td>
+</tr>
+<tr>
+<td align="left"><strong>静默安装支持</strong></td>
+<td align="left"><strong>原生统一</strong>（通用命令 <code>msiexec /i package.msi /quiet</code>）</td>
+<td align="left">依赖开发者的实现（命令参差不齐，如 <code>/S</code>, <code>/silent</code>, <code>/q</code> 等）</td>
+</tr>
+<tr>
+<td align="left"><strong>卸载与修复</strong></td>
+<td align="left">原生支持<strong>回滚（Rollback）</strong>、修复（Repair）和干净卸载，系统会自动记录状态</td>
+<td align="left">依赖开发者编写的卸载程序（<code>uninstall.exe</code>），若没写好容易留有残留</td>
+</tr>
+<tr>
+<td align="left"><strong>企业运维（域控）</strong></td>
+<td align="left"><strong>原生支持</strong>，可通过 Windows Group Policy (GPO) 或 Active Directory 批量静默部署</td>
+<td align="left">无法直接通过 GPO 原生推送，通常需要包装成 <code>.msi</code> 或借助第三方工具 (SCCM&#x2F;Intune)</td>
+</tr>
+</tbody></table>
+<p><strong>.msi 像是一张“安装指南与零件清单”</strong></p>
+<p>.msi 本质上是一个使用微软 OLE 复合文档格式存储的关系型数据库。</p>
+<p>当你双击 .msi 时，实际上是系统自带的 Windows Installer 服务（msiexec.exe）读取了这个数据库。msiexec 负责创建目录、解压文件、写入注册表。</p>
+<p>安全与回滚机制：如果在安装过程中出现错误（如断电、磁盘空间不足），msiexec 可以利用事务机制自动回滚，将系统还原到安装之前的状态，不会留下垃圾文件。</p>
+<p><strong>.exe 像是“自带所有工具的自定义工程队”</strong></p>
+<p>.exe 是真正的 Windows PE（可执行）文件。如果它是一个安装包，通常是开发者使用 NSIS、Inno Setup 或 Advanced Installer 等打包工具生成的。</p>
+<p>当你双击 .exe 安装包时，它会运行开发者写好的代码逻辑：可能包含自定义的炫酷 UI 界面、解压进度条、甚至在后台安装其他捆绑软件。</p>
+<p>灵活性与风险：.exe 非常灵活，可以做任何系统允许的事（比如安装前检查复杂的网络环境、预装驱动等）。但也正因如此，它缺乏统一规范，一旦安装过程崩溃，可能无法自动清理临时文件。</p>
+<p>如果你要为企业&#x2F;域控环境部署软件，或者需要标准的静默安装&#x2F;干净卸载，优先选择 .msi。</p>
+<p>如果软件需要复杂的预检逻辑、自定义界面，或者它本身就是一个无需安装的绿色单文件工具，则选择 .exe。</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Windows/" rel="tag">Windows</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/47827178b145/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Enternium 自动化脚本
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/b780bc28648c/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Trading 短语</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>
