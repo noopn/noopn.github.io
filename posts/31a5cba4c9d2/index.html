@@ -89,7 +89,7 @@
         <span class="post-meta-item-icon">
             <i class="ri-quill-pen-line"></i>
             <span class="post-meta-item-text"> 字数统计:</span>
-            <span class="post-count">4.3k</span>
+            <span class="post-count">4.5k</span>
         </span>
     </span>
 
@@ -207,6 +207,13 @@
 <p>灵活性与风险：.exe 非常灵活，可以做任何系统允许的事（比如安装前检查复杂的网络环境、预装驱动等）。但也正因如此，它缺乏统一规范，一旦安装过程崩溃，可能无法自动清理临时文件。</p>
 <p>如果你要为企业&#x2F;域控环境部署软件，或者需要标准的静默安装&#x2F;干净卸载，优先选择 .msi。</p>
 <p>如果软件需要复杂的预检逻辑、自定义界面，或者它本身就是一个无需安装的绿色单文件工具，则选择 .exe。</p>
+<h4 id="nvm安装nodejs报错"><a href="#nvm安装nodejs报错" class="headerlink" title="nvm安装nodejs报错"></a>nvm安装nodejs报错</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">npm : File C:\nvm4w\nodejs\npm.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.co </span><br><span class="line">m/fwlink/?LinkID=135170.</span><br><span class="line">At line:1 char:1</span><br><span class="line">+ npm -v</span><br><span class="line">+ ~~~</span><br><span class="line">    + CategoryInfo          : SecurityError: (:) [], PSSecurityException</span><br><span class="line">    + FullyQualifiedErrorId : UnauthorizedAccess </span><br></pre></td></tr></table></figure>
+
+<p>这是一个非常经典的 Windows PowerShell 权限报错。Windows 系统出于安全考虑，默认处于严格模式，禁止执行任何 .ps1 脚本文件（包括 Node.js &#x2F; nvm-windows 生成的 npm.ps1 脚本）。你只需要修改一下 PowerShell 的执行策略（Execution Policy）就可以解除这个限制。</p>
+<p>点击 Windows 开始菜单，搜索 PowerShell，然后在搜索结果中点击以管理员身份运行。在终端中复制并粘贴以下命令，然后回车：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-ExecutionPolicy RemoteSigned -Scope CurrentUser</span><br></pre></td></tr></table></figure>
+
+<p>系统会弹出一长串提示，询问你是否要更改执行策略。输入大写字母 Y 并按下回车键确认。</p>
  
       <!-- reward -->
       
