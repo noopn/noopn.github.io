@@ -137,243 +137,6 @@ win + R 输入 taskschd.msc， 创建一个新的计划任务。 **选择 Create
 Action 标签中添加脚本路径 `cmd.exe` , Add arguments 填写 `/c ""C:\Program Files\PrimoCache\scripts\AutoBackup.bat" >> "C:\Program Files\PrimoCache\scripts\backup_log.txt" 2>&1"`
 
 
-
-#### windows 通过桌面小组件显示内网服务器（pve）的磁盘状态信息
-
-安装 [Rainmeter](https://www.rainmeter.net/) 通过 vscode 打开 skins 所在的文件夹路径
-
-创建新的 skins 文件夹作为根路径，创建二级文件夹作为组件，内部创建一个 `.ini` 文件 ,**编码格式选为UTF-16LE**
-
-选择  refreash 重新加载组件， 通过 About Rainmeter 可以看见日志信息。
-
-```ini
-[Rainmeter]
-; This section contains general settings that can be used to change how Rainmeter behaves.
-; 这是组件的全局刷新频率，单位是毫秒 (ms)。
-Update=1000
-; 这是为整个小组件设置一张底层背景图片。
-; 需要特别注意的是前面的 #@#：这是 Rainmeter 的一个内置魔法变量。它代表了当前组件的资源目录（通常路径是 你的组件文件夹\@Resources）。所以这行代码的意思是：去 @Resources 文件夹里读取一张叫 Background.png 的图片作为整体背景。
-Background=#@#Background.png
-; 这决定了背景图片的拉伸和缩放模式。
-; 在 Rainmeter 中，3 代表开启“九宫格缩放”（Scale with Margins）模式。这意味着当你的组件内容变多、尺寸变大时，背景图片不会像普通的图片那样直接被拉伸到变形，而是配合下面的 BackgroundMargins 来智能缩放。
-BackgroundMode=3
-; 这个设置是专门配合 BackgroundMode=3 使用的，它定义了背景图片的“保护边缘”（也就是九宫格缩放的边界）。
-; 这四个数字分别代表：左, 上, 右, 下 的像素距离。
-; 0,34,0,14 的意思是：背景图片的顶部 34 个像素、底部 14 个像素在任何情况下都不参与拉伸变形，只有中间的部分会被拉长去填满空间。这通常用来保证圆角背景框的四角和边框边缘永远保持清晰，不会因为内容变长而变得模糊或被拉长。
-BackgroundMargins=0,34,0,14
-
-; ==================================
-; 1. 全局变量配置区
-; ==================================
-[Variables]
-; Variables declared here can be used later on between two # characters (e.g. #MyVariable#).
-fontName=Trebuchet MS
-textSize=8
-colorBar=235,170,0,255
-colorText=255,255,255,205
-; 你的 PVE IP 地址
-PveIP=pve.iftrue.club
-; 节点名称
-Node=pve
-; 你要监控的物理磁盘名称（如 sda, nvme0n1）
-Disk=/dev/sdc
-; 在这里填入你的完整 API Token 凭证
-Token=root@pam!pveAPIToken=4d7c041b-3a49-46c2-b3df-46d7e011cdd5
-
-; 字体与背景颜色设置
-FontName=Microsoft YaHei
-BgColor=20,20,20,220
-
-; ==================================
-; 2. 数据源提取 (Measures)
-; ==================================
-; ==================================
-; 2. 数据源提取 (Measures)
-; ==================================
-[MeasureSmartAPI]
-Measure=WebParser
-URL="https://#PveIP#/api2/json/nodes/#Node#/disks/smart?disk=#Disk#"
-Header="Authorization: PVEAPIToken=#Token#"
-; 使用正向预查并且修复了空白符匹配 (\s*)，防止吞掉温度数字。
-; 强制按这个顺序抓取数据：1.温度 2.坏道 3.健康状态
-RegExp="(?si)(?=.*?Current Drive Temperature:\s*(\d+))(?=.*?Elements in grown defect list:\s*(\d+))(?=.*?\"health\"\s*:\s*\"(.*?)\")"
-UpdateRate=60
-
-[MeasureTemp]
-Measure=WebParser
-URL=[MeasureSmartAPI]
-; 对应正则第 1 个括号：温度
-StringIndex=1
-
-[MeasureDefects]
-Measure=WebParser
-URL=[MeasureSmartAPI]
-; 对应正则第 2 个括号：坏道
-StringIndex=2
-
-[MeasureHealth]
-Measure=WebParser
-URL=[MeasureSmartAPI]
-; 对应正则第 3 个括号：健康状态
-StringIndex=3
-
-; ; ==================================
-; ; 3. 动态颜色告警逻辑 (Calc)
-; ; ==================================
-[MeasureDefectColor]
-Measure=Calc
-; 去掉方括号，避免初始加载时因空值报错
-Formula=MeasureDefects
-; 如果坏道数大于 0，数字变红；等于 0，保持绿色
-IfAboveValue=0
-IfAboveAction=[!SetOption MeterDefectValue FontColor "255,70,70,255"]
-IfEqualValue=0
-IfEqualAction=[!SetOption MeterDefectValue FontColor "100,255,100,255"]
-DynamicVariables=1
-
-; 温度动态颜色 (超过 50 度变黄，超过 60 度变红)
-[MeasureTempColor]
-Measure=Calc
-; 去掉方括号，直接引用 Measure 名称
-Formula=MeasureTemp
-IfAboveValue=60
-IfAboveAction=[!SetOption MeterTempValue FontColor "255,70,70,255"]
-; 去掉方括号，避免空值报错
-IfCondition=(MeasureTemp > 50) && (MeasureTemp <= 60)
-IfTrueAction=[!SetOption MeterTempValue FontColor "255,200,50,255"]
-IfCondition2=MeasureTemp <= 50
-IfTrueAction2=[!SetOption MeterTempValue FontColor "255,255,255,255"]
-DynamicVariables=1
-
-; ----------------------------------
-; STYLES are used to "centralize" options
-; ----------------------------------
-
-[styleTitle]
-StringAlign=Center
-StringCase=Upper
-StringStyle=Bold
-StringEffect=Shadow
-FontEffectColor=0,0,0,50
-FontColor=#colorText#
-FontFace=#fontName#
-FontSize=10
-AntiAlias=1
-ClipString=1
-
-[styleLeftText]
-StringAlign=Left
-; Meters using styleLeftText will be left-aligned.
-StringCase=None
-StringStyle=Bold
-StringEffect=Shadow
-FontEffectColor=0,0,0,20
-FontColor=#colorText#
-FontFace=#fontName#
-FontSize=#textSize#
-AntiAlias=1
-ClipString=1
-
-[styleRightText]
-StringAlign=Right
-StringCase=None
-StringStyle=Bold
-StringEffect=Shadow
-FontEffectColor=0,0,0,20
-FontColor=#colorText#
-FontFace=#fontName#
-FontSize=#textSize#
-AntiAlias=1
-ClipString=1
-
-[styleBar]
-BarColor=#colorBar#
-BarOrientation=HORIZONTAL
-SolidColor=255,255,255,15
-
-; ==================================
-; 4. UI 界面渲染 (Meters)
-; ==================================
-
-; 标题栏
-[MeterTitle]
-Meter=String
-MeterStyle=styleTitle
-; Using MeterStyle=styleTitle will basically "copy" the
-; contents of the [styleTitle] section here during runtime.
-X=100
-Y=12
-W=190
-H=18
-Text="iSCSI Monitor (#Disk#)"
-
-; --- 健康状态 ---
-[MeterHealthLabel]
-Meter=String
-MeterStyle=styleLeftText
-X=10
-Y=40
-W=190
-H=14
-Text="Health:"
-
-[MeterHealthValue]
-Meter=String
-MeterStyle=styleRightText
-MeasureName=MeasureHealth
-X=200
-Y=0r
-; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels
-; below the Y value of the previous meter (i.e it's the same as in meterLabelCPU).
-W=190
-H=14
-Text="%1"
-AutoScale=1
-
-; --- 硬盘温度 ---
-[MeterTempLabel]
-Meter=String
-MeterStyle=styleLeftText
-X=10
-Y=58
-W=190
-H=14
-Text="Temperature:"
-
-[MeterTempValue]
-Meter=String
-MeasureName=MeasureTemp
-MeterStyle=styleRightText
-X=200
-Y=0r
-; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels
-; below the Y value of the previous meter (i.e it's the same as in meterLabelCPU).
-W=190
-H=14
-Text="%1 °C"
-AntiAlias=1
-
-; --- 增长缺陷列表 (坏道) ---
-[MeterDefectLabel]
-Meter=String
-MeterStyle=styleLeftText
-X=10
-Y=76
-W=190
-H=14
-Text="Grown Defects:"
-
-[MeterDefectValue]
-Meter=String
-MeasureName=MeasureDefects
-MeterStyle=styleRightText
-X=200
-Y=0r
-W=190
-H=14
-Text="%1"
-```
-
 #### .exe 和 .msi 区别
 
 .exe 和 .msi 都是常见的可执行/安装包格式，但它们的本质定位、运行机制和管理方式有着巨大的区别。
@@ -410,3 +173,25 @@ Text="%1"
 
 如果软件需要复杂的预检逻辑、自定义界面，或者它本身就是一个无需安装的绿色单文件工具，则选择 .exe。
 
+
+#### nvm安装nodejs报错
+
+```bash
+npm : File C:\nvm4w\nodejs\npm.ps1 cannot be loaded because running scripts is disabled on this system. For more information, see about_Execution_Policies at https:/go.microsoft.co 
+m/fwlink/?LinkID=135170.
+At line:1 char:1
++ npm -v
++ ~~~
+    + CategoryInfo          : SecurityError: (:) [], PSSecurityException
+    + FullyQualifiedErrorId : UnauthorizedAccess 
+```
+
+这是一个非常经典的 Windows PowerShell 权限报错。Windows 系统出于安全考虑，默认处于严格模式，禁止执行任何 .ps1 脚本文件（包括 Node.js / nvm-windows 生成的 npm.ps1 脚本）。你只需要修改一下 PowerShell 的执行策略（Execution Policy）就可以解除这个限制。
+
+点击 Windows 开始菜单，搜索 PowerShell，然后在搜索结果中点击以管理员身份运行。在终端中复制并粘贴以下命令，然后回车：
+
+```bash
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+系统会弹出一长串提示，询问你是否要更改执行策略。输入大写字母 Y 并按下回车键确认。

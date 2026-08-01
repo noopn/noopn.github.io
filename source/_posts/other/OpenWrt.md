@@ -578,6 +578,69 @@ iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE
   Block，选择广告的资源集，在 DNS 解析的时候就禁止访问
   直连，选择国内的域名规则集，DNS 服务器选择 WAN 自动下发的 DNS 服务，这样当请求一个国内的域名时，可以直接用运营商的 DNS 解析
 
+##### homeproxy 匹配规则字段解释
+
+**域名匹配类 (Domain)**
+
+- Domain name (匹配完整域名)
+
+含义： 绝对精准匹配，一字不差。
+
+例子： 填入 [www.google.com](https://www.google.com)。那么只有访问 [www.google.com](https://www.google.com) 才会命中该规则。访问 google.com 或 mail.google.com 都不会命中。
+
+- Domain suffix (匹配域名后缀)
+
+含义： 匹配该域名及其所有的子域名。这是最常用的规则。
+
+例子： 填入 google.com。那么 google.com、[www.google.com](https://www.google.com)、mail.google.com 都会被匹配。
+
+- Domain keyword (域名关键字匹配)
+
+含义： 只要域名中包含这个词段，就会被匹配。
+
+例子： 填入 google。那么 google.com、google.co.jp 甚至 google-analytics.com 都会被匹配。
+
+- Domain regex (使用正则表达式匹配域名)
+
+含义： 使用正则表达式（Regex）编写复杂的匹配逻辑。
+
+例子： 填入 .*\.cn$。这代表匹配所有以 .cn 结尾的域名。
+
+
+**来源设备匹配类 (Source IP)**,这部分是根据“是谁在发请求”（即你局域网内的设备）来进行匹配。
+
+- Source IP CIDR (匹配源 IP CIDR)
+
+含义： 匹配局域网内特定设备或特定网段发出的请求。手动精准点名。你必须手动输入一个具体的 IP 或网段。
+
+例子：填入 192.168.1.50/32：只匹配 IP 为 192.168.1.50 的这一台设备（比如你的某台特定测试机或 LXC 容器）。
+
+填入 192.168.2.0/24：匹配 192.168.2.x 这个整个网段（比如你给访客或者 IoT 智能家居专门划的 VLAN）。
+
+- Match private source IP (匹配私有源 IP)
+
+含义： 只要这个请求是从一个私有地址（局域网地址，如 192.168.x.x, 10.x.x.x）发出的，就匹配。不用填具体的 IP,自动包含上面提到的所有 10.x、172.16.x、192.168.x 地址。
+
+场景： 通常用于做全局的底层兜底规则，确认流量是来自内网的合法设备。
+
+**目标地址匹配类 (Destination IP)**
+
+当请求没有域名（直接请求 IP ），或者 DNS 解析后，Homeproxy 根据“你要访问哪台服务器的 IP”来进行匹配。
+
+- IP CIDR (匹配 IP CIDR)
+
+含义： 匹配请求要去的目的 IP 或目的 IP 段。
+
+例子： 填入 Telegram 的服务器网段 91.108.4.0/22。只要流量去往这个 IP 段，就会被该规则捕获。
+
+场景： 用于强制特定 App（比如 Telegram、或者某些直接通过 IP 连接的游戏服务器）走特定代理。
+
+- Match private IP (匹配私有 IP)
+
+含义： 只要你要访问的目的 IP 是私有地址（如局域网内的其他设备 192.168.1.100）。
+
+场景： 极度重要，通常这条规则的动作会被设置为 “直连 (Direct)”。这确保了当你在电脑上访问家里的 NAS 或 OpenWrt 后台时，流量不会绕到国外的代理服务器上去，而是直接在局域网内通信。
+
 #### WireGuard 
 
 安装 luci-proto-wireguard  qrencode
@@ -589,4 +652,35 @@ Netword =》 Interfaces =》新建协议 Wireguard Vpn
 防火墙设置 =》 加入 lan 区域
 
 对端设置 =》 创建新的密钥对 =》ip 地址选择一个网段内的 ip =》生成二维码 =》修改链接地址为配置了 DDNS 的域名 =》扫描二维码或复制配置添加
+
+#### 通过API动态修改配置
+
+安装 `opkg install luci-mod-rpc` 
+
+```bash
+# 1.获取token
+curl -X POST "https://home.iftrue.club/cgi-bin/luci/rpc/auth" \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc": "2.0", "id": 1, "method": "login", "params": ["root", "w.521@@ong.COM"]}'
+# {"id":1,"jsonrpc":"2.0","result":"365cdca3fabb0f374d8fd32dccdcc5a4"}
+
+# 2.uci set
+curl -X POST "https://home.iftrue.club/cgi-bin/luci/rpc/uci?auth=a26617f574899578c20bd34f2b272af2" \
+    -H "Content-Type: application/json" \
+    -d '{"jsonrpc": "2.0", "id": 1, "method": "set", "params": ["homeproxy", "MSI", "outbound", "SG"]}'
+# {"id":1,"jsonrpc":"2.0","result":true}
+
+# 3.确认/保存配置 (uci commit)
+curl -X POST "https://home.iftrue.club/cgi-bin/luci/rpc/uci?auth=a26617f574899578c20bd34f2b272af2" \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc": "2.0", "id": 3, "method": "commit", "params": ["homeproxy"]}'
+# {"id":3,"jsonrpc":"2.0","result":true}
+
+# 4.重启 Homeproxy 让代理生效(如果 commit 后不能正常生效则需要)
+curl -X POST "https://home.iftrue.club/cgi-bin/luci/rpc/sys?auth=a26617f574899578c20bd34f2b272af2" \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc": "2.0", "id": 4, "method": "exec", "params": ["/etc/init.d/homeproxy restart"]}'
+# {"id":4,"jsonrpc":"2.0","result":""}
+```
+
 
