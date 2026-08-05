@@ -310,17 +310,17 @@ minivaline:
 
 # advertisement
 # if there is an "ad" word in photo or url，it may blocked by adblock or any other browser extensions
-ads:
-  ad_1:
-    title: vultr优惠vps
-    img: https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/img/vultr.png
-    url: https://www.vultr.com/?ref=8630075
-    width: 300
-  ad_2:
-    title: 云服务器全球购低至2折
-    img: https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/img/ten_2.jpg
-    url: https://curl.qcloud.com/kvO7hb43
-    width: 300
+# ads:
+#   ad_1:
+#     title: vultr优惠vps
+#     img: https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/img/vultr.png
+#     url: https://www.vultr.com/?ref=8630075
+#     width: 300
+#   ad_2:
+#     title: 云服务器全球购低至2折
+#     img: https://cdn.jsdelivr.net/gh/Shen-Yu/cdn/img/ten_2.jpg
+#     url: https://curl.qcloud.com/kvO7hb43
+#     width: 300
 
 # encrypt settings
 lock:

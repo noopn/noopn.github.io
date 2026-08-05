@@ -195,3 +195,23 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
 系统会弹出一长串提示，询问你是否要更改执行策略。输入大写字母 Y 并按下回车键确认。
+
+
+#### clash 解析域名到内网IP 
+
+在 profiles 中导入的代理上右键选择 Extend Config 添加一下配置：
+
+```ymal
+# Merge 配置示例
+prepend-rules:
+  # 优先把泛域名设为直连
+  - DOMAIN-SUFFIX,iftrue.club,DIRECT
+
+hosts:
+  # 映射泛域名到内网 OpenWrt 地址
+  '*.iftrue.club': '192.168.48.1'
+
+dns:
+  fake-ip-filter:
+    - '*.iftrue.club'
+```
