@@ -146,3 +146,4 @@ auto-route: true
 strict-route: true（严格路由模式）
 
 💡 原理：开启 strict-route 后，Clash 会在 Windows 系统底层设置最高优先级的路由表和防火墙规则，强制丢弃/拦截所有从非 TUN 物理网卡直接发出的 DNS UDP/TCP 数据包，直接把 Windows 的抢答通道给断掉。
+

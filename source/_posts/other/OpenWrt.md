@@ -543,9 +543,17 @@ iptables -t nat -A POSTROUTING -o br-lan -j MASQUERADE
 
   默认 DNS 服务器: Google
 
-  缓存: 关闭
+  Disable DNS cache: 不选
 
-  EDNS 客户端子网： （202.101.172.36 浙江） 选择一个距离当前宽带运营商最近的一个 IP 地址，这可以让 Google DNS 查询的时候选择一个离运营商最近的服务器
+  Disable cache expire： 不选 
+
+  Independent cache per server： 不选 
+
+  EDNS Client subnet： 留空,国内网站（如淘宝、B站）：在匹配到国内规则后，系统会直接交给国内本地 DNS 进行解析，拿到的是离你物理位置最近的国内 CDN，根本不会去触发 Google DoH。国外网站（如 Google、YouTube）：这些流量本来就需要走代理节点出口。
+  
+  这些网站的 CDN 节点必须通过你的代理节点去访问。如果你在 DoH 里填了国内 IP，Google DoH 会给你返回一个离中国大陆最近的 CDN IP；但当你实际去连接这个 CDN 时，流量却是从你的海外代理节点发出的。这会导致“节点在美西，却强行去连分配给中国的 CDN”，造成跨国绕路，速度反而变慢。
+
+  Store RDRC： 不选，是否保存被拒绝的DNS
 
 - 路由设置
 

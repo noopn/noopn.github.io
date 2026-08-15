@@ -215,3 +215,69 @@ dns:
   fake-ip-filter:
     - '*.iftrue.club'
 ```
+
+#### clash 重置网络后有些网站上不去 🤷‍♂️🤷‍♂️
+
+网络重置后再开启clash，可能有一些网址无法被正常的分流，原因是可能有些配置没有生效
+
+TUN 模式的设置中可以关闭strict route 保存后，然后再开启 strict route 来刷新配置。
+
+#### 重置 DNS 和 IP
+
+```bash
+# 详细作用： 立即清空 Windows 在本地内存中暂存的“域名 ↔ IP 地址”映射记录。
+# 工作原理： 当你访问 google.com 时，电脑会把查到的 IP 地址保存在内存缓存里，以便下次快速打开。如果网站更换了服务器 IP，或者缓存被代理软件（如 Clash、v2rayN 等）改写成了虚拟 IP（如 198.18.0.99），执行此命令可以强迫电脑清除这些旧数据，下次访问时重新向外界 DNS 请求真实 IP。
+ipconfig /flushdns
+
+# 详细作用： 刷新本机的 DHCP 租约，并向局域网内的 DNS 服务器重新注册你这台电脑的主机名（Computer Name）与 IP。
+# 工作原理： 在公司/企业内网环境中非常实用，能确保局域网内的其他同事或服务器可以通过你的“电脑名称”直接找到你的设备。
+ipconfig /registerdns
+
+# 详细作用： 主动放弃当前网络适配器（网卡）从路由器（DHCP 服务器）拿到的 IP 地址。
+# 工作原理： 电脑会向路由器发送一个 DHCPRELEASE 数据包，告诉路由器：“这个 IP 我退掉了，你可以回收分配给别人。”执行完此命令后，电脑会暂时处于完全断网状态。
+ipconfig /release
+
+# 详细作用： 重新向路由器申请分配一个全新的（或续约原有的）IP 地址及网络配置。
+# 工作原理： 电脑向局域网广播 DHCPDISCOVER 数据包，路由器收到后会重新分配 IP 地址、子网掩码、默认网关（Gateway）以及默认 DNS 服务器地址给你的网卡。
+ipconfig /renew
+
+# 将 Windows 的 Winsock (Windows Sockets API) 目录完全恢复为出厂默认状态。
+# Winsock 是所有 Windows 应用程序（浏览器、游戏、VPN、代理软件等）要发起网络连接时，必须经过的系统层接口。
+# 许多代理软件（Clash、v2rayN）、加速器、防火墙或杀毒软件，会在 Winsock 中插入分流拦截器（LSP / Layered Service Provider）或虚拟网卡勾子。
+# 执行这条命令会强行抹除所有第三方挂载的 Winsock 拦截接口。这就是为什么你之前执行后，代理软件的转发通道直接崩溃，导致访问 ipleak.net 提示无法连线的原因。
+netsh winsock reset
+
+# 详细作用： 重置 Windows 底层的 TCP/IPv4 与 TCP/IPv6 注册表配置，将其恢复为系统初始安装时的状态。
+# 工作原理： 它会直接重写注册表中 HKLM\SYSTEM\CurrentControlSet\Services\Tcpip 等核心路径，清除所有的自定义静态路由、MTU 设置、DNS 绑定以及手动设置的 IP。执行后必须重启电脑才能完全生效。
+netsh int ip reset
+```
+
+| 故障现象 | 推荐执行命令 / 操作 | 详细说明与建议 |
+| :--- | :--- | :--- |
+| **个别网站打不开**<br>`DNS_PROBE_FINISHED_NXDOMAIN`<br>`ERR_NAME_NOT_RESOLVED` | `ipconfig /flushdns` | **最推荐、最安全**。用于清空本地 DNS 缓存。由于不修改系统网络架构，零风险，平时可随时执行。 |
+| **连不上路由器 / 获取不到 IP**<br>提示“无 IP 分配”<br>IP 变成了 `169.254.x.x` | `ipconfig /release`<br>`ipconfig /renew` | 强迫网卡放弃当前 IP，并重新向路由器（DHCP 服务器）申请新的 IP 地址。若无效，建议将路由器关机拔电源，等待 10 秒后重启。 |
+| **代理软件故障 / 网页提示 198.18.x.x 连不上**<br>关闭代理后全盘断网 | `netsh winhttp reset proxy` | 用于清理残留的 WinHTTP 代理设置。如果开启过代理软件的 TUN 模式，**切勿轻易执行 `netsh winsock reset`**，只需在代理软件中重新开关一次“TUN 模式”或“系统代理”即可修复驱动绑定。 |
+| **网络层彻底损坏 / 各种方法均无效** | `netsh winsock reset`<br>`netsh int ip reset` | **终极重置大招**（需管理员权限，执行后必须重启电脑）。会强制清空 TCP/IP 协议栈与 Winsock 目录，但会导致代理软件虚拟网卡、加速器驱动失效，需重新配置。 |
+
+
+#### 等待 iSCSI 加载后开机
+
+第一步：运行命令（调整服务启动顺序）
+
+你在做什么： cmd 管理员模式执行 `sc config ShellHWDetection depend= RpcSs/MSiSCSI`
+
+底层的作用： 告诉 Windows 系统：“负责外设和外置存储图标/盘符渲染的服务（ShellHWDetection），必须排在 iSCSI 服务（MSiSCSI）完全启动之后才能运行。”
+
+解决的问题： 防止 Windows 桌面抢跑。
+
+设置 iSCSI 盘为“永久/首选卷”：
+
+打开 iSCSI 发起程序（iSCSI Initiator） 界面。
+
+切换到 “卷和设备（Volumes and Devices）” 选项卡。
+
+点击 “自动配置（Auto Configure）”，确保你的 iSCSI 卷盘符（例如 E:\ 或 X:\）出现在列表里。这样 Windows 会将该卷标记为系统级关键存储，等待其就绪后再加载桌面图标。
+
+告诉 Windows 系统：“不仅要等 iSCSI 服务启动，而且必须等这个具体的网络盘符（例如 X: 盘）被系统成功挂载、文件系统识别完毕之后，才算‘初始化完成’。”
+
+解决的问题： 防止 iSCSI 服务虽然启动了，但硬盘尚未完成初始化注册导致图标依然找不到路径的问题。
