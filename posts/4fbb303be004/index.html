@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>正则引擎中的有限自动机 ⑥ DFA Table |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-compiling/正则引擎⑥DFA-table"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  正则引擎中的有限自动机 ⑥ DFA Table
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/4fbb303be004/" class="article-date">
+  <time datetime="2024-11-22T23:44:52.000Z" itemprop="datePublished">2024-11-23</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">13 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h1 id="DFA-转换表与子集构造算法-DFA-Transition-Table-Subset-Construction"><a href="#DFA-转换表与子集构造算法-DFA-Transition-Table-Subset-Construction" class="headerlink" title="DFA 转换表与子集构造算法 (DFA Transition Table: Subset Construction)"></a>DFA 转换表与子集构造算法 (DFA Transition Table: Subset Construction)</h1><h2 id="1-为什么需要向-DFA-演进？"><a href="#1-为什么需要向-DFA-演进？" class="headerlink" title="1. 为什么需要向 DFA 演进？"></a>1. 为什么需要向 DFA 演进？</h2><p>在前面两讲中，我们构建了 NFA 以及它的转换表。NFA 最大的优势在于<strong>模块化拼装极其简单</strong>，但它在运行时面临两大固有缺点：</p>
+<ol>
+<li><strong>非确定性（Nondeterminism）</strong>：同一字符可能导致多个可选目标状态；</li>
+<li><strong>$\epsilon$ 转移存在</strong>：允许状态机在不消耗字符的情况下“瞬移”。</li>
+</ol>
+<p>为了彻底消除不确定性与空转移，使状态机在任何时刻面对任何字符都具有<strong>唯一确定的下一步跳跃（$O(1)$ 速度）</strong>，我们必须将 NFA 转换为 <strong>DFA（确定性有限状态机）</strong>。</p>
+<hr>
+<h2 id="2-DFA-转换表的核心特征"><a href="#2-DFA-转换表的核心特征" class="headerlink" title="2. DFA 转换表的核心特征"></a>2. DFA 转换表的核心特征</h2><p>与 NFA 转换表相比，DFA 转换表有三个根本性的结构转变：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">       ┌────────── 字母表字符列 (Alphabet Σ) ──────────┐</span><br><span class="line">       │                                               │</span><br><span class="line">DFA 状态│               &#x27;a&#x27;             &#x27;b&#x27;             │   （无 ε* 列！）</span><br><span class="line">───────┼───────────────────────────────────────────────┤</span><br><span class="line">&gt; 1,2,5│              &quot;3,4&quot;           &quot;6,4&quot;            │   &lt;-- 单一状态值，非数组！</span><br><span class="line">* 3,4  │                -               -              │   &lt;-- 接受状态</span><br><span class="line">* 6,4  │                -               -              │   &lt;-- 接受状态（允许多个接受态！）</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>没有 $\epsilon$ 列</strong>：DFA 语法严格禁止空转移，所有隐式跳跃必须在转换前全部被“吸收”消除；</li>
+<li><strong>单元格内容是单一状态</strong>：对于任意状态和输入字符，目标至多是一个确定的状态标签，不再是状态数组；</li>
+<li><strong>允许多个接受状态</strong>：NFA 依靠不变量始终保持单一出口，但在 DFA 中，任何<strong>包含了原 NFA 接受态的组合状态</strong>，全都是合法的 DFA 接受态！</li>
+</ol>
+<hr>
+<h2 id="3-子集构造法（Subset-Construction-Algorithm）"><a href="#3-子集构造法（Subset-Construction-Algorithm）" class="headerlink" title="3. 子集构造法（Subset Construction Algorithm）"></a>3. 子集构造法（Subset Construction Algorithm）</h2><p>将 NFA 转化为等价 DFA 的经典算法被称为<strong>子集构造法（Subset Construction &#x2F; 幂集构造法 Powerset Construction）</strong>。</p>
+<blockquote>
+<p><strong>核心哲学</strong>：<br>DFA 中的<strong>每一个单一状态</strong>，在本质上都是原 NFA 中<strong>一组可能同时处于活跃状态的子集集合（Subset of NFA States）</strong>！</p>
+</blockquote>
+<hr>
+<h3 id="3-1-步骤一：确定-DFA-的初始状态"><a href="#3-1-步骤一：确定-DFA-的初始状态" class="headerlink" title="3.1 步骤一：确定 DFA 的初始状态"></a>3.1 步骤一：确定 DFA 的初始状态</h3><p>DFA 必须有一个唯一的起点，它应该对应 NFA 的什么状态？</p>
+<ul>
+<li>NFA 的起点是状态 $1$，但在没有输入任何字符之前，状态机可以通过 $\epsilon$ 边自由滑行到状态 $2$ 和 $5$。</li>
+<li>因此，在游戏还没开始前，系统其实<strong>同时处于 $1$、$2$、$5$ 三个状态的叠加态中</strong>！</li>
+</ul>
+<blockquote>
+<p><strong>DFA 起始状态的形式定义</strong>：<br>DFA 的起始状态，正是 <strong>NFA 起始状态的 $\epsilon$-闭包</strong>：</p>
+<p>$$S_{0}^{DFA} &#x3D; \epsilon\text{-closure}(S_{0}^{NFA})$$</p>
+</blockquote>
+<p>对于 <code>/a|b/</code>，NFA 的初始态为 $1$，其闭包为 ${1, 2, 5}$。<br>我们将这个子集打包装箱，命名为一个全新的 DFA 状态：**<code>&quot;1,2,5&quot;</code>**（标记为起始状态 <code>&gt; 1,2,5</code>）。</p>
+<hr>
+<h3 id="3-2-步骤二：计算字符转移的“之字形法则”（The-Zig-Zag-Formula）"><a href="#3-2-步骤二：计算字符转移的“之字形法则”（The-Zig-Zag-Formula）" class="headerlink" title="3.2 步骤二：计算字符转移的“之字形法则”（The Zig-Zag Formula）"></a>3.2 步骤二：计算字符转移的“之字形法则”（The Zig-Zag Formula）</h3><p>假设 DFA 当前处于某个复合状态 $U &#x3D; {s_1, s_2, \dots, s_k}$，当读入字符 $c$ 时，应该跃迁到哪个新的 DFA 状态？</p>
+<p>我们需要分两步完成：</p>
+<ol>
+<li><strong>收集字符转移</strong>：从子集 $U$ 中的每一个 NFA 状态出发，找出所有在字符 $c$ 下能够到达的目标状态；</li>
+<li><strong>吸收后续 $\epsilon$ 转移</strong>：对上述所有目标状态求一次 <strong>$\epsilon$-闭包</strong>，确保把下游所有的空转移全部吸收干净！</li>
+</ol>
+<blockquote>
+<p><strong>DFA 转移计算公式</strong>：</p>
+<p>$$\delta_{DFA}(U, c) &#x3D; \epsilon\text{-closure}\left( \bigcup_{s \in U} \delta_{NFA}(s, c) \right)$$</p>
+</blockquote>
+<p>在 NFA 转换表上，这个操作就像一个<strong>“之字形折线（Zig-Zag）”</strong>：</p>
+<ul>
+<li>先横向查字符列的目标；</li>
+<li>再横向拉到最右侧的 $\epsilon^*$ 列取闭包！</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[当前 DFA 状态中的 NFA 节点] ──(查字符列)──&gt; [目标 NFA 节点] ──(查 ε* 列)──&gt; [最终合并的新状态]</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-3-步骤三：递归探索新状态（广度优先搜索队列）"><a href="#3-3-步骤三：递归探索新状态（广度优先搜索队列）" class="headerlink" title="3.3 步骤三：递归探索新状态（广度优先搜索队列）"></a>3.3 步骤三：递归探索新状态（广度优先搜索队列）</h3><p>每当上述计算产生了一个<strong>之前从未见过的状态组合</strong>（如 <code>&quot;3,4&quot;</code>），我们就必须把它作为一个新的行登记到 DFA 转换表中，并加入待处理队列，重复计算它在所有字符下的转移。直到没有新状态产生为止。</p>
+<hr>
+<h3 id="3-4-步骤四：判定-DFA-接受状态"><a href="#3-4-步骤四：判定-DFA-接受状态" class="headerlink" title="3.4 步骤四：判定 DFA 接受状态"></a>3.4 步骤四：判定 DFA 接受状态</h3><blockquote>
+<p><strong>接受状态判定准则</strong>：<br>一个 DFA 复合状态 $U$ 是接受状态，<strong>当且仅当它包含原 NFA 的接受状态</strong>：</p>
+<p>$$U \in F_{DFA} \iff S_{accept}^{NFA} \in U$$</p>
+</blockquote>
+<hr>
+<p>从 <strong>NFA（非确定性有限状态机）</strong> 转化为 <strong>DFA（确定性有限状态机）</strong> 的过程，在编译原理中被称为 <strong>“子集构造法（Subset Construction &#x2F; 幂集构造）”</strong>。</p>
+<p>这套算法的核心思想只有一句话：</p>
+<blockquote>
+<p><strong>既然 NFA 会因为 $\epsilon$ 边和多选一分支产生“分身（叠加态）”，那我们就把所有可能同时处于活跃的“分身们”打包塞进一个大圈里，把这个“大圈”当成一个全新的单一 DFA 状态！</strong></p>
+</blockquote>
+<p>我们以你刚刚写的正则表达式 <strong><code>/a|b/</code></strong> 为例，用<strong>逐帧图文演播</strong>的方式，带你走完 DFA 诞生的全过程。</p>
+<hr>
+<h3 id="初始蓝图：NFA-原始状态图与转换表"><a href="#初始蓝图：NFA-原始状态图与转换表" class="headerlink" title="初始蓝图：NFA 原始状态图与转换表"></a>初始蓝图：NFA 原始状态图与转换表</h3><p>在诞生 DFA 之前，我们手头有这张由 6 个节点构成的 NFA 图：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">                  ε              &#x27;a&#x27;              ε</span><br><span class="line">           ┌───────────&gt; ( 2 ) ───────&gt; ( 3 ) ───────────┐</span><br><span class="line">           │                                             ▼</span><br><span class="line">  &gt; ( 1 ) ─┤                                           * (( 4 ))</span><br><span class="line">[起点]     │      ε              &#x27;b&#x27;              ε     [终点]</span><br><span class="line">           └───────────&gt; ( 5 ) ───────&gt; ( 6 ) ───────────┘</span><br></pre></td></tr></table></figure>
+
+<p>对应查表字典（<code>nfaTable</code>）：</p>
+<ul>
+<li><code>1</code> 的 $\epsilon$ 闭包 $\rightarrow$ <strong><code>[1, 2, 5]</code></strong></li>
+<li><code>2</code> 吃了 <code>&#39;a&#39;</code> 变 **<code>3</code>**（3 的 $\epsilon$ 闭包是 **<code>[3, 4]</code>**）</li>
+<li><code>5</code> 吃了 <code>&#39;b&#39;</code> 变 **<code>6</code>**（6 的 $\epsilon$ 闭包是 **<code>[6, 4]</code>**）</li>
+<li><code>4</code> 是接受态。</li>
+<li></li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Map</span>(<span class="number">6</span>) &#123;</span><br><span class="line">  <span class="string">&#x27;1&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">1</span>) &#123; <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;1&#x27;</span>, <span class="string">&#x27;2&#x27;</span>, <span class="string">&#x27;5&#x27;</span> ] &#125;,</span><br><span class="line">  <span class="string">&#x27;2&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">2</span>) &#123; <span class="string">&#x27;a&#x27;</span> =&gt; [ <span class="string">&#x27;3&#x27;</span> ], <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;2&#x27;</span> ] &#125;,</span><br><span class="line">  <span class="string">&#x27;3&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">1</span>) &#123; <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;3&#x27;</span>, <span class="string">&#x27;4&#x27;</span> ] &#125;,</span><br><span class="line">  <span class="string">&#x27;4&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">1</span>) &#123; <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;4&#x27;</span> ] &#125;,</span><br><span class="line">  <span class="string">&#x27;5&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">2</span>) &#123; <span class="string">&#x27;b&#x27;</span> =&gt; [ <span class="string">&#x27;6&#x27;</span> ], <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;5&#x27;</span> ] &#125;,</span><br><span class="line">  <span class="string">&#x27;6&#x27;</span> =&gt; <span class="title class_">Map</span>(<span class="number">1</span>) &#123; <span class="string">&#x27;ε&#x27;</span> =&gt; [ <span class="string">&#x27;6&#x27;</span>, <span class="string">&#x27;4&#x27;</span> ] &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="第一帧：第-1-个-DFA-超级节点的诞生（游戏开局）"><a href="#第一帧：第-1-个-DFA-超级节点的诞生（游戏开局）" class="headerlink" title="第一帧：第 1 个 DFA 超级节点的诞生（游戏开局）"></a>第一帧：第 1 个 DFA 超级节点的诞生（游戏开局）</h3><ul>
+<li><strong>提问</strong>：比赛还没开始，字符一个都没输入，系统可能停在哪些节点？</li>
+<li><strong>追踪</strong>：<br>从起点 1 出发，因为有无需消耗字符的 $\epsilon$ 滑行绿道，系统在第 0 秒就已经<strong>同时存在于 1、2、5 三个节点上了</strong>！</li>
+<li><strong>操作</strong>：<br>我们拿一个大麻袋，把 <code>&#123;1, 2, 5&#125;</code> 打包成一个<strong>全新的超级节点</strong>，命名为 <strong><code>状态 A</code>（即 <code>&quot;1,2,5&quot;</code>）</strong>。它就是 DFA 的起始状态！</li>
+</ul>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐</span><br><span class="line">   DFA 起始节点 A: &quot;1,2,5&quot;</span><br><span class="line">│                         │</span><br><span class="line">    ( 1 ) ──ε──&gt; ( 2 )</span><br><span class="line">│     │                   │</span><br><span class="line">      └──ε──&gt; ( 5 )</span><br><span class="line">└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="第二帧：超级节点-A-探索字符-39-a-39-（之字形跳跃）"><a href="#第二帧：超级节点-A-探索字符-39-a-39-（之字形跳跃）" class="headerlink" title="第二帧：超级节点 A 探索字符 &#39;a&#39;（之字形跳跃）"></a>第二帧：超级节点 A 探索字符 <code>&#39;a&#39;</code>（之字形跳跃）</h3><p>现在，假设外界喂给超级节点 A 一个字符 **<code>&#39;a&#39;</code>**：</p>
+<ol>
+<li><strong>麻袋里的每个人各自响应</strong>：<ul>
+<li>节点 1：“我没有 <code>&#39;a&#39;</code> 的路”；</li>
+<li>节点 5：“我只有 <code>&#39;b&#39;</code>，不吃 <code>&#39;a&#39;</code>”；</li>
+<li><strong>节点 2 站出来</strong>：“我有 <code>&#39;a&#39;</code>！吃了 <code>&#39;a&#39;</code>，我跳到了 <strong>节点 3</strong>！”</li>
+</ul>
+</li>
+<li><strong>吸收目的地后续的 $\epsilon$ 边（闭包展开）</strong>：<ul>
+<li>刚落到节点 3，发现节点 3 连着一条 $\epsilon$ 边通往节点 4！</li>
+<li>于是瞬间滑翔到了节点 4。</li>
+<li>吃完 <code>&#39;a&#39;</code> 后的最终落点：**<code>[3, 4]</code>**！</li>
+</ul>
+</li>
+<li><strong>诞生新超级节点 B</strong>：<ul>
+<li>我们拿第二个麻袋，把 <code>&#123;3, 4&#125;</code> 打包成 <strong><code>状态 B</code>（即 <code>&quot;3,4&quot;</code>）</strong>；</li>
+<li>并拉出一条确定的实线转移边：**<code>A ──[&#39;a&#39;]──&gt; B</code>**！</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">┌ ─ ─ ─ ─ ─ ─ ─ ┐                       ┌ ─ ─ ─ ─ ─ ─ ─ ┐</span><br><span class="line">  超级节点 A                              超级节点 B</span><br><span class="line">│    &quot;1,2,5&quot;    │                       │     &quot;3,4&quot;     │</span><br><span class="line">     ( 2 ) ────────────── [&#x27;a&#x27;] ──────────────&gt; ( 3 )   │</span><br><span class="line">│               │                       │         │     │</span><br><span class="line">└ ─ ─ ─ ─ ─ ─ ─ ┘                                 ▼ ε</span><br><span class="line">                                        │       (( 4 )) │</span><br><span class="line">                                        └ ─ ─ ─ ─ ─ ─ ─ ┘</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="第三帧：超级节点-A-探索字符-39-b-39"><a href="#第三帧：超级节点-A-探索字符-39-b-39" class="headerlink" title="第三帧：超级节点 A 探索字符 &#39;b&#39;"></a>第三帧：超级节点 A 探索字符 <code>&#39;b&#39;</code></h3><p>现在，假设外界喂给超级节点 A 另一个字符 **<code>&#39;b&#39;</code>**：</p>
+<ol>
+<li><strong>麻袋里的每个人各自响应</strong>：<ul>
+<li>节点 1、2 不吃 <code>&#39;b&#39;</code>；</li>
+<li><strong>节点 5 站出来</strong>：“吃了 <code>&#39;b&#39;</code>，我跳到了 <strong>节点 6</strong>！”</li>
+</ul>
+</li>
+<li><strong>吸收闭包</strong>：<ul>
+<li>节点 6 顺着 $\epsilon$ 边滑翔到了节点 4；</li>
+<li>吃完 <code>&#39;b&#39;</code> 后的最终落点：**<code>[6, 4]</code>**！</li>
+</ul>
+</li>
+<li><strong>诞生新超级节点 C</strong>：<ul>
+<li>我们拿第三个麻袋，把 <code>&#123;6, 4&#125;</code> 打包成 <strong><code>状态 C</code>（即 <code>&quot;6,4&quot;</code>）</strong>；</li>
+<li>拉出实线边：**<code>A ──[&#39;b&#39;]──&gt; C</code>**！</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">┌ ─ ─ ─ ─ ─ ─ ─ ┐</span><br><span class="line">  超级节点 B</span><br><span class="line">│     &quot;3,4&quot;     │</span><br><span class="line">└ ─ ─ ─ ─ ─ ─ ─ ┘</span><br><span class="line">        ▲</span><br><span class="line">        │ [&#x27;a&#x27;]</span><br><span class="line">        │</span><br><span class="line">┌ ─ ─ ─ ─ ─ ─ ─ ┐</span><br><span class="line">  超级节点 A</span><br><span class="line">│    &quot;1,2,5&quot;    │</span><br><span class="line">└ ─ ─ ─ ─ ─ ─ ─ ┘</span><br><span class="line">        │</span><br><span class="line">        │ [&#x27;b&#x27;]</span><br><span class="line">        ▼</span><br><span class="line">┌ ─ ─ ─ ─ ─ ─ ─ ┐</span><br><span class="line">  超级节点 C</span><br><span class="line">│     &quot;6,4&quot;     │</span><br><span class="line">└ ─ ─ ─ ─ ─ ─ ─ ┘</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="第四帧：检查新节点-B-和-C-的出路（队列收敛）"><a href="#第四帧：检查新节点-B-和-C-的出路（队列收敛）" class="headerlink" title="第四帧：检查新节点 B 和 C 的出路（队列收敛）"></a>第四帧：检查新节点 B 和 C 的出路（队列收敛）</h3><p>现在队列里有刚发现的 <strong>节点 B (<code>&quot;3,4&quot;</code>)</strong> 和 **节点 C (<code>&quot;6,4&quot;</code>)**：</p>
+<ul>
+<li>问节点 B：“你里面的 3 和 4，还能吃 <code>&#39;a&#39;</code> 或 <code>&#39;b&#39;</code> 吗？”<ul>
+<li>查表：节点 3 和 4 都是终点段，没有任何字符出边。</li>
+<li>$\rightarrow$ <strong>节点 B 没有任何出边，填空。</strong></li>
+</ul>
+</li>
+<li>问节点 C：“你里面的 6 和 4，还能吃 <code>&#39;a&#39;</code> 或 <code>&#39;b&#39;</code> 吗？”<ul>
+<li>查表：节点 6 和 4 同样没有任何字符出边。</li>
+<li>$\rightarrow$ <strong>节点 C 没有任何出边，填空。</strong></li>
+</ul>
+</li>
+</ul>
+<p>没有产生任何新的超级节点，待处理队列变空，<strong>主循环结束！</strong></p>
+<hr>
+<h3 id="第五帧：插上终点红旗（确定接受态）"><a href="#第五帧：插上终点红旗（确定接受态）" class="headerlink" title="第五帧：插上终点红旗（确定接受态）"></a>第五帧：插上终点红旗（确定接受态）</h3><p>现在整张图骨架已经成型，谁是接受状态（终点）？</p>
+<ul>
+<li>规则：原 NFA 的最终接受态是 <strong>4 号节点</strong>；</li>
+<li>检查每一个超级节点的麻袋：<ul>
+<li>**节点 A (<code>&quot;1,2,5&quot;</code>)**：没有 4 $\rightarrow$ 普通起点；</li>
+<li><strong>节点 B (<code>&quot;3,4&quot;</code>)<strong>：</strong>里面包含 4！</strong> $\rightarrow$ 插上红旗，成为接受态！</li>
+<li><strong>节点 C (<code>&quot;6,4&quot;</code>)<strong>：</strong>里面包含 4！</strong> $\rightarrow$ 插上红旗，成为接受态！</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="终极对比：NFA-与-DFA-的蜕变"><a href="#终极对比：NFA-与-DFA-的蜕变" class="headerlink" title="终极对比：NFA 与 DFA 的蜕变"></a>终极对比：NFA 与 DFA 的蜕变</h3><h4 id="蜕变前：NFA（6-个节点，充斥着混乱的虚线-epsilon-边）"><a href="#蜕变前：NFA（6-个节点，充斥着混乱的虚线-epsilon-边）" class="headerlink" title="蜕变前：NFA（6 个节点，充斥着混乱的虚线 $\epsilon$ 边）"></a>蜕变前：NFA（6 个节点，充斥着混乱的虚线 $\epsilon$ 边）</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">                ε              &#x27;a&#x27;              ε</span><br><span class="line">         ┌───────────&gt; ( 2 ) ───────&gt; ( 3 ) ───────────┐</span><br><span class="line">         │                                             ▼</span><br><span class="line">&gt; ( 1 ) ─┤                                           * (( 4 ))</span><br><span class="line">         │      ε              &#x27;b&#x27;              ε     </span><br><span class="line">         └───────────&gt; ( 5 ) ───────&gt; ( 6 ) ───────────┘</span><br></pre></td></tr></table></figure>
+
+<h4 id="蜕变后：DFA（只有-3-个确定节点，0-条-epsilon-边，单线直达）"><a href="#蜕变后：DFA（只有-3-个确定节点，0-条-epsilon-边，单线直达）" class="headerlink" title="蜕变后：DFA（只有 3 个确定节点，0 条 $\epsilon$ 边，单线直达）"></a>蜕变后：DFA（只有 3 个确定节点，0 条 $\epsilon$ 边，单线直达）</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">          ┌─────── &#x27;a&#x27; ───────&gt; * (( 3,4 ))</span><br><span class="line">          │</span><br><span class="line">&gt; ( 1,2,5 )</span><br><span class="line">          │</span><br><span class="line">          └─────── &#x27;b&#x27; ───────&gt; * (( 6,4 ))</span><br></pre></td></tr></table></figure>
+
+<p>这就是 DFA 产生的完整闭环！它通过<strong>“闭包打包、单步吃字、吸收滑行、确定连线”</strong>，把原本充满不确定性、需要到处回溯试探的图，重构为了一个没有任何歧义的高速公路网！</p>
+<h3 id="最终生成的-DFA-转换表"><a href="#最终生成的-DFA-转换表" class="headerlink" title="最终生成的 DFA 转换表"></a>最终生成的 DFA 转换表</h3><table>
+<thead>
+<tr>
+<th align="center">DFA 状态</th>
+<th align="center">输入 <code>&#39;a&#39;</code></th>
+<th align="center">输入 <code>&#39;b&#39;</code></th>
+<th align="center">是否接受态？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong><code>&gt; 1,2,5</code></strong></td>
+<td align="center"><code>&quot;3,4&quot;</code></td>
+<td align="center"><code>&quot;6,4&quot;</code></td>
+<td align="center">否</td>
+</tr>
+<tr>
+<td align="center"><strong><code>* 3,4</code></strong></td>
+<td align="center">$-$</td>
+<td align="center">$-$</td>
+<td align="center"><strong>是 (Accepting)</strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>* 6,4</code></strong></td>
+<td align="center">$-$</td>
+<td align="center">$-$</td>
+<td align="center"><strong>是 (Accepting)</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="5-代码工程实现-TypeScript"><a href="#5-代码工程实现-TypeScript" class="headerlink" title="5. 代码工程实现 (TypeScript)"></a>5. 代码工程实现 (TypeScript)</h2><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">DFA</span> &#123;</span><br><span class="line">    <span class="attr">nfaTable</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt;&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">constructor</span>(<span class="params"><span class="keyword">public</span> <span class="attr">nfa</span>: NFA</span>) &#123;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">nfa</span> = nfa;</span><br><span class="line">        <span class="variable language_">this</span>.<span class="property">nfaTable</span> = nfa.<span class="title function_">getTransitionTable</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    startId = <span class="string">&#x27;1&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="title function_">getAlphabet</span>(<span class="attr">nfaTable</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt;&gt;): <span class="built_in">string</span>[] &#123;</span><br><span class="line">        <span class="keyword">const</span> alphabet = <span class="keyword">new</span> <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">const</span> row <span class="keyword">of</span> nfaTable.<span class="title function_">values</span>()) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">const</span> <span class="built_in">symbol</span> <span class="keyword">of</span> row.<span class="title function_">keys</span>()) &#123;</span><br><span class="line">                <span class="keyword">if</span> (<span class="built_in">symbol</span> !== <span class="string">&#x27;ε&#x27;</span>) &#123;</span><br><span class="line">                    alphabet.<span class="title function_">add</span>(<span class="built_in">symbol</span>);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="title class_">Array</span>.<span class="title function_">from</span>(alphabet).<span class="title function_">sort</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 将 NFA 状态 ID 集合规范化为唯一的 DFA 状态标识字符串（如 [&#x27;2&#x27;, &#x27;1&#x27;, &#x27;5&#x27;] -&gt; &#x27;1,2,5&#x27;）</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="title function_">formatStateKey</span>(<span class="attr">ids</span>: <span class="title class_">Iterable</span>&lt;<span class="built_in">string</span>&gt;): <span class="built_in">string</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title class_">Array</span>.<span class="title function_">from</span>(ids).<span class="title function_">sort</span>(<span class="function">(<span class="params">a, b</span>) =&gt;</span> <span class="title class_">Number</span>(a) - <span class="title class_">Number</span>(b)).<span class="title function_">join</span>(<span class="string">&#x27;,&#x27;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">getTransitionTable</span>(): <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt;&gt; &#123;</span><br><span class="line">        <span class="keyword">const</span> startClosure = <span class="variable language_">this</span>.<span class="property">nfaTable</span>.<span class="title function_">get</span>(<span class="variable language_">this</span>.<span class="property">startId</span>)!.<span class="title function_">get</span>(<span class="string">&#x27;ε&#x27;</span>)!;</span><br><span class="line">        <span class="keyword">const</span> startStateKey = <span class="variable language_">this</span>.<span class="title function_">formatStateKey</span>(startClosure);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 使用队列做 BFS 搜索，同时用 visited 集合在入队前剪枝</span></span><br><span class="line">        <span class="keyword">const</span> <span class="attr">queue</span>: <span class="built_in">string</span>[][] = [startClosure];</span><br><span class="line">        <span class="keyword">const</span> visited = <span class="keyword">new</span> <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;([startStateKey]);</span><br><span class="line">        <span class="keyword">const</span> <span class="attr">dfaTable</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt;&gt; = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (queue.<span class="property">length</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">const</span> currentIds = queue.<span class="title function_">shift</span>()!;</span><br><span class="line">            <span class="keyword">const</span> currentStateKey = <span class="variable language_">this</span>.<span class="title function_">formatStateKey</span>(currentIds);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 记录当前复合状态接收各字符后转移到的 NFA 状态集合</span></span><br><span class="line">            <span class="keyword">const</span> symbolTransitions = <span class="keyword">new</span> <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;&gt;();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">const</span> nfaId <span class="keyword">of</span> currentIds) &#123;</span><br><span class="line">                <span class="keyword">const</span> nfaRow = <span class="variable language_">this</span>.<span class="property">nfaTable</span>.<span class="title function_">get</span>(nfaId);</span><br><span class="line">                <span class="keyword">if</span> (!nfaRow) <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">const</span> [<span class="built_in">symbol</span>, nextIds] <span class="keyword">of</span> nfaRow.<span class="title function_">entries</span>()) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (<span class="built_in">symbol</span> === <span class="string">&#x27;ε&#x27;</span>) <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">let</span> targetSet = symbolTransitions.<span class="title function_">get</span>(<span class="built_in">symbol</span>);</span><br><span class="line">                    <span class="keyword">if</span> (!targetSet) &#123;</span><br><span class="line">                        targetSet = <span class="keyword">new</span> <span class="title class_">Set</span>&lt;<span class="built_in">string</span>&gt;();</span><br><span class="line">                        symbolTransitions.<span class="title function_">set</span>(<span class="built_in">symbol</span>, targetSet);</span><br><span class="line">                    &#125;</span><br><span class="line"></span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">const</span> nextId <span class="keyword">of</span> nextIds) &#123;</span><br><span class="line">                        <span class="keyword">const</span> closure = <span class="variable language_">this</span>.<span class="property">nfaTable</span>.<span class="title function_">get</span>(nextId)?.<span class="title function_">get</span>(<span class="string">&#x27;ε&#x27;</span>);</span><br><span class="line">                        <span class="keyword">if</span> (closure) &#123;</span><br><span class="line">                            <span class="keyword">for</span> (<span class="keyword">const</span> cid <span class="keyword">of</span> closure) &#123;</span><br><span class="line">                                targetSet.<span class="title function_">add</span>(cid);</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 单次遍历完成：1. 填充 DFA 转移表  2. 发现新状态入队</span></span><br><span class="line">            <span class="keyword">const</span> <span class="attr">row</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt; = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">const</span> [<span class="built_in">symbol</span>, targetSet] <span class="keyword">of</span> symbolTransitions.<span class="title function_">entries</span>()) &#123;</span><br><span class="line">                <span class="keyword">const</span> targetKey = <span class="variable language_">this</span>.<span class="title function_">formatStateKey</span>(targetSet);</span><br><span class="line">                row.<span class="title function_">set</span>(<span class="built_in">symbol</span>, targetKey);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 入队前剪枝：仅当该 DFA 复合状态尚未发现过时才推入队列，避免重复排队与出队</span></span><br><span class="line">                <span class="keyword">if</span> (!visited.<span class="title function_">has</span>(targetKey)) &#123;</span><br><span class="line">                    visited.<span class="title function_">add</span>(targetKey);</span><br><span class="line">                    queue.<span class="title function_">push</span>(<span class="title class_">Array</span>.<span class="title function_">from</span>(targetSet));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            dfaTable.<span class="title function_">set</span>(currentStateKey, row);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> dfaTable;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%AD%A3%E5%88%99/" rel="tag">正则</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag">编译原理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/c106a03ba7c5/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Babel 源码与插件
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/8700de120fca/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">正则引擎中的有限自动机 ④ NFA acceptor/table</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

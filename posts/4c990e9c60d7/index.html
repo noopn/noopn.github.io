@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Rainmeter 自定义组件 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-other/Rainmeter"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Rainmeter 自定义组件
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/4c990e9c60d7/" class="article-date">
+  <time datetime="2024-10-13T09:44:18.000Z" itemprop="datePublished">2024-10-13</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4.3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">19 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="Rainmeter"><a href="#Rainmeter" class="headerlink" title="Rainmeter"></a>Rainmeter</h4><p>安装 <a target="_blank" rel="noopener" href="https://www.rainmeter.net/">Rainmeter</a> 通过 vscode 打开 skins 所在的文件夹路径</p>
+<p>创建新的 skins 文件夹作为根路径，创建二级文件夹作为组件，内部创建一个 <code>.ini</code> 文件 ,<strong>编码格式选为UTF-16LE</strong></p>
+<p>选择  refreash 重新加载组件， 通过 About Rainmeter 可以看见日志信息。</p>
+<h4 id="显示PVE服务器的磁盘信息"><a href="#显示PVE服务器的磁盘信息" class="headerlink" title="显示PVE服务器的磁盘信息"></a>显示PVE服务器的磁盘信息</h4><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Rainmeter]</span></span><br><span class="line"><span class="comment">; This section contains general settings that can be used to change how Rainmeter behaves.</span></span><br><span class="line"><span class="comment">; 这是组件的全局刷新频率，单位是毫秒 (ms)。</span></span><br><span class="line"><span class="attr">Update</span>=<span class="number">1000</span></span><br><span class="line"><span class="comment">; 这是为整个小组件设置一张底层背景图片。</span></span><br><span class="line"><span class="comment">; 需要特别注意的是前面的 #@#：这是 Rainmeter 的一个内置魔法变量。它代表了当前组件的资源目录（通常路径是 你的组件文件夹\@Resources）。所以这行代码的意思是：去 @Resources 文件夹里读取一张叫 Background.png 的图片作为整体背景。</span></span><br><span class="line">Background=<span class="comment">#@#Background.png</span></span><br><span class="line"><span class="comment">; 这决定了背景图片的拉伸和缩放模式。</span></span><br><span class="line"><span class="comment">; 在 Rainmeter 中，3 代表开启“九宫格缩放”（Scale with Margins）模式。这意味着当你的组件内容变多、尺寸变大时，背景图片不会像普通的图片那样直接被拉伸到变形，而是配合下面的 BackgroundMargins 来智能缩放。</span></span><br><span class="line"><span class="attr">BackgroundMode</span>=<span class="number">3</span></span><br><span class="line"><span class="comment">; 这个设置是专门配合 BackgroundMode=3 使用的，它定义了背景图片的“保护边缘”（也就是九宫格缩放的边界）。</span></span><br><span class="line"><span class="comment">; 这四个数字分别代表：左, 上, 右, 下 的像素距离。</span></span><br><span class="line"><span class="comment">; 0,34,0,14 的意思是：背景图片的顶部 34 个像素、底部 14 个像素在任何情况下都不参与拉伸变形，只有中间的部分会被拉长去填满空间。这通常用来保证圆角背景框的四角和边框边缘永远保持清晰，不会因为内容变长而变得模糊或被拉长。</span></span><br><span class="line"><span class="attr">BackgroundMargins</span>=<span class="number">0</span>,<span class="number">34</span>,<span class="number">0</span>,<span class="number">14</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 1. 全局变量配置区</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[Variables]</span></span><br><span class="line"><span class="comment">; Variables declared here can be used later on between two # characters (e.g. #MyVariable#).</span></span><br><span class="line"><span class="attr">fontName</span>=Trebuchet MS</span><br><span class="line"><span class="attr">textSize</span>=<span class="number">8</span></span><br><span class="line"><span class="attr">colorBar</span>=<span class="number">235</span>,<span class="number">170</span>,<span class="number">0</span>,<span class="number">255</span></span><br><span class="line"><span class="attr">colorText</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">205</span></span><br><span class="line"><span class="comment">; 你的 PVE IP 地址</span></span><br><span class="line"><span class="attr">PveIP</span>=pve.if<span class="literal">true</span>.club</span><br><span class="line"><span class="comment">; 节点名称</span></span><br><span class="line"><span class="attr">Node</span>=pve</span><br><span class="line"><span class="comment">; 你要监控的物理磁盘名称（如 sda, nvme0n1）</span></span><br><span class="line"><span class="attr">Disk</span>=/dev/sdc</span><br><span class="line"><span class="comment">; 在这里填入你的完整 API Token 凭证</span></span><br><span class="line"><span class="attr">Token</span>=root@pam!pveAPIToken=<span class="number">4</span>d7c041b-<span class="number">3</span>a49-<span class="number">46</span>c2-b3df-<span class="number">46</span>d7e011cdd5</span><br><span class="line"></span><br><span class="line"><span class="comment">; 字体与背景颜色设置</span></span><br><span class="line"><span class="attr">FontName</span>=Microsoft YaHei</span><br><span class="line"><span class="attr">BgColor</span>=<span class="number">20</span>,<span class="number">20</span>,<span class="number">20</span>,<span class="number">220</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 2. 数据源提取 (Measures)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 2. 数据源提取 (Measures)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[MeasureSmartAPI]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=<span class="string">&quot;https://#PveIP#/api2/json/nodes/#Node#/disks/smart?disk=#Disk#&quot;</span></span><br><span class="line"><span class="attr">Header</span>=<span class="string">&quot;Authorization: PVEAPIToken=#Token#&quot;</span></span><br><span class="line"><span class="comment">; 使用正向预查并且修复了空白符匹配 (\s*)，防止吞掉温度数字。</span></span><br><span class="line"><span class="comment">; 强制按这个顺序抓取数据：1.温度 2.坏道 3.健康状态</span></span><br><span class="line"><span class="attr">RegExp</span>=<span class="string">&quot;(?si)(?=.*?Current Drive Temperature:\s*(\d+))(?=.*?Elements in grown defect list:\s*(\d+))(?=.*?\&quot;health\&quot;\s*:\s*\&quot;(.*?)\&quot;)&quot;</span></span><br><span class="line"><span class="attr">UpdateRate</span>=<span class="number">60</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureTemp]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 1 个括号：温度</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureDefects]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 2 个括号：坏道</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureHealth]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureSmartAPI]</span><br><span class="line"><span class="comment">; 对应正则第 3 个括号：健康状态</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ; ==================================</span></span><br><span class="line"><span class="comment">; ; 3. 动态颜色告警逻辑 (Calc)</span></span><br><span class="line"><span class="comment">; ; ==================================</span></span><br><span class="line"><span class="section">[MeasureDefectColor]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 去掉方括号，避免初始加载时因空值报错</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureDefects</span><br><span class="line"><span class="comment">; 如果坏道数大于 0，数字变红；等于 0，保持绿色</span></span><br><span class="line"><span class="attr">IfAboveValue</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">IfAboveAction</span>=[!SetOption MeterDefectValue FontColor <span class="string">&quot;255,70,70,255&quot;</span>]</span><br><span class="line"><span class="attr">IfEqualValue</span>=<span class="number">0</span></span><br><span class="line"><span class="attr">IfEqualAction</span>=[!SetOption MeterDefectValue FontColor <span class="string">&quot;100,255,100,255&quot;</span>]</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 温度动态颜色 (超过 50 度变黄，超过 60 度变红)</span></span><br><span class="line"><span class="section">[MeasureTempColor]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 去掉方括号，直接引用 Measure 名称</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureTemp</span><br><span class="line"><span class="attr">IfAboveValue</span>=<span class="number">60</span></span><br><span class="line"><span class="attr">IfAboveAction</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,70,70,255&quot;</span>]</span><br><span class="line"><span class="comment">; 去掉方括号，避免空值报错</span></span><br><span class="line"><span class="attr">IfCondition</span>=(MeasureTemp &gt; <span class="number">50</span>) &amp;&amp; (MeasureTemp &lt;= <span class="number">60</span>)</span><br><span class="line"><span class="attr">IfTrueAction</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,200,50,255&quot;</span>]</span><br><span class="line"><span class="attr">IfCondition2</span>=MeasureTemp &lt;= <span class="number">50</span></span><br><span class="line"><span class="attr">IfTrueAction2</span>=[!SetOption MeterTempValue FontColor <span class="string">&quot;255,255,255,255&quot;</span>]</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"><span class="comment">; STYLES are used to &quot;centralize&quot; options</span></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleTitle]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Center</span><br><span class="line"><span class="attr">StringCase</span>=Upper</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">50</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="attr">FontSize</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleLeftText]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Left</span><br><span class="line"><span class="comment">; Meters using styleLeftText will be left-aligned.</span></span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleRightText]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Right</span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="section">[styleBar]</span></span><br><span class="line">BarColor=<span class="comment">#colorBar#</span></span><br><span class="line"><span class="attr">BarOrientation</span>=HORIZONTAL</span><br><span class="line"><span class="attr">SolidColor</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">15</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 4. UI 界面渲染 (Meters)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 标题栏</span></span><br><span class="line"><span class="section">[MeterTitle]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleTitle</span><br><span class="line"><span class="comment">; Using MeterStyle=styleTitle will basically &quot;copy&quot; the</span></span><br><span class="line"><span class="comment">; contents of the [styleTitle] section here during runtime.</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">100</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">12</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">18</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;iSCSI Monitor (#Disk#)&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 健康状态 ---</span></span><br><span class="line"><span class="section">[MeterHealthLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">40</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Health:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterHealthValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureHealth</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="comment">; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels</span></span><br><span class="line"><span class="comment">; below the Y value of the previous meter (i.e it&#x27;s the same as in meterLabelCPU).</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1&quot;</span></span><br><span class="line"><span class="attr">AutoScale</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 硬盘温度 ---</span></span><br><span class="line"><span class="section">[MeterTempLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">58</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Temperature:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterTempValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureTemp</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="comment">; r stands for relative. In this case, the Y postition of meterValueCPU is 0 pixels</span></span><br><span class="line"><span class="comment">; below the Y value of the previous meter (i.e it&#x27;s the same as in meterLabelCPU).</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1 °C&quot;</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 增长缺陷列表 (坏道) ---</span></span><br><span class="line"><span class="section">[MeterDefectLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">76</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Grown Defects:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterDefectValue]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeasureName</span>=MeasureDefects</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1&quot;</span></span><br></pre></td></tr></table></figure>
+
+
+<h4 id="显示-BWG-的流量统计"><a href="#显示-BWG-的流量统计" class="headerlink" title="显示 BWG 的流量统计"></a>显示 BWG 的流量统计</h4><figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br><span class="line">242</span><br><span class="line">243</span><br><span class="line">244</span><br><span class="line">245</span><br><span class="line">246</span><br><span class="line">247</span><br><span class="line">248</span><br><span class="line">249</span><br><span class="line">250</span><br><span class="line">251</span><br><span class="line">252</span><br><span class="line">253</span><br><span class="line">254</span><br><span class="line">255</span><br><span class="line">256</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; Rainmeter 引擎核心配置区</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="section">[Rainmeter]</span></span><br><span class="line"><span class="comment">; 组件的全局刷新频率，单位是毫秒 (ms)。1000 代表每 1 秒刷新一次整个皮肤的显示</span></span><br><span class="line"><span class="attr">Update</span>=<span class="number">1000</span></span><br><span class="line"><span class="comment">; 设置皮肤的整体背景图片。#@# 是魔法变量，代表 @Resources 资源文件夹路径</span></span><br><span class="line">Background=<span class="comment">#@#Background.png</span></span><br><span class="line"><span class="comment">; 3 代表开启“九宫格缩放”模式，这样当内容增多时，背景只会拉伸中间部分，四角不会变形</span></span><br><span class="line"><span class="attr">BackgroundMode</span>=<span class="number">3</span></span><br><span class="line"><span class="comment">; 定义九宫格缩放的保护边缘（左, 上, 右, 下）。这几个像素范围内的背景图片不会参与拉伸</span></span><br><span class="line"><span class="attr">BackgroundMargins</span>=<span class="number">0</span>,<span class="number">34</span>,<span class="number">0</span>,<span class="number">14</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; 1. 全局变量配置区 (定义后可以在下方使用 #变量名# 来引用)</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="section">[Variables]</span></span><br><span class="line"><span class="comment">; 定义全局默认英文字体 (注意：Rainmeter变量不区分大小写，会被下方的 FontName 覆盖)</span></span><br><span class="line"><span class="attr">fontName</span>=Trebuchet MS</span><br><span class="line"><span class="comment">; 定义默认字体大小为 8</span></span><br><span class="line"><span class="attr">textSize</span>=<span class="number">8</span></span><br><span class="line"><span class="comment">; 定义进度条的默认颜色 (R, G, B, 透明度)</span></span><br><span class="line"><span class="attr">colorBar</span>=<span class="number">235</span>,<span class="number">170</span>,<span class="number">0</span>,<span class="number">255</span></span><br><span class="line"><span class="comment">; 定义文字的默认颜色 (白色，透明度 205)</span></span><br><span class="line"><span class="attr">colorText</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">205</span></span><br><span class="line"><span class="comment">; 覆盖上面的 fontName，设置为微软雅黑字体，支持中文显示</span></span><br><span class="line"><span class="attr">FontName</span>=Microsoft YaHei</span><br><span class="line"><span class="comment">; 定义背景的颜色 (R, G, B, 透明度) - 此变量目前在代码中备用，未直接调用</span></span><br><span class="line"><span class="attr">BgColor</span>=<span class="number">20</span>,<span class="number">20</span>,<span class="number">20</span>,<span class="number">220</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; 2. 数据源提取 (Measures) - 负责从网络 API 拉取原始数据</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="section">[MeasureMainAPI]</span></span><br><span class="line"><span class="comment">; 声明该 Measure 的类型为 WebParser (网页解析器)，专门用来处理网络请求</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="comment">; API 的请求地址，包含你的节点 veid 和 API Key 凭证</span></span><br><span class="line"><span class="attr">URL</span>=<span class="string">&quot;https://api.64clouds.com/v1/getServiceInfo?veid=1859048&amp;api_key=private_sC8OXr5e1AQI4E4qEPYEmlnd&quot;</span></span><br><span class="line"><span class="comment">; 正则表达式：使用 (?si) 忽略大小写和换行，(?=.*?) 正向预查确保无视字段顺序，并提取 3 个括号里的值</span></span><br><span class="line"><span class="attr">RegExp</span>=<span class="string">&quot;(?si)(?=.*?\&quot;node_location\&quot;\s*:\s*\&quot;(.*?)\&quot;)(?=.*?\&quot;plan_monthly_data\&quot;\s*:\s*(\d+))(?=.*?\&quot;data_counter\&quot;\s*:\s*(\d+))&quot;</span></span><br><span class="line"><span class="comment">; 限制请求频率：UpdateRate=60 意味着每隔 60 次全局刷新(即 60 秒)才请求一次网络，防止被 API 封禁</span></span><br><span class="line"><span class="attr">UpdateRate</span>=<span class="number">60</span></span><br><span class="line"><span class="comment">; 开启调试模式：会在当前皮肤文件夹生成 WebParserDump.txt 供你查看原始抓取数据。确认没问题后可以删掉这行</span></span><br><span class="line"><span class="comment">; Debug=2</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 提取节点位置 (对应上面正则里的第 1 个括号) ---</span></span><br><span class="line"><span class="section">[MeasureNodeLocation]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="comment">; 告诉这个子 Measure，数据来源于父组件 [MeasureMainAPI]</span></span><br><span class="line"><span class="attr">URL</span>=[MeasureMainAPI]</span><br><span class="line"><span class="comment">; 指定提取正则匹配成功后的第 1 个子字符串</span></span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 提取总流量计划 Bytes (对应正则里的第 2 个括号) ---</span></span><br><span class="line"><span class="section">[MeasureMonthlyData]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureMainAPI]</span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 提取已使用流量 Bytes (对应正则里的第 3 个括号) ---</span></span><br><span class="line"><span class="section">[MeasureDataCounter]</span></span><br><span class="line"><span class="attr">Measure</span>=WebParser</span><br><span class="line"><span class="attr">URL</span>=[MeasureMainAPI]</span><br><span class="line"><span class="attr">StringIndex</span>=<span class="number">3</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; 3. 动态数据计算 (Calc) - 负责将提取到的 Bytes 转换为 GB 并计算百分比</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 计算已用流量 GB ---</span></span><br><span class="line"><span class="section">[MeasureDataUsedGB]</span></span><br><span class="line"><span class="comment">; 声明类型为 Calc (计算器)</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 运算公式：用截取到的原始 Bytes 数据除以 1024的三次方 (1073741824)，转换为 GB</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureDataCounter / <span class="number">1073741824</span></span><br><span class="line"><span class="comment">; 开启动态变量支持，确保数值随时间实时运算更新</span></span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 计算总流量 GB ---</span></span><br><span class="line"><span class="section">[MeasureTotalDataGB]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 运算公式：总流量 Bytes 转为 GB</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureMonthlyData / <span class="number">1073741824</span></span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 专供进度条使用的计算组件 ---</span></span><br><span class="line"><span class="section">[MeasureDataUsageCalc]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 进度条的当前进度值为：已用 GB</span></span><br><span class="line"><span class="attr">Formula</span>=MeasureDataUsedGB</span><br><span class="line"><span class="comment">; 重点：必须告诉进度条“最大值”是多少。这里将最大值设为总流量 GB</span></span><br><span class="line"><span class="attr">MaxValue</span>=[MeasureTotalDataGB]</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 计算使用百分比，并根据百分比改变进度条颜色 ---</span></span><br><span class="line"><span class="section">[MeasureDataPercentage]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="comment">; 计算百分比公式：(已用 / 总量) * 100。</span></span><br><span class="line"><span class="comment">; Max(MeasureTotalDataGB, 0.00001) 的作用是防止在刚启动还没连上网络时，总流量为 0 导致发生“除零错误”(Division by 0)</span></span><br><span class="line"><span class="attr">Formula</span>=(MeasureDataUsedGB / Max(MeasureTotalDataGB, <span class="number">0.00001</span>)) * <span class="number">100</span></span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 条件1：如果使用百分比 &lt; 50%</span></span><br><span class="line"><span class="attr">IfCondition</span>=MeasureDataPercentage &lt; <span class="number">50</span></span><br><span class="line"><span class="comment">; 如果条件1为真，执行动作：利用 !SetOption 命令修改 meterBarDataUsed 进度条组件的 BarColor 属性为绿色</span></span><br><span class="line"><span class="attr">IfTrueAction</span>=[!SetOption meterBarDataUsed BarColor <span class="string">&quot;100,255,100,255&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">; 条件2：如果使用百分比 &gt;= 50% 且 &lt;= 90%</span></span><br><span class="line"><span class="attr">IfCondition2</span>=(MeasureDataPercentage &gt;= <span class="number">50</span>) &amp;&amp; (MeasureDataPercentage &lt;= <span class="number">90</span>)</span><br><span class="line"><span class="comment">; 如果条件2为真，执行动作：修改进度条颜色为橙色 (也是你原本设置的默认颜色)</span></span><br><span class="line"><span class="attr">IfTrueAction2</span>=[!SetOption meterBarDataUsed BarColor <span class="string">&quot;235,170,0,255&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">; 条件3：如果使用百分比 &gt; 90%</span></span><br><span class="line"><span class="attr">IfCondition3</span>=MeasureDataPercentage &gt; <span class="number">90</span></span><br><span class="line"><span class="comment">; 如果条件3为真，执行动作：修改进度条颜色为红色，起警告作用</span></span><br><span class="line"><span class="attr">IfTrueAction3</span>=[!SetOption meterBarDataUsed BarColor <span class="string">&quot;255,70,70,255&quot;</span>]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; 4. 样式预设 (Styles) - 像 CSS 一样将重复的排版属性集中起来供后续继承</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 顶部标题样式 ---</span></span><br><span class="line"><span class="section">[styleTitle]</span></span><br><span class="line"><span class="comment">; 文本对齐方式：居中</span></span><br><span class="line"><span class="attr">StringAlign</span>=Center</span><br><span class="line"><span class="comment">; 文本自动转换：全部大写</span></span><br><span class="line"><span class="attr">StringCase</span>=Upper</span><br><span class="line"><span class="comment">; 文本样式：加粗</span></span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="comment">; 字体特效：添加阴影</span></span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="comment">; 特效颜色：黑色阴影，透明度 50</span></span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">50</span></span><br><span class="line"><span class="comment">; 字体颜色：调用上方定义的 #colorText# 变量</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line"><span class="comment">; 字体名称：调用上方定义的 #fontName# 变量</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="comment">; 字体大小：10磅</span></span><br><span class="line"><span class="attr">FontSize</span>=<span class="number">10</span></span><br><span class="line"><span class="comment">; 开启抗锯齿，使文字边缘平滑不模糊</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="comment">; 开启文本裁剪，超出设定宽度的文本会自动隐藏或变为省略号</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 左侧标签文字样式 ---</span></span><br><span class="line"><span class="section">[styleLeftText]</span></span><br><span class="line"><span class="comment">; 文本对齐：左对齐</span></span><br><span class="line"><span class="attr">StringAlign</span>=Left</span><br><span class="line"><span class="comment">; 保持原本大小写</span></span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="comment">; 字体大小调用上方定义的 #textSize# 变量</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 右侧数值文字样式 ---</span></span><br><span class="line"><span class="section">[styleRightText]</span></span><br><span class="line"><span class="comment">; 文本对齐：右对齐 (由于是右对齐，坐标 X 需要填右边界的位置)</span></span><br><span class="line"><span class="attr">StringAlign</span>=Right</span><br><span class="line"><span class="attr">StringCase</span>=None</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">StringEffect</span>=Shadow</span><br><span class="line"><span class="attr">FontEffectColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">20</span></span><br><span class="line">FontColor=<span class="comment">#colorText#</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line">FontSize=<span class="comment">#textSize#</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">ClipString</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 进度条样式 ---</span></span><br><span class="line"><span class="section">[styleBar]</span></span><br><span class="line"><span class="comment">; 进度条的前景色：调用 #colorBar#</span></span><br><span class="line">BarColor=<span class="comment">#colorBar#</span></span><br><span class="line"><span class="comment">; 进度条方向：水平 (HORIZONTAL)</span></span><br><span class="line"><span class="attr">BarOrientation</span>=HORIZONTAL</span><br><span class="line"><span class="comment">; 进度条未填充部分的底色：半透明的白色</span></span><br><span class="line"><span class="attr">SolidColor</span>=<span class="number">255</span>,<span class="number">255</span>,<span class="number">255</span>,<span class="number">15</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"><span class="comment">; 5. UI 界面渲染 (Meters) - 实际在屏幕上画出图形和文字</span></span><br><span class="line"><span class="comment">; ======================================================================</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 绘制顶部标题 ---</span></span><br><span class="line"><span class="section">[MeterTitle]</span></span><br><span class="line"><span class="comment">; 组件类型为纯文本 (String)</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="comment">; 继承并应用上方写好的 [styleTitle] 样式模板</span></span><br><span class="line"><span class="attr">MeterStyle</span>=styleTitle</span><br><span class="line"><span class="comment">; 绑定数据源为节点位置。提取出的位置会替换掉 Text 里的 %1</span></span><br><span class="line"><span class="attr">MeasureName</span>=MeasureNodeLocation</span><br><span class="line"><span class="comment">; X轴坐标设在 100，配合居中对齐，代表以 100 为中心轴向左右扩散</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">100</span></span><br><span class="line"><span class="comment">; Y轴坐标距离背景顶部 12 像素</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">12</span></span><br><span class="line"><span class="comment">; 定义组件总宽度 190</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="comment">; 定义组件总高度 18</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">18</span></span><br><span class="line"><span class="comment">; 实际渲染的文本内容，%1 会被映射为 MeasureNodeLocation 获取到的字符串</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;BWG %1&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 绘制左侧静态标签：&quot;Data Usage:&quot; ---</span></span><br><span class="line"><span class="section">[MeterDataLabel]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleLeftText</span><br><span class="line"><span class="comment">; X轴从左侧边缘 10 像素处开始</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="comment">; Y轴定在 40，位于标题下方</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">40</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="comment">; 纯静态文本展示，无需绑定 Measure</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Data Usage:&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 绘制右侧动态数值：&quot;XXX GB / XXX GB&quot; ---</span></span><br><span class="line"><span class="section">[meterDataUsed]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleRightText</span><br><span class="line"><span class="comment">; 绑定第一个变量：已用 GB，用于替换 %1</span></span><br><span class="line"><span class="attr">MeasureName</span>=MeasureDataUsedGB</span><br><span class="line"><span class="comment">; 绑定第二个变量：总共 GB，用于替换 %2</span></span><br><span class="line"><span class="attr">MeasureName2</span>=MeasureTotalDataGB</span><br><span class="line"><span class="comment">; X轴设在 200，因为它是右对齐的，200是它的最右侧边界限制</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">200</span></span><br><span class="line"><span class="comment">; Y=0r 中的 &#x27;r&#x27; 代表相对定位 (relative)。0r 意味着它的 Y 坐标与前一个组件（MeterDataLabel）保持同一水平线</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">0</span>r</span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">14</span></span><br><span class="line"><span class="comment">; 显示格式模板：%1 和 %2 会被上述两个 Measure 替换</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;%1 GB / %2 GB&quot;</span></span><br><span class="line"><span class="comment">; 强制让小数显示时保留 2 位（如 45.20 GB）</span></span><br><span class="line"><span class="attr">NumOfDecimals</span>=<span class="number">2</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 绘制底部流量进度条 ---</span></span><br><span class="line"><span class="section">[meterBarDataUsed]</span></span><br><span class="line"><span class="comment">; 组件类型为进度条 (Bar)</span></span><br><span class="line"><span class="attr">Meter</span>=Bar</span><br><span class="line"><span class="attr">MeterStyle</span>=styleBar</span><br><span class="line"><span class="comment">; 绑定上面写好带有 MaxValue 属性的进度比例 Calc 组件</span></span><br><span class="line"><span class="attr">MeasureName</span>=MeasureDataUsageCalc</span><br><span class="line"><span class="comment">; 进度条起点 X 为 10</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">10</span></span><br><span class="line"><span class="comment">; 进度条纵向起点在 55 像素，正好位于上述文字的下方</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">55</span></span><br><span class="line"><span class="comment">; 进度条总长度 190</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="comment">; 进度条高度（线条粗细）为 1 像素</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="使用-openwrt-api-动态切换代理"><a href="#使用-openwrt-api-动态切换代理" class="headerlink" title="使用 openwrt api 动态切换代理"></a>使用 openwrt api 动态切换代理</h4><p>创建 <code>proxy_control.ps1</code> 放到 Rainmeter 组件 @Resources 文件夹 </p>
+<figure class="highlight ps1"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">param</span> (</span><br><span class="line">    [<span class="built_in">string</span>]<span class="variable">$Action</span> = <span class="string">&quot;Status&quot;</span>,</span><br><span class="line">    [<span class="built_in">string</span>]<span class="variable">$TargetNode</span> = <span class="string">&quot;&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="variable">$RouterUrl</span> = <span class="string">&quot;https://home.iftrue.club/cgi-bin/luci/rpc&quot;</span></span><br><span class="line"><span class="variable">$User</span> = <span class="string">&quot;root&quot;</span></span><br><span class="line"><span class="variable">$Pass</span> = <span class="string">&quot;w.521@@ong.COM&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 忽略 HTTPS 自签证书错误</span></span><br><span class="line">[<span class="type">System.Net.ServicePointManager</span>]::ServerCertificateValidationCallback = &#123;<span class="variable">$true</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment"># 1. 登录获取 Token</span></span><br><span class="line">    <span class="variable">$AuthBody</span> = <span class="selector-tag">@</span>&#123; jsonrpc = <span class="string">&quot;2.0&quot;</span>; id = <span class="number">1</span>; method = <span class="string">&quot;login&quot;</span>; params = <span class="selector-tag">@</span>(<span class="variable">$User</span>, <span class="variable">$Pass</span>) &#125; | <span class="built_in">ConvertTo-Json</span> <span class="literal">-Depth</span> <span class="number">10</span></span><br><span class="line">    <span class="variable">$AuthResponse</span> = <span class="built_in">Invoke-RestMethod</span> <span class="literal">-Uri</span> <span class="string">&quot;<span class="variable">$RouterUrl</span>/auth&quot;</span> <span class="literal">-Method</span> Post <span class="literal">-Body</span> <span class="variable">$AuthBody</span> <span class="literal">-ContentType</span> <span class="string">&quot;application/json&quot;</span></span><br><span class="line">    <span class="variable">$Token</span> = <span class="variable">$AuthResponse</span>.result</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ([<span class="built_in">string</span>]::IsNullOrEmpty(<span class="variable">$Token</span>)) &#123;</span><br><span class="line">        <span class="built_in">Write-Output</span> <span class="string">&quot;AuthFailed&quot;</span></span><br><span class="line">        <span class="keyword">exit</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 2. 查询状态</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">$Action</span> <span class="operator">-eq</span> <span class="string">&quot;Status&quot;</span>) &#123;</span><br><span class="line">        <span class="variable">$GetBody</span> = <span class="selector-tag">@</span>&#123; jsonrpc = <span class="string">&quot;2.0&quot;</span>; id = <span class="number">2</span>; method = <span class="string">&quot;get&quot;</span>; params = <span class="selector-tag">@</span>(<span class="string">&quot;homeproxy&quot;</span>, <span class="string">&quot;MSI&quot;</span>, <span class="string">&quot;outbound&quot;</span>) &#125; | <span class="built_in">ConvertTo-Json</span> <span class="literal">-Depth</span> <span class="number">10</span></span><br><span class="line">        <span class="variable">$GetResponse</span> = <span class="built_in">Invoke-RestMethod</span> <span class="literal">-Uri</span> <span class="string">&quot;<span class="variable">$RouterUrl</span>/uci?auth=<span class="variable">$Token</span>&quot;</span> <span class="literal">-Method</span> Post <span class="literal">-Body</span> <span class="variable">$GetBody</span> <span class="literal">-ContentType</span> <span class="string">&quot;application/json&quot;</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 必须使用 Write-Output 才能被 Rainmeter 正确捕捉</span></span><br><span class="line">        <span class="built_in">Write-Output</span> <span class="variable">$GetResponse</span>.result</span><br><span class="line">        <span class="keyword">exit</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 3. 指定设置节点</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="variable">$Action</span> <span class="operator">-eq</span> <span class="string">&quot;Set&quot;</span> <span class="operator">-and</span> <span class="variable">$TargetNode</span> <span class="operator">-ne</span> <span class="string">&quot;&quot;</span>) &#123;</span><br><span class="line">        <span class="comment"># uci set</span></span><br><span class="line">        <span class="variable">$SetBody</span> = <span class="selector-tag">@</span>&#123; jsonrpc = <span class="string">&quot;2.0&quot;</span>; id = <span class="number">3</span>; method = <span class="string">&quot;set&quot;</span>; params = <span class="selector-tag">@</span>(<span class="string">&quot;homeproxy&quot;</span>, <span class="string">&quot;MSI&quot;</span>, <span class="string">&quot;outbound&quot;</span>, <span class="variable">$TargetNode</span>) &#125; | <span class="built_in">ConvertTo-Json</span> <span class="literal">-Depth</span> <span class="number">10</span></span><br><span class="line">        <span class="built_in">Invoke-RestMethod</span> <span class="literal">-Uri</span> <span class="string">&quot;<span class="variable">$RouterUrl</span>/uci?auth=<span class="variable">$Token</span>&quot;</span> <span class="literal">-Method</span> Post <span class="literal">-Body</span> <span class="variable">$SetBody</span> <span class="literal">-ContentType</span> <span class="string">&quot;application/json&quot;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># uci commit</span></span><br><span class="line">        <span class="variable">$CommitBody</span> = <span class="selector-tag">@</span>&#123; jsonrpc = <span class="string">&quot;2.0&quot;</span>; id = <span class="number">4</span>; method = <span class="string">&quot;commit&quot;</span>; params = <span class="selector-tag">@</span>(<span class="string">&quot;homeproxy&quot;</span>) &#125; | <span class="built_in">ConvertTo-Json</span> <span class="literal">-Depth</span> <span class="number">10</span></span><br><span class="line">        <span class="built_in">Invoke-RestMethod</span> <span class="literal">-Uri</span> <span class="string">&quot;<span class="variable">$RouterUrl</span>/uci?auth=<span class="variable">$Token</span>&quot;</span> <span class="literal">-Method</span> Post <span class="literal">-Body</span> <span class="variable">$CommitBody</span> <span class="literal">-ContentType</span> <span class="string">&quot;application/json&quot;</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 必须使用 Write-Output 才能被 Rainmeter 正确捕捉</span></span><br><span class="line">        <span class="built_in">Write-Output</span> <span class="variable">$TargetNode</span></span><br><span class="line">        <span class="keyword">exit</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="built_in">Write-Output</span> <span class="string">&quot;Error&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创建 Rainmeter 组件</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[Rainmeter]</span></span><br><span class="line"><span class="attr">Update</span>=<span class="number">1000</span></span><br><span class="line">Background=<span class="comment">#@#Background.png</span></span><br><span class="line"><span class="attr">BackgroundMode</span>=<span class="number">3</span></span><br><span class="line"><span class="attr">BackgroundMargins</span>=<span class="number">0</span>,<span class="number">34</span>,<span class="number">0</span>,<span class="number">14</span></span><br><span class="line"><span class="attr">OnRefreshAction</span>=[!CommandMeasure MeasureCheckStatus <span class="string">&quot;Run&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="section">[Metadata]</span></span><br><span class="line"><span class="attr">Name</span>=HomeProxy Switcher Grid</span><br><span class="line"><span class="attr">Author</span>=YourName</span><br><span class="line"><span class="attr">Information</span>=Bootstrap 风格多按钮代理切换面板</span><br><span class="line"></span><br><span class="line"><span class="section">[Variables]</span></span><br><span class="line"><span class="comment">; Bootstrap 现代无衬线字体 (Windows 自带)</span></span><br><span class="line"><span class="attr">fontName</span>=Segoe UI</span><br><span class="line"><span class="attr">SetNode</span>=<span class="string">&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; --- Bootstrap 颜色方案 ---</span></span><br><span class="line"><span class="comment">; 默认状态 (柔和的深灰色, 类似 btn-dark)</span></span><br><span class="line"><span class="attr">BgNormal</span>=<span class="number">44</span>,<span class="number">48</span>,<span class="number">52</span>,<span class="number">255</span></span><br><span class="line"><span class="attr">TextNormal</span>=<span class="number">170</span>,<span class="number">175</span>,<span class="number">180</span>,<span class="number">255</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 高亮状态 (柔和的黯蓝色, 类似 btn-primary 降低饱和度，不刺眼)</span></span><br><span class="line"><span class="attr">BgActive</span>=<span class="number">50</span>,<span class="number">110</span>,<span class="number">160</span>,<span class="number">255</span></span><br><span class="line"><span class="attr">TextActive</span>=<span class="number">245</span>,<span class="number">250</span>,<span class="number">255</span>,<span class="number">255</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 加载/点击瞬间状态 (稍亮的深灰色)</span></span><br><span class="line"><span class="attr">BgLoading</span>=<span class="number">65</span>,<span class="number">70</span>,<span class="number">75</span>,<span class="number">255</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 核心逻辑: 状态轮询与匹配</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[MeasureTimer]</span></span><br><span class="line"><span class="attr">Measure</span>=Calc</span><br><span class="line"><span class="attr">Formula</span>=(MeasureTimer + <span class="number">1</span>) % <span class="number">10</span></span><br><span class="line"><span class="attr">IfCondition</span>=MeasureTimer = <span class="number">0</span></span><br><span class="line"><span class="attr">IfTrueAction</span>=[!CommandMeasure MeasureCheckStatus <span class="string">&quot;Run&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="section">[MeasureCheckStatus]</span></span><br><span class="line"><span class="attr">Measure</span>=Plugin</span><br><span class="line"><span class="attr">Plugin</span>=RunCommand</span><br><span class="line"><span class="attr">Parameter</span>=powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File <span class="string">&quot;#@#proxy_control.ps1&quot;</span> -Action Status</span><br><span class="line"><span class="attr">State</span>=Hide</span><br><span class="line"><span class="attr">OutputType</span>=ANSI</span><br><span class="line"><span class="attr">FinishAction</span>=[!UpdateMeasure MeasureCheckStatus][!Redraw]</span><br><span class="line"></span><br><span class="line"><span class="comment">; --- 高亮逻辑 (先用正则匹配，将所有形状重置，再点亮特定的形状和文字) ---</span></span><br><span class="line"><span class="comment">; 注意：这里我们通过改变 Shape 字符串中的 Fill Color 来改变圆角矩形的颜色</span></span><br><span class="line"><span class="attr">IfMatch</span>=BWG</span><br><span class="line"><span class="attr">IfMatchAction</span>=[!SetOptionGroup ProxyBtns_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgNormal# | StrokeWidth 0&quot;</span>][!SetOptionGroup ProxyBtns_Text FontColor <span class="string">&quot;#TextNormal#&quot;</span>][!SetOption MeterBtnBWG_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgActive# | StrokeWidth 0&quot;</span>][!SetOption MeterBtnBWG_Text FontColor <span class="string">&quot;#TextActive#&quot;</span>][!UpdateMeterGroup ProxyBtns_Shape][!UpdateMeterGroup ProxyBtns_Text][!Redraw]</span><br><span class="line"></span><br><span class="line"><span class="attr">IfMatch2</span>=SG</span><br><span class="line"><span class="attr">IfMatchAction2</span>=[!SetOptionGroup ProxyBtns_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgNormal# | StrokeWidth 0&quot;</span>][!SetOptionGroup ProxyBtns_Text FontColor <span class="string">&quot;#TextNormal#&quot;</span>][!SetOption MeterBtnSG_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgActive# | StrokeWidth 0&quot;</span>][!SetOption MeterBtnSG_Text FontColor <span class="string">&quot;#TextActive#&quot;</span>][!UpdateMeterGroup ProxyBtns_Shape][!UpdateMeterGroup ProxyBtns_Text][!Redraw]</span><br><span class="line"></span><br><span class="line"><span class="attr">IfMatch3</span>=HK</span><br><span class="line"><span class="attr">IfMatchAction3</span>=[!SetOptionGroup ProxyBtns_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgNormal# | StrokeWidth 0&quot;</span>][!SetOptionGroup ProxyBtns_Text FontColor <span class="string">&quot;#TextNormal#&quot;</span>][!SetOption MeterBtnHK_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgActive# | StrokeWidth 0&quot;</span>][!SetOption MeterBtnHK_Text FontColor <span class="string">&quot;#TextActive#&quot;</span>][!UpdateMeterGroup ProxyBtns_Shape][!UpdateMeterGroup ProxyBtns_Text][!Redraw]</span><br><span class="line"></span><br><span class="line"><span class="attr">IfMatch4</span>=JP</span><br><span class="line"><span class="attr">IfMatchAction4</span>=[!SetOptionGroup ProxyBtns_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgNormal# | StrokeWidth 0&quot;</span>][!SetOptionGroup ProxyBtns_Text FontColor <span class="string">&quot;#TextNormal#&quot;</span>][!SetOption MeterBtnJP_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgActive# | StrokeWidth 0&quot;</span>][!SetOption MeterBtnJP_Text FontColor <span class="string">&quot;#TextActive#&quot;</span>][!UpdateMeterGroup ProxyBtns_Shape][!UpdateMeterGroup ProxyBtns_Text][!Redraw]</span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 核心逻辑: 提交修改节点请求</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[MeasureSetProxy]</span></span><br><span class="line"><span class="attr">Measure</span>=Plugin</span><br><span class="line"><span class="attr">Plugin</span>=RunCommand</span><br><span class="line"><span class="attr">Parameter</span>=powershell.exe -ExecutionPolicy Bypass -WindowStyle Hidden -File <span class="string">&quot;#@#proxy_control.ps1&quot;</span> -Action Set -TargetNode <span class="string">&quot;#SetNode#&quot;</span></span><br><span class="line"><span class="attr">State</span>=Hide</span><br><span class="line"><span class="attr">OutputType</span>=ANSI</span><br><span class="line"><span class="attr">DynamicVariables</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">FinishAction</span>=[!CommandMeasure MeasureCheckStatus <span class="string">&quot;Run&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; 样式表 (Bootstrap 风格)</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[styleTitle]</span></span><br><span class="line"><span class="attr">StringAlign</span>=Center</span><br><span class="line"><span class="attr">StringCase</span>=Upper</span><br><span class="line"><span class="attr">StringStyle</span>=Bold</span><br><span class="line"><span class="attr">FontColor</span>=<span class="number">180</span>,<span class="number">180</span>,<span class="number">180</span>,<span class="number">255</span></span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="attr">FontSize</span>=<span class="number">9</span></span><br><span class="line"><span class="attr">CharacterSpacing</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 圆角背景形状的基础样式 (宽80, 高28, 圆角弧度5)</span></span><br><span class="line"><span class="section">[styleBtnShape]</span></span><br><span class="line"><span class="attr">Shape</span>=Rectangle <span class="number">0</span>,<span class="number">0</span>,<span class="number">80</span>,<span class="number">28</span>,<span class="number">5</span> | Fill Color <span class="comment">#BgNormal# | StrokeWidth 0</span></span><br><span class="line"><span class="attr">Group</span>=ProxyBtns_Shape</span><br><span class="line"></span><br><span class="line"><span class="comment">; 文字样式 (附带透明点击层)</span></span><br><span class="line"><span class="section">[styleBtnText]</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">80</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">28</span></span><br><span class="line"><span class="attr">StringAlign</span>=CenterCenter</span><br><span class="line">FontFace=<span class="comment">#fontName#</span></span><br><span class="line"><span class="attr">FontSize</span>=<span class="number">9</span></span><br><span class="line"><span class="attr">FontWeight</span>=<span class="number">600</span></span><br><span class="line">FontColor=<span class="comment">#TextNormal#</span></span><br><span class="line"><span class="attr">SolidColor</span>=<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>,<span class="number">1</span></span><br><span class="line"><span class="attr">AntiAlias</span>=<span class="number">1</span></span><br><span class="line"><span class="attr">Group</span>=ProxyBtns_Text</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="comment">; UI 界面渲染</span></span><br><span class="line"><span class="comment">; ==================================</span></span><br><span class="line"><span class="section">[MeterTitle]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleTitle</span><br><span class="line"><span class="attr">X</span>=<span class="number">100</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">12</span></span><br><span class="line"><span class="attr">W</span>=<span class="number">190</span></span><br><span class="line"><span class="attr">H</span>=<span class="number">18</span></span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;Proxy Nodes&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"><span class="comment">; 第一排按钮 (Y=40, 左间距15, 中间间距10)</span></span><br><span class="line"><span class="comment">; ----------------------------------</span></span><br><span class="line"><span class="comment">; 按钮 BWG -------------------------</span></span><br><span class="line"><span class="section">[MeterBtnBWG_Shape]</span></span><br><span class="line"><span class="attr">Meter</span>=Shape</span><br><span class="line"><span class="attr">MeterStyle</span>=styleBtnShape</span><br><span class="line"><span class="attr">X</span>=<span class="number">15</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">40</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterBtnBWG_Text]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleBtnText</span><br><span class="line"><span class="comment">; X=40r 代表相对上面的 Shape 向右偏移40(居中)，Y=14r 代表向下偏移14(居中)</span></span><br><span class="line"><span class="attr">X</span>=<span class="number">40</span>r</span><br><span class="line"><span class="attr">Y</span>=<span class="number">14</span>r</span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;BWG&quot;</span></span><br><span class="line"><span class="attr">LeftMouseUpAction</span>=[!SetVariable SetNode <span class="string">&quot;BWG&quot;</span>][!SetOption MeterBtnBWG_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgLoading# | StrokeWidth 0&quot;</span>][!UpdateMeter MeterBtnBWG_Shape][!Redraw][!UpdateMeasure MeasureSetProxy][!CommandMeasure MeasureSetProxy <span class="string">&quot;Run&quot;</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment">; 按钮 SG --------------------------</span></span><br><span class="line"><span class="section">[MeterBtnSG_Shape]</span></span><br><span class="line"><span class="attr">Meter</span>=Shape</span><br><span class="line"><span class="attr">MeterStyle</span>=styleBtnShape</span><br><span class="line"><span class="attr">X</span>=<span class="number">105</span></span><br><span class="line"><span class="attr">Y</span>=<span class="number">40</span></span><br><span class="line"></span><br><span class="line"><span class="section">[MeterBtnSG_Text]</span></span><br><span class="line"><span class="attr">Meter</span>=String</span><br><span class="line"><span class="attr">MeterStyle</span>=styleBtnText</span><br><span class="line"><span class="attr">X</span>=<span class="number">40</span>r</span><br><span class="line"><span class="attr">Y</span>=<span class="number">14</span>r</span><br><span class="line"><span class="attr">Text</span>=<span class="string">&quot;SG&quot;</span></span><br><span class="line"><span class="attr">LeftMouseUpAction</span>=[!SetVariable SetNode <span class="string">&quot;SG&quot;</span>][!SetOption MeterBtnSG_Shape Shape <span class="string">&quot;Rectangle 0,0,80,28,5 | Fill Color #BgLoading# | StrokeWidth 0&quot;</span>][!UpdateMeter MeterBtnSG_Shape][!Redraw][!UpdateMeasure MeasureSetProxy][!CommandMeasure MeasureSetProxy <span class="string">&quot;Run&quot;</span>]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">; ; ----------------------------------</span></span><br><span class="line"><span class="comment">; ; 第二排按钮 (Y=78, 与第一排上下间距10)</span></span><br><span class="line"><span class="comment">; ; ----------------------------------</span></span><br><span class="line"><span class="comment">; ; 按钮 HK --------------------------</span></span><br><span class="line"><span class="comment">; [MeterBtnHK_Shape]</span></span><br><span class="line"><span class="comment">; Meter=Shape</span></span><br><span class="line"><span class="comment">; MeterStyle=styleBtnShape</span></span><br><span class="line"><span class="comment">; X=15</span></span><br><span class="line"><span class="comment">; Y=78</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; [MeterBtnHK_Text]</span></span><br><span class="line"><span class="comment">; Meter=String</span></span><br><span class="line"><span class="comment">; MeterStyle=styleBtnText</span></span><br><span class="line"><span class="comment">; X=40r</span></span><br><span class="line"><span class="comment">; Y=14r</span></span><br><span class="line"><span class="comment">; Text=&quot;HK&quot;</span></span><br><span class="line"><span class="comment">; LeftMouseUpAction=[!SetVariable SetNode &quot;HK&quot;][!SetOption MeterBtnHK_Shape Shape &quot;Rectangle 0,0,80,28,5 | Fill Color #BgLoading# | StrokeWidth 0&quot;][!UpdateMeter MeterBtnHK_Shape][!Redraw][!UpdateMeasure MeasureSetProxy][!CommandMeasure MeasureSetProxy &quot;Run&quot;]</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; ; 按钮 JP --------------------------</span></span><br><span class="line"><span class="comment">; [MeterBtnJP_Shape]</span></span><br><span class="line"><span class="comment">; Meter=Shape</span></span><br><span class="line"><span class="comment">; MeterStyle=styleBtnShape</span></span><br><span class="line"><span class="comment">; X=105</span></span><br><span class="line"><span class="comment">; Y=78</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; [MeterBtnJP_Text]</span></span><br><span class="line"><span class="comment">; Meter=String</span></span><br><span class="line"><span class="comment">; MeterStyle=styleBtnText</span></span><br><span class="line"><span class="comment">; X=40r</span></span><br><span class="line"><span class="comment">; Y=14r</span></span><br><span class="line"><span class="comment">; Text=&quot;JP&quot;</span></span><br><span class="line"><span class="comment">; LeftMouseUpAction=[!SetVariable SetNode &quot;JP&quot;][!SetOption MeterBtnJP_Shape Shape &quot;Rectangle 0,0,80,28,5 | Fill Color #BgLoading# | StrokeWidth 0&quot;][!UpdateMeter MeterBtnJP_Shape][!Redraw][!UpdateMeasure MeasureSetProxy][!CommandMeasure MeasureSetProxy &quot;Run&quot;]</span></span><br></pre></td></tr></table></figure>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Rainmeter/" rel="tag">Rainmeter</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Windows/" rel="tag">Windows</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/3be93f59e1e6/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            VPS 相关信息
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/31cf04fdc929/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Speaches 部署</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

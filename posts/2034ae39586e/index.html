@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>正则引擎中的有限自动机 ① 正则历史和语法 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-compiling/正则引擎①正则语法"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  正则引擎中的有限自动机 ① 正则历史和语法
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/2034ae39586e/" class="article-date">
+  <time datetime="2024-11-08T06:22:02.000Z" itemprop="datePublished">2024-11-08</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">8.9k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">32 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="正则的历史"><a href="#正则的历史" class="headerlink" title="正则的历史"></a>正则的历史</h4><p><strong>斯蒂芬·克莱恩 (Stephen Kleene, 1951年) —— 理论的诞生</strong></p>
+<ul>
+<li><strong>学术背景</strong>：1951年，著名数学家斯蒂芬·克莱恩在理论计算机科学的自动机理论子领域中，为了形式化描述神经元活动与状态变化，首次提出并分类了形式语言。</li>
+<li><strong>正则集与正则语言</strong>：克莱恩发明了一种数学符号体系，称为“正则集”（Regular Sets），用于严格描述“正则语言”（Regular Languages）。</li>
+<li><strong>有限自动机的等价性定义</strong>：在自动机理论中，正则语言被正式且严格地定义为——<strong>能够被有限自动机（Finite Automata）所识别的语言</strong>。<ul>
+<li>注：“有限自动机”（Finite Automata）与“状态机”（State Machines）在绝大多数计算语境下是完全等价且可以互换使用的术语。</li>
+</ul>
+</li>
+<li>**克莱恩定理 (Kleene’s Theorem)**：确立了正则表达式与有限自动机在表达能力上的完全等价性。即：任何正则语言都可以由一个正则表达式表达，且必然存在一个有限自动机能够识别该语言，反之亦然。</li>
+<li>**克莱恩星号 (Kleene-star &#x2F; Kleene-closure)**：广为人知的星号 <code>*</code> 操作符（代表一个匹配模式重复“零次或多次”），在计算机科学中的标准学术名称正是“克莱恩星”或“克莱恩闭包算子”。</li>
+</ul>
+<p><strong>诺姆·乔姆斯基 (Noam Chomsky, 1956年) —— 形式层级与算力边界</strong></p>
+<ul>
+<li>**乔姆斯基层次结构 (Chomsky Hierarchy)**：1956年，被誉为现代语言学之父的诺姆·乔姆斯基建立了著名的形式文法层级分类体系。</li>
+<li>**3型文法 (Type 3 Grammars &#x2F; Regular Grammars)**：在该层级中，正则语言严格对应由“3型文法”（即正则文法）所生成的语言集合。</li>
+<li><strong>算力局限与工程铁律</strong>：<ul>
+<li>在乔姆斯基文法体系中，正则文法是表达能力最弱的一种形式文法。</li>
+<li>正则文法严格位于“上下文无关文法”（Context-Free Grammars, CFG）之下。而 CFG 才是现代绝大多数编程语言（如 C、Java、Rust、Python 等）语法解析的基石。</li>
+<li><strong>关键结论</strong>：由于正则文法表达能力的局限性，<strong>在一般情况下，仅依靠纯粹的正则表达式是根本不可能或极难完整解析一门现代编程语言的</strong>（例如无法单靠纯正则处理具有无限嵌套结构的语法块与括号平衡）。</li>
+</ul>
+</li>
+</ul>
+<p><strong>肯·汤普森 (Ken Thompson, 约1968年) —— 黑客出鞘与工程落地</strong></p>
+<ul>
+<li><strong>理论走向工程</strong>：约12年后（1968年前后），著名的 Unix 之父、图灵奖得主肯·汤普森将正则表达式从纯理论数学体系引入实际工程中，使其成为计算机工业的标准工具。</li>
+<li><strong>两大经典应用场景</strong>：<ol>
+<li>**模式匹配 (Pattern Matching)**：用于海量文本与字符串的高效模式搜索（Unix 下 grep、sed、awk 等工具的理论基石）。</li>
+<li>**词法分析 (Lexical Analysis)**：在现代编译器前端解析编程语言时，用于实现扫描器（Scanner）或分词器（Tokenizer）模块，将源码切分为 Token 流。</li>
+</ol>
+</li>
+<li>**汤普森构造法 (Thompson Construction)**：汤普森完全基于有限自动机理论实现了正则表达式。他提出了一套经典的、直接从正则表达式语法树构造非确定性有限自动机（$\epsilon$-NFA）的规范算法，后世称为“汤普森构造法”。</li>
+<li><strong>性能优势与现代影响</strong>：<ul>
+<li>基于状态机实现的正则表达式引擎具备极其优异的运行性能（线性时间复杂度保证，避免指数级回溯爆炸）。</li>
+<li>现代编译器解析器生成工具（如 Bison、Flex）在构建底层 Tokenizer 模块时，依然全面沿用此架构。</li>
+</ul>
+</li>
+</ul>
+<h4 id="字母表"><a href="#字母表" class="headerlink" title="字母表"></a>字母表</h4><p>从最基本的概念开始，来体会如何演变到状态机的过程。</p>
+<p>正则表达式用于匹配字符串，而字符串一定来自于某个字母表。</p>
+<ul>
+<li><strong>定义</strong>：字母表是字符&#x2F;符号（Characters &#x2F; Symbols）的<strong>有限非空集合</strong>。</li>
+<li><strong>数学表示</strong>：在形式语言中，字母表通常用希腊字母大写 $\Sigma$ (Sigma) 表示。</li>
+<li><strong>示例</strong>：<br>$$\Sigma &#x3D; {a, b}$$<br>该字母表仅包含两个合法字符：$a$ 与 $b$。</li>
+</ul>
+<h4 id="语言-Language-L"><a href="#语言-Language-L" class="headerlink" title="语言 (Language, $L$)"></a>语言 (Language, $L$)</h4><ul>
+<li><strong>定义</strong>：语言是特定字母表 $\Sigma$ 上所有满足某种条件的<strong>字符串的集合</strong>。</li>
+<li>**无限语言 (Unbound &#x2F; Infinite Language)**：<ul>
+<li>例如，语言 $L_1$ 定义为字母表 $\Sigma &#x3D; {a, b}$ 上由这些字符所有可能排列构成的任意长度字符串的集合：<br>$$L_1 &#x3D; {\epsilon, a, b, aa, ab, ba, bb, aaa, \dots}$$</li>
+<li>由于字符串长度不受限制，该语言包含无穷多个字符串。</li>
+</ul>
+</li>
+<li>**有限受限语言 (Restricted &#x2F; Finite Language)**：<ul>
+<li>若在生成集合时增加额外约束条件，例如：规定字符串长度必须<strong>恰好为 2 个字符</strong>，则生成语言 $L_2$：<br>$$L_2 &#x3D; {aa, ab, ba, bb}$$</li>
+<li>此时，$L_2$ 是一个只包含 4 个元素的有限集合。</li>
+</ul>
+</li>
+</ul>
+<h4 id="形式文法-Formal-Grammar-的数学定义"><a href="#形式文法-Formal-Grammar-的数学定义" class="headerlink" title="形式文法 (Formal Grammar) 的数学定义"></a>形式文法 (Formal Grammar) 的数学定义</h4><p>当我们对语言中的字符串结构提出约束规则时，就诞生了<strong>文法（Grammar）</strong>，在计算机科学中称之为<strong>形式文法（Formal Grammar）</strong>。</p>
+<p>一个形式文法 $G$ 在数学上由一个四元组严格定义：<br>$$G &#x3D; (N, T, P, S)$$</p>
+<table>
+<thead>
+<tr>
+<th align="left">组成部分</th>
+<th align="left">英文全称</th>
+<th align="left">核心含义与工程映射</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>$N$</strong></td>
+<td align="left"><strong>Non-terminals</strong> (非终结符)</td>
+<td align="left">文法中的**变量 (Variables)**，用于抽象表示语法的子结构。在推导过程中，非终结符可以被其产生的规则值所替换。通常用大写字母表示（如 $S, X, A$）。</td>
+</tr>
+<tr>
+<td align="left"><strong>$T$</strong></td>
+<td align="left"><strong>Terminals</strong> (终结符)</td>
+<td align="left">字符串中出现的<strong>实际字符</strong>，它们按原样存在，<strong>不可再被展开或替换</strong>。通常用小写字母表示（如 $a, b, c$）。</td>
+</tr>
+<tr>
+<td align="left"><strong>$P$</strong></td>
+<td align="left"><strong>Productions</strong> (产生式规则)</td>
+<td align="left">文法的<strong>推导&#x2F;替换规则集</strong>。形式为：$\alpha \to \beta$，表示将左侧的结构替换为右侧的内容。</td>
+</tr>
+<tr>
+<td align="left"><strong>$S$</strong></td>
+<td align="left"><strong>Starting Symbol</strong> (起始符号)</td>
+<td align="left">推导过程的起点变量（$S \in N$），所有语法分析均从此符号开始展开。</td>
+</tr>
+</tbody></table>
+<p>给定文法：</p>
+<ul>
+<li>$N &#x3D; {S, X}$</li>
+<li>$T &#x3D; {a, b}$</li>
+<li>起始符号：$S$</li>
+<li>产生式集合 $P$ 包含两条规则：<ol>
+<li>$S \to aX$ （$S$ 推导出字符 $a$ 跟随变量 $X$）</li>
+<li>$X \to b$ （变量 $X$ 替换为终结符 $b$）</li>
+</ol>
+</li>
+</ul>
+<p><strong>推导过程</strong>：<br>$$S \implies aX \implies ab$$<br>该文法所能接受&#x2F;生成的唯一合法字符串就是 <code>&quot;ab&quot;</code>。</p>
+<h4 id="正则语法"><a href="#正则语法" class="headerlink" title="正则语法"></a>正则语法</h4><p>乔姆斯基根据产生式规则的形式约束，将形式文法划分为 4 个层级。文法所处的层级越低，规则受到的限制越多，其表达能力也越弱：</p>
+<p>在形式语言理论中，一个文法由四元组 $G &#x3D; (N, T, P, S)$ 定义。其中，<strong>决定一个文法属于哪个层级的，全看产生式规则（$P$ 中的规则 $\alpha \to \beta$）受到的数学限制严苛程度</strong>。</p>
+<p>乔姆斯基发现：<strong>文法规则的受限程度，与执行这套规则所需的“机器模型（自动机）的存储能力”，存在极其优美的严格一对一对应</strong>：</p>
+<table>
+<thead>
+<tr>
+<th align="left">层级与文法名称</th>
+<th align="left">产生式规则 $\alpha \to \beta$ 的形式约束</th>
+<th align="left">本质限制</th>
+<th align="left">对应的计算模型（自动机）</th>
+<th align="left">存储能力（内存）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>0型：无限制文法</strong> (Unrestricted)</td>
+<td align="left">$\alpha \in (N \cup T)^+, \beta \in (N \cup T)^*$</td>
+<td align="left"><strong>无任何限制</strong>，左侧只要有符号就行</td>
+<td align="left"><strong>图灵机 (Turing Machine)</strong></td>
+<td align="left">无限纸带，可在任意位置读写</td>
+</tr>
+<tr>
+<td align="left"><strong>1型：上下文相关文法</strong> (Context-Sensitive)</td>
+<td align="left">$\alpha_1 A \alpha_2 \to \alpha_1 \beta \alpha_2$<br>且要求 $|\alpha| \le |\beta|$</td>
+<td align="left">只有当 $A$ 两侧存在特定的上下文 $\alpha_1, \alpha_2$ 时才能被展开</td>
+<td align="left"><strong>线性有界自动机 (LBA)</strong></td>
+<td align="left">纸带长度被输入串长度线性约束</td>
+</tr>
+<tr>
+<td align="left"><strong>2型：上下文无关文法</strong> (CFG)</td>
+<td align="left">$A \to \gamma$<br>($A \in N$，左侧必须是<strong>单个非终结符</strong>)</td>
+<td align="left">展开 $A$ 时，<strong>完全不需要理会 $A$ 周围有什么上下文</strong></td>
+<td align="left"><strong>下推自动机 (PDA)</strong></td>
+<td align="left"><strong>有限状态控制器 + 一个后进先出栈 (Stack)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>3型：正则文法</strong> (Regular)</td>
+<td align="left">$A \to aB$ 或 $A \to a$<br>(必须是<strong>单向右线性</strong>或单向左线性)</td>
+<td align="left">右侧最多只能有<strong>一个</strong>非终结符，且<strong>必须在最末端</strong></td>
+<td align="left"><strong>有限自动机 (FA &#x2F; FSM)</strong></td>
+<td align="left"><strong>只有有限个固定状态，没有任何额外存储&#x2F;栈</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>理论本质</strong>：乔姆斯基通过对“左侧能不能带上下文”以及“右侧非终结符能放几个、放哪里”施加越来越苛刻的限制，逐步把文法从通用图灵机一步步剥离成了只能做简单模式流转的有限自动机。<br><strong>核心结论</strong>：由于正则文法严格处于上下文无关文法（CFG）的下层，因此<strong>单纯使用纯正则表达式是无法解析完整的编程语言语法的</strong>。</p>
+</blockquote>
+<p>形式文法本质上就是一个<strong>“文字擦除与替换的游戏”</strong>。</p>
+<p>在解释规则前，先认识两个最基础的“零件箱”：</p>
+<ul>
+<li><strong>$N$（Non-terminals，非终结符 &#x2F; 变量）</strong>：你可以把它理解成<strong>“半成品”</strong>或<strong>“待填空的占位符”</strong>。通常用大写字母表示（比如 $A, B, S$）。它们最终不能出现在成品文章里，必须被替换掉。</li>
+<li><strong>$T$（Terminals，终结符）</strong>：你可以把它理解成<strong>“最终零件”</strong>或<strong>“固定字面量”</strong>。比如字母 <code>&#39;a&#39;</code>, <code>&#39;b&#39;</code>，数字 <code>&#39;1&#39;</code>, <code>&#39;2&#39;</code>。它们生成了就定死了，不能再替换。</li>
+</ul>
+<p>有了这两个箱子，那些奇怪的符号就很容易理解了：</p>
+<ol>
+<li>**$N \cup T$**：<ul>
+<li>“$\cup$”是集合的“并集”。意思就是把“半成品”和“最终零件”混在一个大盒子里。</li>
+</ul>
+</li>
+<li>**$(N \cup T)^+$ 中的那个小加号 $+$**：<ul>
+<li>正闭包，意思是<strong>“至少有 1 个符号”</strong>。</li>
+<li><strong>大白话</strong>：不管里面装的是大写还是小写，<strong>至少得有 1 个字符，不能是空（不能是空气）</strong>。</li>
+</ul>
+</li>
+<li><strong>$(N \cup T)^*$ 中的那个小星号 $*$（克莱恩星）</strong>：<ul>
+<li>闭包，意思是<strong>“可以有任意多个符号，也可以是 0 个（即空串）”</strong>。</li>
+</ul>
+</li>
+<li><strong>$\alpha \to \beta$（阿尔法 变成 贝塔）</strong>：<ul>
+<li>规则的含义极其直白：<strong>“你在纸面上只要看到了 $\alpha$ 这一坨东西，就可以把它擦掉，换成 $\beta$ 这一坨东西”</strong>。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p><strong>0型：无限制文法 与 图灵机的“无限纸带”</strong></p>
+<ol>
+<li>产生式规则：$\alpha \in (N \cup T)^+, \beta \in (N \cup T)^*$</li>
+</ol>
+<ul>
+<li>**左边 $\alpha$**：只要不是空的，你想写几个字符就写几个字符，可以大写小写混杂（比如 $AbC$、或 $aBa$）。</li>
+<li>**右边 $\beta$**：没有任何限制！可以变得很长，也可以变得很短，甚至可以直接变成“空（消失不见）”。</li>
+<li><strong>大白话</strong>：<strong>“无法无天”</strong>。你可以定义任意离谱的替换规则，比如：只要看到 <code>猫狗鸡</code> 三个字连在一起，就可以瞬间替换成一个字 <code>神</code>，或者直接把它们全抹掉蒸发。</li>
+</ul>
+<ol start="2">
+<li>什么是“图灵机”？为什么说是“无限纸带”？<br>在 1936 年，阿兰·图灵设计这个理论模型时，现代电脑还没诞生，内存条更不存在。图灵是怎么想象一台终极计算机的？</li>
+</ol>
+<p>想象一台老式打字机，但它有极其恐怖的能力：</p>
+<ol>
+<li><strong>纸带（就是内存）</strong>：有一条长长的纸带，被划分成一个一个的小格子，每个格子里可以写一个字符。</li>
+<li><strong>读写头（就是 CPU 的探针）</strong>：机器有一个指针停在某个格子上，它可以<strong>读出</strong>格子里现在的字，可以<strong>擦掉重写</strong>一个字，并且可以<strong>向左移一格</strong>，或者<strong>向右移一格</strong>。</li>
+<li><strong>为什么叫“无限纸带”？</strong><ul>
+<li>意味着这台机器拥有<strong>无限大的草稿纸（无限内存）</strong>！</li>
+<li>只要计算需要，读写头可以往右走一万亿步，再往左走一万亿步，纸带两头无限延伸，永远不用担心内存爆满（Out of Memory）。</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p><strong>与 0 型文法的关系</strong>：<br>凡是这台“拥有无限内存的图灵机”能够计算出来的任何逻辑，0 型文法随便写写规则就能完全模拟出来。因此它代表了计算机能够计算的<strong>最高极限</strong>。</p>
+</blockquote>
+<hr>
+<p><strong>1型：上下文相关文法 与 线性有界自动机（LBA）</strong></p>
+<p>到了 1 型文法，科学家们开始给它套上枷锁了。它加了<strong>两条非常致命的紧箍咒</strong>：</p>
+<ol>
+<li>限制一：看规则 $\alpha_1 A \alpha_2 \to \alpha_1 \beta \alpha_2$（什么叫上下文？）<br>请仔细看箭头两边：</li>
+</ol>
+<ul>
+<li>左边是：$\alpha_1$ <strong>$A$</strong> $\alpha_2$</li>
+<li>右边是：$\alpha_1$ <strong>$\beta$</strong> $\alpha_2$</li>
+</ul>
+<p>发现了没有？<strong>左右两边的 $\alpha_1$ 和 $\alpha_2$ 根本没有变！</strong> 真正被替换的，仅仅是夹在中间的那个 <strong>$A$</strong> 变成了 $\beta$。</p>
+<ul>
+<li><strong>为什么叫“上下文相关（Context-Sensitive）”？</strong><ul>
+<li>$\alpha_1$ 就是 $A$ 的<strong>左邻居</strong>，$\alpha_2$ 就是 $A$ 的<strong>右邻居</strong>。这就是所谓的“上下文”！</li>
+<li><strong>生活中的例子</strong>：汉字“长”。<ul>
+<li>如果它的上下文是“校 $\underline{\quad}$ 室”，这个字必须读 $zhǎng$；</li>
+<li>如果它的上下文是“细 $\underline{\quad}$ 线”，这个字必须读 $cháng$。</li>
+<li><strong>这个字怎么替换、怎么解析，完全取决于它周围的邻居是谁！</strong> 单独看一个 $A$ 你不能动它，只有当它左右两边刚好是 $\alpha_1$ 和 $\alpha_2$ 时，才准许把它展开成 $\beta$。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ol start="2">
+<li>限制二：长度要求 $|\alpha| \le |\beta|$（什么叫非收缩？）</li>
+</ol>
+<ul>
+<li>$|\alpha|$ 代表左边的字符个数，$|\beta|$ 代表右边的字符个数。</li>
+<li>左边长度 $\le$ 右边长度，意味着：<strong>每一次替换，字符串要么长度不变，要么越变越长，绝对不准缩短！更不准凭空蒸发成空串！</strong></li>
+</ul>
+<p><strong>什么是“线性有界自动机 (LBA)”？为什么说纸带受限？</strong></p>
+<p>既然 1 型文法的规则规定了<strong>“只准变长，不准缩短”</strong>，那它对应的机器就发生质变了：</p>
+<ul>
+<li>依然是刚才图灵机的那台打字机，依然有读写头可以左右走动。</li>
+<li><strong>但是，无限纸带被没收了！</strong></li>
+<li>如果你给机器输入了一个长度为 5 的单词（比如 <code>&quot;apple&quot;</code>），这台机器的纸带两头就被打上了物理界限标签（<code>[</code> 和 <code>]</code>）。</li>
+<li>机器的读写头<strong>只能在这 5 个格子（或者最多常数倍，比如 $2 \times 5 &#x3D; 10$ 个格子）的范围内来回移动修改，绝对不允许越界走到外面去申请新的草稿纸！</strong></li>
+<li><strong>“线性有界”的大白话</strong>：你这台机器能用的<strong>内存空间上限，被你输入的文本长度死死锁定了</strong>（两者成严格的线性正比关系）。</li>
+</ul>
+<blockquote>
+<p><strong>与 1 型文法的关系</strong>：<br>因为 1 型文法的产生式是“只变长不缩短”的，如果你想逆向去推导和验证一段代码合不合法，推导过程中的中间字符数量<strong>绝不可能超过你最初的代码长度</strong>。所以计算机根本不需要无限草稿纸，只要在输入大小的有界空间内，就一定能算完！</p>
+</blockquote>
+<p>在 1 型文法里，我们要改一个占位符，还得看左右邻居的脸色（$\alpha_1 A \alpha_2 \to \alpha_1 \beta \alpha_2$）。</p>
+<p><strong>2型： 上下文无关文法 与 下推自动机 (PDA)</strong></p>
+<p>文法规则：$A \to \gamma$ —— “六亲不认的单挑”</p>
+<ul>
+<li><strong>左边</strong>：<strong>必须且只能是单独 1 个大写字母（单个非终结符 $A$）</strong>。绝对不准带任何邻居！</li>
+<li><strong>右边</strong>：任意符号串 $\gamma$（爱写啥写啥，可以长也可以短）。</li>
+<li><strong>为什么叫“上下文无关”？</strong><ul>
+<li>因为无论 $A$ 处于什么样的水深火热中，左边站着谁、右边站着谁，只要你看到单独的 $A$，**完全不需要看邻居脸色，直接就能把它换成 $\gamma$**！</li>
+<li>这就叫“上下文无关（Context-Free）”。</li>
+</ul>
+</li>
+</ul>
+<p>神奇能力：为什么它能解决“套娃”和“嵌套”？<br>虽然左边只能是单独一个 $A$，但右边却拥有把符号<strong>“夹在中间”</strong>的特权！<br>看看我们上一讲提到的经典规则：<br>$$S \to (S) \quad \text{或} \quad S \to \epsilon$$<br>注意：大写的 $S$ 被两边的左右括号<strong>死死包在了中间</strong>！</p>
+<ul>
+<li>替换第 1 次：$(S)$</li>
+<li>替换第 2 次：$((S))$</li>
+<li>替换第 3 次：$(((S)))$</li>
+<li>最后把 $S$ 抹掉变空气（$\epsilon$）：$((()))$<br><strong>它像俄罗斯套娃一样，两边对称地往外膨胀</strong>！这正是解析编程语言中 <code>(1 + (2 * (3 + 4)))</code> 或 <code>&#123; if &#123; while &#123; ... &#125; &#125; &#125;</code> 所必须的核心能力。</li>
+</ul>
+<p><strong>什么是下推自动机 (PDA)?</strong></p>
+<p>如果用一句话概括<strong>下推自动机（Pushdown Automaton，简称 PDA）</strong>的本质：</p>
+<blockquote>
+<p><strong>下推自动机 &#x3D; 一个普通的有限状态机（FA） + 外挂了一个具有后进先出特性的【栈（Stack）】。</strong></p>
+</blockquote>
+<p>它是乔姆斯基 <strong>2 型文法（上下文无关文法 CFG）</strong>的物理执行模型。计算机世界里所有编译器的<strong>语法分析器（Parser）</strong>，骨子里全都是一台下推自动机！</p>
+<hr>
+<p>为什么叫“下推”（Pushdown）这么奇怪的名字？</p>
+<p>这个名字来自 20 世纪 50 年代食堂里的一个生活装置——<strong>弹簧餐盘架</strong>（或者枪械的弹夹）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">放入餐盘 (Push 压入)</span><br><span class="line">      │</span><br><span class="line">      ▼</span><br><span class="line">┌───────────┐</span><br><span class="line">│  [餐盘 3]  │ ◄── 栈顶（只有最上面的盘子看得到、拿得到）</span><br><span class="line">├───────────┤</span><br><span class="line">│  [餐盘 2]  │ ◄── 下面的盘子被压在底下</span><br><span class="line">├───────────┤</span><br><span class="line">│  [餐盘 1]  │</span><br><span class="line">└─────┬─────┘</span><br><span class="line">    [ 弹簧 ]  （放一个盘子，弹簧被往下压一格；拿走一个，弹簧往上顶一格）</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>当你往架子上叠新盘子时，弹簧被<strong>往下推（Push down）</strong>；</li>
+<li>当你拿走最上面的盘子时（Pop 弹出），下面的盘子才会露出来；</li>
+<li>你<strong>永远只能操作最顶上的这一个盘子</strong>，看不到更深处的盘子。</li>
+</ul>
+<p>科学家们把这个只有一端能进出的存储结构做进自动机里，就把它命名为了<strong>“下推自动机”</strong>。</p>
+<hr>
+<p>它长什么样？（硬件解剖图）</p>
+<p>下推自动机的内部只有三大核心构件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">              输入纸带（从左往右只读一次，绝不回头）</span><br><span class="line">        ┌───┬───┬───┬───┬───┬───┬───┐</span><br><span class="line">输入 ──&gt;│ a │ a │ a │ b │ b │ b │ $ │</span><br><span class="line">        └───┴───┴───┴───┴───┴───┴───┘</span><br><span class="line">                  ▲</span><br><span class="line">                  │ 读头（只能向右移动）</span><br><span class="line">        ┌─────────┴─────────┐</span><br><span class="line">        │   有限状态控制器   │ (内部只有几个灯泡/状态开关)</span><br><span class="line">        └─────────┬─────────┘</span><br><span class="line">                  │</span><br><span class="line">                  ▼ 读写栈顶（压栈 / 弹栈）</span><br><span class="line">               ┌─────┐</span><br><span class="line">               │  A  │ ◄── 栈顶（当前看到的符号）</span><br><span class="line">               ├─────┤</span><br><span class="line">               │  A  │</span><br><span class="line">               ├─────┤</span><br><span class="line">               │  Z0 │ ◄── 栈底标记</span><br><span class="line">               └─────┘</span><br><span class="line">              【下推栈】</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>输入带</strong>：待检查的代码或字符串，单向流水线，读过就扔。</li>
+<li><strong>有限状态控制器</strong>：和普通状态机一样，负责记录“当前所处的状态”（比如：正在读左括号状态、还是正在读右括号状态）。</li>
+<li><strong>下推栈（关键外挂）</strong>：<strong>理论上可以无限往上叠放符号的栈</strong>。它赋予了机器<strong>“记忆嵌套深度”</strong>的超能力！</li>
+</ol>
+<hr>
+<p>确定性 PDA vs. 非确定性 PDA（编译器的命门）</p>
+<p>下推自动机也分两类，这个区分在编译器工业界是生死攸关的：</p>
+<ol>
+<li><p>**非确定性下推自动机 (NPDA)**：</p>
+<ul>
+<li>允许在同一时刻有多条分支，或者允许在不读字符的情况下自发瞎猜压栈。</li>
+<li><strong>数学地位</strong>：它<strong>完美等价于全部上下文无关文法（CFG）</strong>。</li>
+<li><strong>缺点</strong>：因为有“瞎猜&#x2F;分支”，计算机直接执行它需要大量的试探或回溯，解析速度不稳定。</li>
+</ul>
+</li>
+<li><p>**确定性下推自动机 (DPDA)**：</p>
+<ul>
+<li>每一步该压栈、该弹栈、还是该切状态，<strong>唯一确定，绝不犹豫，毫无二义性</strong>！</li>
+<li><strong>工业地位</strong>：它的解析时间是严格的 <strong>$O(n)$ 线性时间</strong>。</li>
+<li><strong>现代编程语言的铁律</strong>：我们在设计 C++、Rust、Python、Java 语法时，语法设计专家会<strong>故意限制语法规则</strong>，确保这门语言能够被 <strong>确定性下推自动机（DPDA）</strong> 解析（比如大家常听说的 LR(1)、LALR 文法）。这样编译器在编译几百万行代码时，才能瞬间完成，绝不卡死！</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>现实生活中你在哪里天天用到它？</p>
+<p>只要你在写代码，下推自动机就无时无刻不在你身边运转：</p>
+<ol>
+<li><strong>你的 IDE 代码编辑器</strong>：<br>你在 VS Code 里打了一个 <code>&#123;</code>，编辑器能立刻高亮出它对应的 <code>&#125;</code> 在哪一行，哪怕中间嵌套了 20 层循环。背后就是一个迷你 PDA 在用栈帮你匹配。</li>
+<li><strong>算术表达式求值</strong>：<br>你在计算器里输入 <code>1 + 2 * (3 + (4 - 5))</code>，经典的“双栈求值算法（一个操作数栈、一个运算符栈）”，本质上就是手动用代码实现了一台确定性下推自动机。</li>
+<li><strong>编译器前端语法分析器（Parser）</strong>：<br>任何一门语言的编译器，不管是 Clang、GCC 还是 Python 解释器，在词法分析把源码切成 Token 之后，拿着这些 Token 一层层组装成语法树（AST）的核心引擎，其数学理论模型就是一台下推自动机！</li>
+</ol>
+<hr>
+<p><strong>3型：正则文法 (Regular) 与 有限自动机 (FA)</strong></p>
+<p>到了 3 型文法，科学家们觉得：“给你一个能无限堆盘子的桶，你的能力还是太强了（解析起来不够快）”。</p>
+<hr>
+<p>文法规则：$A \to aB$ 或 $A \to a$ —— “排队报数，禁止套娃”<br>在 2 型里，虽然左边单挑，但右边允许写 $(S)$ 把变量夹在中间套娃。<br>到了 3 型，科学家直接立下一条死规矩：<strong>右线性（Right-linear）</strong>！</p>
+<ul>
+<li>产生式的右边，**只能先产生一个真正的文字零件（终结符 $a$），后面最多只能跟 1 个占位符 $B$**；</li>
+<li><strong>而且这个 $B$ 必须老老实实呆在整个队伍的最屁股后面！</strong></li>
+<li><strong>严禁把占位符夹在中间！</strong> 你绝对不能写 $A \to aBb$（左边产一个 $a$、右边产一个 $b$）。</li>
+</ul>
+<p><strong>大白话</strong>：你只能像排队报数一样，从左往右一个字一个字往后接龙，<strong>彻底剥夺了从两边往中间对称包裹的能力</strong>！</p>
+<hr>
+<p>配备的装备：有限自动机 (FA) 与“手里的几个灯泡开关”<br>到了这一层，机器的装备被扒得只剩底裤了：</p>
+<ul>
+<li><strong>无限草稿纸？没有！</strong></li>
+<li><strong>装盘子的桶（栈）？彻底没收！</strong></li>
+<li><strong>你手里只剩下什么？</strong><br>你手里只有<strong>几个固定的开关按钮（比如 3 个红、黄、绿指示灯，即所谓的“有限状态” States）</strong>！</li>
+</ul>
+<p>机器运转的方式变成了<strong>极其弱智但也极其快速的盲操作</strong>：</p>
+<ol>
+<li>输入纸条从眼前滑过，一次看一个字符；</li>
+<li>如果看到 <code>&#39;a&#39;</code>，根据手册把黄灯关掉，把绿灯打开；</li>
+<li>如果看到 <code>&#39;b&#39;</code>，把绿灯关掉，把红灯打开；</li>
+<li><strong>致命特征：过目即忘！</strong><ul>
+<li>机器在任何瞬间，<strong>唯一的记忆就是“当前亮着哪盏灯”</strong>。</li>
+<li>至于之前到底看过了 5 个字符还是 100 个字符？之前发生过什么？<strong>它完全失忆，毫无印象！</strong></li>
+</ul>
+</li>
+</ol>
+<p><strong>为什么用这几个灯泡，绝对解不开括号匹配？</strong><br>假设你手头只有 3 盏灯（3 个状态），现在输入了 4 个左括号 <code>((((</code>：</p>
+<ol>
+<li>读入第 1 个 <code>(</code> $\to$ 点亮 1 号灯；</li>
+<li>读入第 2 个 <code>(</code> $\to$ 点亮 2 号灯；</li>
+<li>读入第 3 个 <code>(</code> $\to$ 点亮 3 号灯；</li>
+<li><strong>读入第 4 个 <code>(</code> 时，灾难发生了</strong>：你没有 4 号灯了！你只能被迫重新点亮刚才已经亮过的 1 号灯或者 2 号灯（也就是在图上兜圈子形成死循环 Loop）。</li>
+<li><strong>记忆崩溃</strong>：接下来的右括号来了，机器看着那几盏灯，已经彻底不知道前面到底进来了 4 个括号还是 100 个括号！它再也无法验证左右是否匹配了。</li>
+</ol>
+<blockquote>
+<p><strong>这就是有限自动机（正则）的宿命</strong>：<br>因为<strong>没有栈</strong>，它根本不具备“数数”并“存起来待会儿对账”的能力。它只能识别平铺直叙的流水线字符（比如“以 $a$ 开头，后面跟着若干个 $b$，最后以 $c$ 结尾”）。</p>
+</blockquote>
+<hr>
+<p><strong>为什么编程语言是上下文无关文法?</strong></p>
+<p>如果从“一段代码在逻辑上是否合法”的整体视角来看，<strong>Python 以及绝大多数现代编程语言确实都是“上下文相关”的</strong>。比如：</p>
+<ul>
+<li>一个变量必须先定义再使用（变量是否存在取决于上下文作用域）。</li>
+<li>函数调用传参的个数和类型是否匹配（取决于函数定义处的上下文）。</li>
+<li>Python 最具特色的<strong>代码缩进</strong>（缩进几格取决于外层代码块的上下文）。</li>
+</ul>
+<p>那为什么编译原理教材和课程中都一致说<strong>“编程语言是用上下文无关文法（CFG）定义的”</strong>呢？</p>
+<p>这背后其实是现代编译器工程中最重要的设计哲学：<strong>关注点分离（Separation of Concerns）与工程妥协</strong>。</p>
+<hr>
+<p>编译器的分层解耦：句法（Syntax）与语义（Semantics）</p>
+<p>编译器并没有试图在一张文法规则里解决所有问题，而是把它拆成了两个阶段：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">源代码 </span><br><span class="line">  │</span><br><span class="line">  ▼</span><br><span class="line">[阶段一：语法/句法分析 (Parsing)] ──&gt; 使用“上下文无关文法 (CFG)”</span><br><span class="line">  │   只负责检查代码的“骨架结构”是否合法，生成 AST 语法树。</span><br><span class="line">  │   不管变量有没有声明，也不管类型对不对。</span><br><span class="line">  ▼</span><br><span class="line">[阶段二：语义分析 (Semantic Analysis)] ──&gt; 处理真正的“上下文相关 (Context-Sensitive)”</span><br><span class="line">      使用“符号表 (Symbol Table)”和属性检查代码，</span><br><span class="line">      负责查作用域、查类型匹配、查变量是否声明。</span><br></pre></td></tr></table></figure>
+
+<p>在<strong>句法分析阶段</strong>，编译器只关心形状：</p>
+<ul>
+<li>它只认：<code>if &lt;条件表达式&gt; : &lt;代码块&gt;</code> 这个结构对不对；</li>
+<li>至于 <code>&lt;条件表达式&gt;</code> 里的变量在上下文里有没有被声明、是不是全局变量，<strong>句法分析器完全不关心，直接当成合法的表达式节点放进 AST 里</strong>。<br>这一层骨架结构，就是用<strong>上下文无关文法（CFG）</strong>来表达的。</li>
+</ul>
+<hr>
+<p>计算复杂度的硬限制：为什么不用真正的“1型上下文相关文法”？</p>
+<p>如果我们在第一阶段就用乔姆斯基 1 型（上下文相关文法 CSG）来描述整个 Python，后果是灾难性的：</p>
+<ul>
+<li><strong>1型文法解析是 PSPACE 完全问题</strong>：通用解析器运行极其缓慢，在最坏情况下时间复杂度呈指数级爆炸。</li>
+<li><strong>2型上下文无关文法（CFG）极其高效</strong>：存在确定性的线性时间算法（如 LL(k)、LR(k)、LALR 以及 Python 3.9+ 正在使用的 PEG 解析器），能做到 $O(n)$ 线性时间内飞速解析数万行代码。</li>
+</ul>
+<p>因此，计算机科学家和工程师达成了妥协：<strong>用 2型文法（CFG）搭建高速骨架，把上下文相关的逻辑剥离到后续阶段用普通程序逻辑去检查。</strong></p>
+<hr>
+<p>Python 的特殊疑问：缩进（Indentation）难道不是上下文相关吗？</p>
+<p>Python 强依赖缩进，很多初学者会疑惑：“下一行属于哪个代码块，必须对比上一行的缩进深度，这难道不是赤裸裸的上下文依赖吗？”</p>
+<p>Python 的解决方案非常绝妙——<strong>下放给词法分析器（Lexer Hack）</strong>：</p>
+<ol>
+<li>词法分析器在读取字符时，在内存里偷偷维护了一个<strong>缩进栈（Indent Stack）</strong>。</li>
+<li>当发现缩进增加时，它向后扔出一个虚拟的 Token：<code>INDENT</code>。</li>
+<li>当发现缩进减少时，它弹栈并扔出一个或多个虚拟 Token：<code>DEDENT</code>。</li>
+<li><strong>到了语法分析器（Parser）手里时</strong>，缩进已经被抹平成了普通的标记符号，文法规则依然是完美的<strong>上下文无关</strong>：<figure class="highlight bnf"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">if_stmt : &quot;if&quot; test &quot;:&quot; suite</span><br><span class="line">suite   : simple_stmt | NEWLINE INDENT stmt+ DEDENT</span><br></pre></td></tr></table></figure>
+（这和 C&#x2F;Java 中的 <code>&#123;</code> 对应 <code>INDENT</code>、<code>&#125;</code> 对应 <code>DEDENT</code> 本质没有任何区别。）</li>
+</ol>
+<hr>
+<p><strong>正则为什么不能解析语言</strong></p>
+<p>核心瓶颈：有限状态机没有“无限计数”的记忆能力</p>
+<ul>
+<li>3 型文法对应的底层机器是<strong>有限自动机（FA）</strong>。</li>
+<li>有限自动机的关键定语是<strong>“有限”（Finite）</strong>：它只有固定的 $k$ 个内部状态，<strong>没有栈、没有额外变量、没有辅助内存</strong>。</li>
+<li>它在任何时刻的全部记忆，仅仅等于它“当前停留在哪一个状态节点上”。</li>
+</ul>
+<p>数学反例：括号平衡匹配（$a^n b^n$ 问题）<br>在任何编程语言中，代码块 <code>&#123; ... &#125;</code>、函数传参 <code>( ... )</code>、算术表达式 <code>((1 + 2) * 3)</code> 都允许<strong>无限深度的嵌套与对称闭合</strong>。<br>抽象成最简单的数学语言，这就是语言：<br>$$L &#x3D; { a^n b^n \mid n \ge 1 } \quad \text{（即 $n$ 个左括号后面必须精确跟随 $n$ 个右括号）}$$</p>
+<p><strong>利用计算机科学中的【鸽巢原理（抽屉原理）&#x2F; 泵引理 (Pumping Lemma)】推导</strong>：</p>
+<ol>
+<li>假设存在一个有限自动机能够识别这个合法的括号嵌套语言，设该自动机内部有 $k$ 个状态。</li>
+<li>现在我们给它输入一个嵌套深度超过状态总数的串，比如连续输入 $n &#x3D; k + 1$ 个左括号（即输入串包含 $k+1$ 个 $a$）。</li>
+<li>根据<strong>鸽巢原理</strong>：只有 $k$ 个状态，却读入了 $k+1$ 个字符，自动机在读这串左括号的过程中，<strong>必然会重复踏入某一个相同的状态两次</strong>（即图上必然出现了闭环 Loop）！</li>
+<li><strong>致命推论</strong>：一旦在读取左括号时陷入了循环回路，这个自动机就<strong>彻底丢失了它到底已经读入了多少个左括号的精确计数</strong>！</li>
+<li>结果就是：它再也无法保证右边紧跟着的右括号数量是否恰好也是 $n$ 个。它必然会错误地接受像 $a^{n+m}b^n$ 这样括号不匹配的非法串。</li>
+</ol>
+<p><strong>因此定理得证</strong>：有限自动机（及等价的正则表达式）从理论上<strong>绝对不可能</strong>表达具有无限嵌套、自平衡特性的语法结构，而现代编程语言的骨架偏偏全都是这种自包含的嵌套结构。</p>
+<hr>
+<p><strong>正则一定有回溯么？</strong></p>
+<p>门派一：正统自动机派（无栈、无回溯、绝对线性时间）</p>
+<blockquote>
+<p><strong>代表选手</strong>：Ken Thompson 的原始算法、Unix 的 <code>grep</code>、Google 开发的 <code>RE2</code> 引擎、Rust 的 <code>regex</code> 库。</p>
+</blockquote>
+<p>你可能会极其好奇：<strong>“既然没有栈，遇到分支选择（比如 <code>cat|car</code>），它不回溯怎么知道该走哪条路？”</strong></p>
+<hr>
+<p>答案是：它不是“走错了再退回来”，而是“影分身术（并行推进）”！<br>有限自动机（特别是 NFA）在面对多个分支时，根本不需要用栈去记录回退点。</p>
+<p><strong>直观图解</strong>：假设匹配 <code>(cat|car)</code>，目标字符串是 <code>&quot;car&quot;</code>：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">              ┌── 走 &#x27;c&#x27; ──&gt; [状态A] ── 走 &#x27;a&#x27; ──&gt; [状态C] ── 走 &#x27;t&#x27; ──&gt; (接受)</span><br><span class="line">[起始状态] ───┤</span><br><span class="line">              └── 走 &#x27;c&#x27; ──&gt; [状态B] ── 走 &#x27;a&#x27; ──&gt; [状态D] ── 走 &#x27;r&#x27; ──&gt; (接受)</span><br></pre></td></tr></table></figure>
+<ol>
+<li>读入第 1 个字符 <code>&#39;c&#39;</code>：<ul>
+<li>自动机<strong>同时踏入</strong>状态 A 和 状态 B。此时自动机内部的状态集合是：<code>&#123;A, B&#125;</code>。</li>
+</ul>
+</li>
+<li>读入第 2 个字符 <code>&#39;a&#39;</code>：<ul>
+<li>状态 A 走向 C，状态 B 走向 D。当前存活的状态集合是：<code>&#123;C, D&#125;</code>。</li>
+</ul>
+</li>
+<li>读入第 3 个字符 <code>&#39;r&#39;</code>：<ul>
+<li>从状态 C 无法消耗 <code>&#39;r&#39;</code>，这条分支死掉了；</li>
+<li>但从状态 D 成功消耗 <code>&#39;r&#39;</code>，顺利走进接受状态！</li>
+</ul>
+</li>
+<li><strong>匹配成功！</strong></li>
+</ol>
+<p>整个过程中，<strong>输入字符串只被从左往右读了一遍，机器一次都没有往回倒退，也根本不需要一个“栈”来记账！</strong><br>它只是每走一步，都在维护一个当前存活状态的“小集合”。这种算法由肯·汤普森在 1968 年发明，速度快得不可思议！</p>
+<hr>
+<p>门派二：回溯派（带栈、有回溯、可能导致指数级卡死）</p>
+<blockquote>
+<p><strong>代表选手</strong>：Perl、Python (<code>re</code> 模块)、Java、JavaScript (<code>RegExp</code>)、PCRE、.NET。</p>
+</blockquote>
+<p>既然自动机派速度又快又不需要栈，为什么 Python、Java 他们不用呢？</p>
+<ol>
+<li>为什么回溯派要引入“栈”？<br>因为人类在实际编程中，给正则表达式贪婪地加了太多<strong>理论之外的超纲功能</strong>：</li>
+</ol>
+<ul>
+<li>**捕获组与反向引用 (Backreferences)**：比如 <code>([a-z]+)\1</code>，要求后面匹配的单词必须和前面捕获的一模一样。</li>
+<li>**零宽断言 &#x2F; 环视 (Lookahead &#x2F; Lookbehind)**：比如 <code>(?&lt;=foo)bar</code>。</li>
+</ul>
+<p><strong>致命的真相</strong>：根据乔姆斯基层级，<strong>“反向引用”根本不是 3 型正则语言，它甚至超越了 2 型，属于 1 型（上下文相关）！</strong><br>纯有限自动机是绝对做不到反向引用的。为了支持这些功能，Perl、Python 引擎的开发者不得不放弃纯自动机，<strong>引入了调用栈，采用“贪婪试探 + 碰壁回溯（Backtracking）”的算法</strong>。</p>
+<ol start="2">
+<li>回溯派的噩梦：灾难性回溯 (Catastrophic Backtracking)<br>一旦引入了栈和回溯，灾难就可能发生。<br>比如这条简单的正则：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(a+)+$</span><br></pre></td></tr></table></figure>
+如果拿它去匹配一串长文本：<code>aaaaaaaaaaaaaaaaaaaaaaaaX</code>（后面带一个不匹配的 X）：</li>
+<li>引擎一头扎进去，贪婪地穷举第一层 <code>a+</code> 到底切几个，第二层 <code>a+</code> 切几个；</li>
+<li>读到最后发现没有 <code>$</code>，匹配失败！</li>
+<li>于是从栈里<strong>弹栈回退</strong>，尝试换一种切分方式；</li>
+<li>这种穷举组合呈<strong>指数级增长（$2^n$）</strong>！如果输入有 30 个 <code>a</code>，回溯次数高达 $2^{30} \approx 10$ 亿次！</li>
+<li><strong>结果</strong>：Python 进程直接 CPU 飙到 100%，卡死几十分钟甚至几天！这就是黑客极其喜欢的 <strong>ReDoS（正则表达式拒绝服务攻击）</strong>。</li>
+</ol>
+<hr>
+<p>计算机泰斗的愤怒与回归：Russ Cox 与 RE2</p>
+<p>在 2007 年，Go 语言核心设计者、Google 架构师 <strong>Russ Cox</strong> 写了一篇震动整个计算机界的经典论文：</p>
+<blockquote>
+<p><strong>《Regular Expression Matching Can Be Simple And Fast (but is slow in Java, Perl, PHP, Python…)》</strong><br>（正则表达式匹配本可以简单又飞快，但在 Java、Python 里面却慢得像蜗牛……）</p>
+</blockquote>
+<p>Russ Cox 在文章中指出：</p>
+<ul>
+<li>现代很多语言的正则引擎走偏了，搞出了极其低效的带栈回溯机制；</li>
+<li>而 Thompson 在 1968 年写的<strong>基于纯状态机的正则引擎</strong>，即便面对恶意输入，也永远在几微秒内给出结果，绝不卡死。</li>
+</ul>
+<p>后来，Google 索性自己写了一个彻底摒弃回溯的正则库——<strong>RE2</strong>（现在也被 Go、Rust 官方库吸收）。RE2 <strong>故意不支持反向引用等超纲特性，严格遵循有限自动机理论，保证绝对不回溯、绝对不爆栈、严格线性时间！</strong></p>
+<hr>
+<p><strong>巴科斯范式 (BNF) 与正则表达式的本质等价性</strong></p>
+<p>本质揭秘：正则表达式只是正则文法的“语法糖”</p>
+<ul>
+<li>形式文法的产生式通常书写为<strong>巴科斯范式（BNF, Backus-Naur Form）</strong>。</li>
+<li><strong>关键洞察</strong>：<strong>我们日常使用的正则表达式，在本质上只是对应正则文法在工程实现上的一种更简洁、更方便在代码中书写的语法符号（Syntactic Notation）</strong>。两者在理论上完全等价。</li>
+</ul>
+<p>等价性推导案例<br>考察以下 BNF 正则文法产生式：</p>
+<ol>
+<li>$S \to aS$</li>
+<li>$S \to bA$</li>
+<li>$A \to cA$</li>
+<li>$A \to \epsilon$</li>
+</ol>
+<p>其中符号 $\epsilon$（Epsilon）代表<strong>空字符串（Empty String）</strong>，意味着可以直接消除该非终结符并结束推导。</p>
+<p>若要匹配字符串 <code>&quot;abc&quot;</code>，推导路径如下：<br>$$S \xrightarrow{(1)} aS \xrightarrow{(2)} abA \xrightarrow{(3)} abcA \xrightarrow{(4)} abc\epsilon &#x3D; abc$$</p>
+<p>该 BNF 规则与正则表达式 <code>a*bc*</code>（或者以 <code>a</code> 开头、紧随 <code>b</code>、后接可选 <code>c</code> 的模式）在逻辑语义上完全等价。在代码中编写 BNF 极其冗长，而正则表达式提供了极致简练的等价记号。</p>
+<hr>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%AD%A3%E5%88%99/" rel="tag">正则</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag">编译原理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/3eecc83132ed/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            正则引擎中的有限自动机 ② 有限自动机
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/6a27ccdebbe5/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Steam 动态限速</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

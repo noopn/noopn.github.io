@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>正则引擎中的有限自动机 ④ NFA acceptor/table |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-compiling/正则引擎⑤NFA-acceptor-table copy"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  正则引擎中的有限自动机 ④ NFA acceptor/table
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/8700de120fca/" class="article-date">
+  <time datetime="2024-11-19T20:33:46.000Z" itemprop="datePublished">2024-11-20</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">3.8k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">16 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h1 id="NFA-接收器与图遍历匹配算法-NFA-Acceptor-Graph-Traversal-Engine"><a href="#NFA-接收器与图遍历匹配算法-NFA-Acceptor-Graph-Traversal-Engine" class="headerlink" title="NFA 接收器与图遍历匹配算法 (NFA Acceptor: Graph Traversal Engine)"></a>NFA 接收器与图遍历匹配算法 (NFA Acceptor: Graph Traversal Engine)</h1><h2 id="1-架构总览：从“静态电路图”到“动态求值引擎”"><a href="#1-架构总览：从“静态电路图”到“动态求值引擎”" class="headerlink" title="1. 架构总览：从“静态电路图”到“动态求值引擎”"></a>1. 架构总览：从“静态电路图”到“动态求值引擎”</h2><p>上一章节，我们实现了五大基础 NFA 构建块（单字符、空串、连接、并集、闭包）以及针对字符集的工程优化。这些工厂函数的核心任务是<strong>“画图纸 &#x2F; 搭电路”</strong>——它们在内存中建立起由 <code>State</code> 对象与转移边构成的静态有向图。</p>
+<p>本讲开启了第三模块的核心篇章：<strong>如何驱动这台机器去执行真正的字符串匹配校验？</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">┌──────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    静态构建阶段 (Builder)                    │</span><br><span class="line">│   char(&#x27;a&#x27;), concatenation(nfa1, nfa2), or(nfa1, nfa2)...    │</span><br><span class="line">└──────────────────────────────┬───────────────────────────────┘</span><br><span class="line">                               │ 生成静态 NFA 图</span><br><span class="line">                               ▼</span><br><span class="line">┌──────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    动态求值阶段 (Acceptor)                   │</span><br><span class="line">│          nfa.test(&quot;abc&quot;) ──&gt; 判定该字符串是否被该机器接受        │</span><br><span class="line">└──────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="2-委托模式：NFA-与-State-的职责划分"><a href="#2-委托模式：NFA-与-State-的职责划分" class="headerlink" title="2. 委托模式：NFA 与 State 的职责划分"></a>2. 委托模式：<code>NFA</code> 与 <code>State</code> 的职责划分</h2><p>在面向对象架构中，<code>NFA</code> 类对外暴露统一的 <code>test(string)</code> 接口，但它自身并不直接执行深度图搜索，而是<strong>薄薄地封装了一层委托（Delegation）</strong>，将匹配工作完全交给它的起始节点 <code>inState</code>：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">NFA</span> &#123;</span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"></span></span><br><span class="line"><span class="params">    <span class="keyword">public</span> <span class="attr">inState</span>: <span class="title class_">State</span>,</span></span><br><span class="line"><span class="params">    <span class="keyword">public</span> <span class="attr">outState</span>: <span class="title class_">State</span></span></span><br><span class="line"><span class="params">  </span>) &#123;&#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 判定输入字符串是否被当前 NFA 接受</span></span><br><span class="line"><span class="comment">   * 核心工作委托给唯一入口 inState 的 test 方法</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="title function_">test</span>(<span class="attr">string</span>: <span class="built_in">string</span>): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">inState</span>.<span class="title function_">test</span>(<span class="built_in">string</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="为什么可以从-inState-线性委托？"><a href="#为什么可以从-inState-线性委托？" class="headerlink" title="为什么可以从 inState 线性委托？"></a>为什么可以从 <code>inState</code> 线性委托？</h3><p>这正是得益于我们贯穿始终的<strong>核心架构不变量（Architectural Invariant）</strong>：</p>
+<ul>
+<li>任何合法的 NFA 片段都<strong>有且仅有一个明确的入口</strong>（<code>inState</code>）；</li>
+<li>任何合法的 NFA 片段都<strong>有且仅有一个全局出口</strong>（<code>outState</code>，且标记为 <code>accepting: true</code>）。</li>
+</ul>
+<p>因此，匹配逻辑总是且必须从 <code>inState</code> 出发，沿着有向边一路探索。</p>
+<hr>
+<h2 id="3-图遍历匹配算法详解-DFS-x2F-Backtracking"><a href="#3-图遍历匹配算法详解-DFS-x2F-Backtracking" class="headerlink" title="3. 图遍历匹配算法详解 (DFS &#x2F; Backtracking)"></a>3. 图遍历匹配算法详解 (DFS &#x2F; Backtracking)</h2><p><code>State.prototype.test(string)</code> 的本质是一个<strong>基于深度优先搜索（DFS）与回溯（Backtracking）的有向图可达性判定器</strong>。</p>
+<p>在每一步递归中，状态机面临两类转移：</p>
+<ol>
+<li><strong>符号转移（Symbol Transition）</strong>：必须消耗输入流中的当前字符；</li>
+<li><strong>空串转移（$\epsilon$-Transition）</strong>：<strong>不消耗</strong>任何输入字符，瞬间自由跳转。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">             ┌───────────────────────────┐</span><br><span class="line">             │   State.prototype.test    │</span><br><span class="line">             │   (string, visited)       │</span><br><span class="line">             └─────────────┬─────────────┘</span><br><span class="line">                           │</span><br><span class="line">            字符串是否为空 (string === &quot;&quot;)?</span><br><span class="line">                    /              \</span><br><span class="line">                 [是]              [否]</span><br><span class="line">                  /                  \</span><br><span class="line">        当前是否为接受态?         1. 尝试匹配当前字符 string[0]:</span><br><span class="line">         /          \               有字符边 -&gt; 消耗字符, 递归 test(rest)</span><br><span class="line">      [是]          [否]          2. 尝试走 ε 边 (不消耗字符):</span><br><span class="line">      /                \            有 ε 边 -&gt; 保持原串, 递归 test(string)</span><br><span class="line">返回 true         顺着 ε 边搜索:</span><br><span class="line">                 能否抵达接受态?</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-1-终止条件判定（Base-Cases）"><a href="#3-1-终止条件判定（Base-Cases）" class="headerlink" title="3.1 终止条件判定（Base Cases）"></a>3.1 终止条件判定（Base Cases）</h3><h4 id="情况-A：输入字符串已完全消耗完毕（string-length-0）"><a href="#情况-A：输入字符串已完全消耗完毕（string-length-0）" class="headerlink" title="情况 A：输入字符串已完全消耗完毕（string.length === 0）"></a>情况 A：输入字符串已完全消耗完毕（<code>string.length === 0</code>）</h4><ol>
+<li><strong>成功终态</strong>：如果当前状态恰好是接受状态（<code>this.accepting === true</code>），说明输入字符串完整且精确地导向了终点，**直接返回 <code>true</code>**。</li>
+<li><strong>潜伏路径（绝不能轻言放弃！）</strong>：如果当前状态还不是接受状态，<strong>不能立刻判定失败</strong>！<ul>
+<li>因为当前状态后面可能连接着若干条 $\epsilon$ 边；</li>
+<li>这些 $\epsilon$ 边允许状态机在<strong>不吃任何字符</strong>的情况下继续向前“瞬移”，最终抵达接受状态！</li>
+<li>因此，仍需沿着所有 $\epsilon$ 出边继续递归探测。如果其中任意一条路径能抵达接受状态，返回 <code>true</code>；否则返回 <code>false</code>。</li>
+</ul>
+</li>
+</ol>
+<h4 id="情况-B：输入字符串尚未结束（string-length-gt-0）"><a href="#情况-B：输入字符串尚未结束（string-length-gt-0）" class="headerlink" title="情况 B：输入字符串尚未结束（string.length &gt; 0）"></a>情况 B：输入字符串尚未结束（<code>string.length &gt; 0</code>）</h4><p>当前状态需要分别尝试两条路：</p>
+<ol>
+<li><strong>分支一：字符边匹配（消耗字符）</strong><ul>
+<li>取出首字符 <code>char = string[0]</code>；</li>
+<li>查询当前状态是否存在标记为 <code>char</code> 的出边：<code>this.getTransitionsForSymbol(char)</code>；</li>
+<li>若存在，则字符被成功消耗，递归调用下一跳状态的 <code>test(string.slice(1))</code>；</li>
+<li>只要有任意一个分支递归成功返回 <code>true</code>，整体即刻判定成功（短路返回 <code>true</code>）。</li>
+</ul>
+</li>
+<li><strong>分支二：$\epsilon$ 边瞬移（不消耗字符）</strong><ul>
+<li>即使当前字符没有匹配的字符边，或者字符边匹配失败，状态机依然可以尝试走 $\epsilon$ 边；</li>
+<li>走 $\epsilon$ 边时，输入字符串保持原样（<code>string</code> 不缩短），递归调用下一跳状态的 <code>test(string)</code>；</li>
+<li>同样，若有分支返回 <code>true</code>，整体判定成功。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="4-核心陷阱：-epsilon-环路与死循环防范"><a href="#4-核心陷阱：-epsilon-环路与死循环防范" class="headerlink" title="4. 核心陷阱：$\epsilon$-环路与死循环防范"></a>4. 核心陷阱：$\epsilon$-环路与死循环防范</h2><h3 id="4-1-死循环危机"><a href="#4-1-死循环危机" class="headerlink" title="4.1 死循环危机"></a>4.1 死循环危机</h3><p>考虑闭包模式或复合模式（如 <code>/(a*)* /</code> 或存在回环边的结构）：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">   ┌────────── ε ──────────┐</span><br><span class="line">   ▼                       │</span><br><span class="line">( S1 ) ──────── ε ───────&gt; ( S2 )</span><br></pre></td></tr></table></figure>
+<p>如果图结构中存在由 $\epsilon$ 边构成的环路，且当前处于 <code>string === &quot;&quot;</code> 或走 $\epsilon$ 路径，递归函数将在状态之间无限来回横跳，最终导致<strong>调用栈溢出（Maximum call stack size exceeded）</strong>！</p>
+<h3 id="4-2-访问集防线-visited-Set-lt-State-gt"><a href="#4-2-访问集防线-visited-Set-lt-State-gt" class="headerlink" title="4.2 访问集防线 (visited: Set&lt;State&gt;)"></a>4.2 访问集防线 (<code>visited: Set&lt;State&gt;</code>)</h3><p>为了彻底消除死循环，算法引入了一个只针对 $\epsilon$ 转移的<strong>访问记录集（Visited Set）</strong>：</p>
+<ul>
+<li>当沿着一条 $\epsilon$ 边前进时，将目标状态登记入 <code>visited</code> 集合；</li>
+<li>如果在<strong>未消耗任何字符</strong>的前提下再次回到了 <code>visited</code> 中的某个状态，说明陷入了无意义的 $\epsilon$ 死循环，**直接剪枝返回 <code>false</code>**；</li>
+<li><strong>关键重置时机</strong>：一旦状态机沿着真实的<strong>字符边</strong>前进并成功消耗了一个字符，输入纸带已经推进一步，这一轮的 <code>visited</code> 集合必须<strong>清空重置</strong>（因为不同字符位置重新访问同一状态是完全合法且必要的重复！）。</li>
+</ul>
+<hr>
+<h2 id="5-完整代码工程实现"><a href="#5-完整代码工程实现" class="headerlink" title="5. 完整代码工程实现"></a>5. 完整代码工程实现</h2><p>在 <code>State</code> 类与 <code>NFA</code> 类中补充完整的 <code>test</code> 逻辑：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">const</span> <span class="variable constant_">EPSILON</span> = <span class="string">&#x27;ε&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">class</span> <span class="title class_">State</span> &#123;</span><br><span class="line">  <span class="attr">accepting</span>: <span class="built_in">boolean</span>;</span><br><span class="line">  <span class="attr">transitions</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">State</span>[]&gt;;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params">&#123; accepting = <span class="literal">false</span> &#125; = &#123;&#125;</span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">accepting</span> = accepting;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">transitions</span> = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">addTransitionForSymbol</span>(<span class="attr">symbol</span>: <span class="built_in">string</span>, <span class="attr">state</span>: <span class="title class_">State</span>): <span class="built_in">void</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> list = <span class="variable language_">this</span>.<span class="property">transitions</span>.<span class="title function_">get</span>(<span class="built_in">symbol</span>);</span><br><span class="line">    <span class="keyword">if</span> (list) &#123;</span><br><span class="line">      list.<span class="title function_">push</span>(state);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="variable language_">this</span>.<span class="property">transitions</span>.<span class="title function_">set</span>(<span class="built_in">symbol</span>, [state]);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">getTransitionsForSymbol</span>(<span class="attr">symbol</span>: <span class="built_in">string</span>): <span class="title class_">State</span>[] &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">transitions</span>.<span class="title function_">get</span>(<span class="built_in">symbol</span>) || [];</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 图遍历执行器：递归深度优先搜索 + 回溯</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> string 当前待匹配的剩余字符串</span></span><br><span class="line"><span class="comment">   * <span class="doctag">@param</span> visited 仅用于 ε 转移的环路检测集合</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="title function_">test</span>(<span class="attr">string</span>: <span class="built_in">string</span>, <span class="attr">visited</span>: <span class="title class_">Set</span>&lt;<span class="title class_">State</span>&gt; = <span class="keyword">new</span> <span class="title class_">Set</span>()): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="comment">// 1. ε 环路死循环检测：若在空跳转下重复踩中已访问状态，直接剪枝</span></span><br><span class="line">    <span class="keyword">if</span> (visited.<span class="title function_">has</span>(<span class="variable language_">this</span>)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    visited.<span class="title function_">add</span>(<span class="variable language_">this</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 基准情况：字符串已被消耗殆尽</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">string</span>.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="comment">// 成功终点：停留在接受状态</span></span><br><span class="line">      <span class="keyword">if</span> (<span class="variable language_">this</span>.<span class="property">accepting</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 虽未在接受态，但尝试通过剩余的 ε 边能否滑向接受态</span></span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> nextState <span class="keyword">of</span> <span class="variable language_">this</span>.<span class="title function_">getTransitionsForSymbol</span>(<span class="variable constant_">EPSILON</span>)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (nextState.<span class="title function_">test</span>(<span class="string">&#x27;&#x27;</span>, visited)) &#123;</span><br><span class="line">          <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 递归情况：字符串非空</span></span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">symbol</span> = <span class="built_in">string</span>[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">const</span> rest = <span class="built_in">string</span>.<span class="title function_">slice</span>(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 路径 A：匹配当前字符边（消耗 1 个字符）</span></span><br><span class="line">    <span class="comment">// 注意：一旦消耗了字符，新的递归分支使用全新独立的 visited 集！</span></span><br><span class="line">    <span class="keyword">const</span> symbolTransitions = <span class="variable language_">this</span>.<span class="title function_">getTransitionsForSymbol</span>(<span class="built_in">symbol</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> nextState <span class="keyword">of</span> symbolTransitions) &#123;</span><br><span class="line">      <span class="keyword">if</span> (nextState.<span class="title function_">test</span>(rest, <span class="keyword">new</span> <span class="title class_">Set</span>())) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 路径 B：尝试 ε 空转移（不消耗字符）</span></span><br><span class="line">    <span class="comment">// 继承当前的 visited 集合，持续监控 ε 环路</span></span><br><span class="line">    <span class="keyword">const</span> epsilonTransitions = <span class="variable language_">this</span>.<span class="title function_">getTransitionsForSymbol</span>(<span class="variable constant_">EPSILON</span>);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> nextState <span class="keyword">of</span> epsilonTransitions) &#123;</span><br><span class="line">      <span class="keyword">if</span> (nextState.<span class="title function_">test</span>(<span class="built_in">string</span>, visited)) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 所有可能路径均无法抵达接受态</span></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="6-双游标执行轨迹演练-Trace-Walkthrough"><a href="#6-双游标执行轨迹演练-Trace-Walkthrough" class="headerlink" title="6. 双游标执行轨迹演练 (Trace Walkthrough)"></a>6. 双游标执行轨迹演练 (Trace Walkthrough)</h2><h3 id="案例：以连接机器-ab-匹配-quot-ab-quot-为例"><a href="#案例：以连接机器-ab-匹配-quot-ab-quot-为例" class="headerlink" title="案例：以连接机器 /ab/ 匹配 &quot;ab&quot; 为例"></a>案例：以连接机器 <code>/ab/</code> 匹配 <code>&quot;ab&quot;</code> 为例</h3><p>机器结构拓扑：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(S1) ──[&#x27;a&#x27;]──&gt; (S2) ──[ε]──&gt; (S3) ──[&#x27;b&#x27;]──&gt; ((S4: accepting))</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th align="center">步数</th>
+<th align="center">当前状态</th>
+<th align="center">剩余字符串</th>
+<th align="left">触发动作</th>
+<th align="center">visited 状态</th>
+<th align="left">判定分支</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong>1</strong></td>
+<td align="center"><code>S1</code></td>
+<td align="center"><code>&quot;ab&quot;</code></td>
+<td align="left">读取 <code>string[0] === &#39;a&#39;</code>，命中字符边 <code>S1 -&gt; S2</code></td>
+<td align="center"><code>&#123;S1&#125;</code></td>
+<td align="left">消耗 <code>&#39;a&#39;</code>，进入 <code>S2.test(&quot;b&quot;)</code></td>
+</tr>
+<tr>
+<td align="center"><strong>2</strong></td>
+<td align="center"><code>S2</code></td>
+<td align="center"><code>&quot;b&quot;</code></td>
+<td align="left">检查字符边 <code>&#39;b&#39;</code>：无出边！转向尝试 $\epsilon$ 边 <code>S2 -&gt; S3</code></td>
+<td align="center"><code>&#123;S2&#125;</code></td>
+<td align="left">保持 <code>&quot;b&quot;</code>，进入 <code>S3.test(&quot;b&quot;)</code></td>
+</tr>
+<tr>
+<td align="center"><strong>3</strong></td>
+<td align="center"><code>S3</code></td>
+<td align="center"><code>&quot;b&quot;</code></td>
+<td align="left">读取 <code>string[0] === &#39;b&#39;</code>，命中字符边 <code>S3 -&gt; S4</code></td>
+<td align="center"><code>&#123;S2, S3&#125;</code></td>
+<td align="left">消耗 <code>&#39;b&#39;</code>，进入 <code>S4.test(&quot;&quot;)</code></td>
+</tr>
+<tr>
+<td align="center"><strong>4</strong></td>
+<td align="center"><code>S4</code></td>
+<td align="center"><code>&quot;&quot;</code></td>
+<td align="left">字符串为空！检查 <code>S4.accepting === true</code></td>
+<td align="center"><code>&#123;&#125;</code></td>
+<td align="left"><strong>匹配成功！返回 <code>true</code></strong></td>
+</tr>
+</tbody></table>
+<h1 id="NFA-转换表与-ε-闭包计算-NFA-Transition-Table-amp-ε-Closure"><a href="#NFA-转换表与-ε-闭包计算-NFA-Transition-Table-amp-ε-Closure" class="headerlink" title="NFA 转换表与 ε-闭包计算 (NFA Transition Table &amp; ε-Closure)"></a>NFA 转换表与 ε-闭包计算 (NFA Transition Table &amp; ε-Closure)</h1><h2 id="1-为什么需要转换表？-From-Graph-to-Matrix"><a href="#1-为什么需要转换表？-From-Graph-to-Matrix" class="headerlink" title="1. 为什么需要转换表？(From Graph to Matrix)"></a>1. 为什么需要转换表？(From Graph to Matrix)</h2><p>在上一讲中，我们通过直接在 NFA 状态图上进行递归回溯遍历，实现了一个功能完备的 <code>test</code> 接收器。</p>
+<p>然而，在编译器工业实现中，<strong>直接在指针图上游走存在重大性能瓶颈</strong>：</p>
+<ol>
+<li><strong>内存碎片与指针跳转（Pointer Chasing）</strong>：图遍历充斥着散乱的堆内存寻址与缓存未命中；</li>
+<li><strong>非确定性（Nondeterminism）与 $\epsilon$ 边</strong>：导致程序执行流分叉、需要反复维护 <code>visited</code> 集合以防环路死循环；</li>
+<li><strong>向 DFA 进化的必经之路</strong>：为了将正则引擎彻底加速为确定性的 $O(1)$ 单步跳转，第一步必须将散乱的图模型结构化为统一的<strong>转换矩阵（Transition Table）</strong>。</li>
+</ol>
+<hr>
+<h2 id="2-NFA-转换表的结构剖析-Anatomy-of-the-NFA-Table"><a href="#2-NFA-转换表的结构剖析-Anatomy-of-the-NFA-Table" class="headerlink" title="2. NFA 转换表的结构剖析 (Anatomy of the NFA Table)"></a>2. NFA 转换表的结构剖析 (Anatomy of the NFA Table)</h2><p>NFA 转换表将状态机的所有拓扑信息浓缩为一张二维网格：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">       ┌────────── 字母表字符列 (Alphabet Σ) ──────────┐    ┌── 核心闭包列 ──┐</span><br><span class="line">       │                                               │    │                │</span><br><span class="line">状态行  │               &#x27;a&#x27;             &#x27;b&#x27;             │    │       ε*       │</span><br><span class="line">───────┼───────────────────────────────────────────────┼────┼────────────────┤</span><br><span class="line">  &gt; 1  │               -                -              │    │   &#123; 1, 2, 5 &#125;  │</span><br><span class="line">    2  │              &#123;3&#125;               -              │    │      &#123; 2 &#125;     │</span><br><span class="line">    3  │               -                -              │    │    &#123; 3, 4 &#125;    │</span><br><span class="line">  * 4  │               -                -              │    │      &#123; 4 &#125;     │</span><br><span class="line">    5  │               -               &#123;6&#125;             │    │      &#123; 5 &#125;     │</span><br><span class="line">    6  │               -                -              │    │    &#123; 6, 4 &#125;    │</span><br></pre></td></tr></table></figure>
+
+<h3 id="表格要素说明："><a href="#表格要素说明：" class="headerlink" title="表格要素说明："></a>表格要素说明：</h3><ol>
+<li><strong>行表头（Rows - 状态标签）</strong>：<ul>
+<li>包含 NFA 图中的所有状态节点。</li>
+<li>每个状态分配一个唯一标签（如数字 <code>1, 2, 3...</code> 或字母）。</li>
+<li><strong>特殊标记</strong>：<ul>
+<li><code>&gt;</code> 或 <code>-&gt;</code>：标记机器的<strong>初始状态（Start State）</strong>（如 <code>&gt; 1</code>）；</li>
+<li><code>*</code> 或双圈：标记机器的<strong>接受状态（Accepting State）</strong>（如 <code>* 4</code>）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>字符列（Columns - 字母表 $\Sigma$）</strong>：<ul>
+<li>包含该正则模式中出现的所有真实字符（例如 <code>/a|b/</code> 的字符集为 <code>&#123;&#39;a&#39;, &#39;b&#39;&#125;</code>）。</li>
+<li>单元格内记录从当前状态读入该字符后所转移到的<strong>目标状态集合</strong>（因非确定性，可能是 0 个、1 个或多个状态）。</li>
+</ul>
+</li>
+<li><em><em>核心扩展列：$\epsilon^</em>$ 列（Epsilon-Closure &#x2F; 空转移闭包）</em>*：<ul>
+<li>这是 NFA 转换表中最核心、最重要的列，也是后续消除所有 $\epsilon$ 边并转化为 DFA 的绝对基石。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-核心概念：-epsilon-闭包（Epsilon-Closure-epsilon-）"><a href="#3-核心概念：-epsilon-闭包（Epsilon-Closure-epsilon-）" class="headerlink" title="3. 核心概念：$\epsilon$-闭包（Epsilon Closure, $\epsilon^*$）"></a>3. 核心概念：$\epsilon$-闭包（Epsilon Closure, $\epsilon^*$）</h2><h3 id="3-1-语义与数学定义"><a href="#3-1-语义与数学定义" class="headerlink" title="3.1 语义与数学定义"></a>3.1 语义与数学定义</h3><p>类比于克莱恩星号闭包（Kleene Closure, $A^*$ 表示重复 0 次或多次），**$\epsilon$-闭包（记作 $\epsilon^*(S)$）** 表示：</p>
+<blockquote>
+<p><strong>从状态 $S$ 出发，沿着 0 条或多条 $\epsilon$ 转移边所能抵达的所有状态的集合。</strong></p>
+</blockquote>
+<p>$$\epsilon\text{-closure}(S) &#x3D; { q \in Q \mid S \xrightarrow{\epsilon^*} q }$$</p>
+<h3 id="3-2-自反性铁律：必须包含状态本身！"><a href="#3-2-自反性铁律：必须包含状态本身！" class="headerlink" title="3.2 自反性铁律：必须包含状态本身！"></a>3.2 自反性铁律：必须包含状态本身！</h3><blockquote>
+<p>[!IMPORTANT]<br><strong>任何状态的 $\epsilon$-闭包，第一项永远是它自身！</strong></p>
+<p>即：$$S \in \epsilon\text{-closure}(S)$$</p>
+<p><strong>原因</strong>：消耗“0 个 $\epsilon$ 转移”意味着原地不动。不消耗任何字符留在当前状态，在物理语义上完全等价于存在一条指向自己的隐式 $\epsilon$ 转移。</p>
+</blockquote>
+<h3 id="3-3-闭包计算演示"><a href="#3-3-闭包计算演示" class="headerlink" title="3.3 闭包计算演示"></a>3.3 闭包计算演示</h3><p>以状态 $1$ 为例（图见下节）：</p>
+<ol>
+<li>首先加入自身：<code>&#123; 1 &#125;</code>；</li>
+<li>状态 $1$ 有两条显式 $\epsilon$ 出边：分别通往状态 $2$ 和状态 $5$；</li>
+<li>检查状态 $2$ 和 $5$，它们均没有更深层的 $\epsilon$ 出边；</li>
+<li>搜索结束，状态 $1$ 的 $\epsilon$-闭包为：<code>&#123; 1, 2, 5 &#125;</code>。</li>
+</ol>
+<hr>
+<h2 id="4-经典全流程实战：构建-a-b-的-NFA-转换表"><a href="#4-经典全流程实战：构建-a-b-的-NFA-转换表" class="headerlink" title="4. 经典全流程实战：构建 /a|b/ 的 NFA 转换表"></a>4. 经典全流程实战：构建 <code>/a|b/</code> 的 NFA 转换表</h2><p>我们以标准的并集模式 <code>/a|b/</code> 为例，完整走一遍手工与算法建表流程。</p>
+<h3 id="4-1-NFA-拓扑图与状态编号"><a href="#4-1-NFA-拓扑图与状态编号" class="headerlink" title="4.1 NFA 拓扑图与状态编号"></a>4.1 NFA 拓扑图与状态编号</h3><p>根据 Thompson 构造法，<code>/a|b/</code> 包含 6 个状态节点：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">                  ε              &#x27;a&#x27;              ε</span><br><span class="line">           ┌───────────&gt; ( 2 ) ───────&gt; ( 3 ) ───────────┐</span><br><span class="line">           │                                             ▼</span><br><span class="line">  &gt; ( 1 ) ─┤                                           * (( 4 ))</span><br><span class="line">[Start]    │      ε              &#x27;b&#x27;              ε     [Accept]</span><br><span class="line">           └───────────&gt; ( 5 ) ───────&gt; ( 6 ) ───────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-逐行计算状态转移与闭包"><a href="#4-2-逐行计算状态转移与闭包" class="headerlink" title="4.2 逐行计算状态转移与闭包"></a>4.2 逐行计算状态转移与闭包</h3><h4 id="状态-1（初始入口-gt-1）："><a href="#状态-1（初始入口-gt-1）：" class="headerlink" title="状态 1（初始入口 &gt; 1）："></a>状态 1（初始入口 <code>&gt; 1</code>）：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code>**：无任何直接字符边 $\rightarrow$ 填空（或 $\emptyset$）；</li>
+<li>**读入 <code>&#39;b&#39;</code>**：无任何直接字符边 $\rightarrow$ 填空；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：包含自身 $1$，顺着 $\epsilon$ 边可达 $2$ 和 $5$ $\rightarrow$ **<code>&#123; 1, 2, 5 &#125;</code>**。</li>
+</ul>
+<h4 id="状态-2："><a href="#状态-2：" class="headerlink" title="状态 2："></a>状态 2：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code>**：有一条边连向状态 $3$ $\rightarrow$ **<code>&#123; 3 &#125;</code>**；</li>
+<li>**读入 <code>&#39;b&#39;</code>**：无出边 $\rightarrow$ 填空；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：无 $\epsilon$ 出边，仅含自身 $\rightarrow$ **<code>&#123; 2 &#125;</code>**。</li>
+</ul>
+<h4 id="状态-3："><a href="#状态-3：" class="headerlink" title="状态 3："></a>状态 3：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code> &#x2F; <code>&#39;b&#39;</code>**：均无字符出边 $\rightarrow$ 填空；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：自身 $3$，加上顺着 $\epsilon$ 边直达的 $4$ $\rightarrow$ **<code>&#123; 3, 4 &#125;</code>**。</li>
+</ul>
+<h4 id="状态-4（最终接受态-4）："><a href="#状态-4（最终接受态-4）：" class="headerlink" title="状态 4（最终接受态 * 4）："></a>状态 4（最终接受态 <code>* 4</code>）：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code> &#x2F; <code>&#39;b&#39;</code>**：全局出口，无任何字符出边 $\rightarrow$ 填空；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：自身 $4$ $\rightarrow$ **<code>&#123; 4 &#125;</code>**。</li>
+</ul>
+<h4 id="状态-5："><a href="#状态-5：" class="headerlink" title="状态 5："></a>状态 5：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code>**：无出边 $\rightarrow$ 填空；</li>
+<li>**读入 <code>&#39;b&#39;</code>**：有一条边连向状态 $6$ $\rightarrow$ **<code>&#123; 6 &#125;</code>**；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：自身 $5$ $\rightarrow$ **<code>&#123; 5 &#125;</code>**。</li>
+</ul>
+<h4 id="状态-6："><a href="#状态-6：" class="headerlink" title="状态 6："></a>状态 6：</h4><ul>
+<li>**读入 <code>&#39;a&#39;</code> &#x2F; <code>&#39;b&#39;</code>**：无字符出边 $\rightarrow$ 填空；</li>
+<li><em><em>$\epsilon^</em>$ 闭包</em>*：自身 $6$，加上顺着 $\epsilon$ 边直达的 $4$ $\rightarrow$ **<code>&#123; 6, 4 &#125;</code>**。</li>
+</ul>
+<h3 id="4-3-最终生成的完整-NFA-转换表"><a href="#4-3-最终生成的完整-NFA-转换表" class="headerlink" title="4.3 最终生成的完整 NFA 转换表"></a>4.3 最终生成的完整 NFA 转换表</h3><table>
+<thead>
+<tr>
+<th align="center">状态 (State)</th>
+<th align="center">输入 <code>&#39;a&#39;</code></th>
+<th align="center">输入 <code>&#39;b&#39;</code></th>
+<th align="center">$\epsilon^*$ (Epsilon-Closure)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center"><strong><code>&gt; 1</code></strong></td>
+<td align="center">$\emptyset$</td>
+<td align="center">$\emptyset$</td>
+<td align="center"><strong><code>&#123; 1, 2, 5 &#125;</code></strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>2</code></strong></td>
+<td align="center"><code>&#123; 3 &#125;</code></td>
+<td align="center">$\emptyset$</td>
+<td align="center"><strong><code>&#123; 2 &#125;</code></strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>3</code></strong></td>
+<td align="center">$\emptyset$</td>
+<td align="center">$\emptyset$</td>
+<td align="center"><strong><code>&#123; 3, 4 &#125;</code></strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>* 4</code></strong></td>
+<td align="center">$\emptyset$</td>
+<td align="center">$\emptyset$</td>
+<td align="center"><strong><code>&#123; 4 &#125;</code></strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>5</code></strong></td>
+<td align="center">$\emptyset$</td>
+<td align="center"><code>&#123; 6 &#125;</code></td>
+<td align="center"><strong><code>&#123; 5 &#125;</code></strong></td>
+</tr>
+<tr>
+<td align="center"><strong><code>6</code></strong></td>
+<td align="center">$\emptyset$</td>
+<td align="center">$\emptyset$</td>
+<td align="center"><strong><code>&#123; 6, 4 &#125;</code></strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="5-代码工程实现-TypeScript"><a href="#5-代码工程实现-TypeScript" class="headerlink" title="5. 代码工程实现 (TypeScript)"></a>5. 代码工程实现 (TypeScript)</h2><h3 id="5-1-数据结构定义"><a href="#5-1-数据结构定义" class="headerlink" title="5.1 数据结构定义"></a>5.1 数据结构定义</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">type</span> <span class="title class_">StateId</span> = <span class="built_in">number</span> | <span class="built_in">string</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">interface</span> <span class="title class_">NFATableRow</span> &#123;</span><br><span class="line">  <span class="attr">state</span>: <span class="title class_">StateId</span>;</span><br><span class="line">  <span class="attr">isStart</span>: <span class="built_in">boolean</span>;</span><br><span class="line">  <span class="attr">isAccepting</span>: <span class="built_in">boolean</span>;</span><br><span class="line">  <span class="attr">transitions</span>: <span class="title class_">Record</span>&lt;<span class="built_in">string</span>, <span class="title class_">StateId</span>[]&gt;; <span class="comment">// 字符 -&gt; 目标状态数组</span></span><br><span class="line">  <span class="attr">epsilonClosure</span>: <span class="title class_">StateId</span>[];              <span class="comment">// ε* 闭包集合</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">type</span> <span class="title class_">NFATable</span> = <span class="title class_">NFATableRow</span>[];</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-计算单个状态的-epsilon-闭包算法"><a href="#5-2-计算单个状态的-epsilon-闭包算法" class="headerlink" title="5.2 计算单个状态的 $\epsilon$-闭包算法"></a>5.2 计算单个状态的 $\epsilon$-闭包算法</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">getEpsilonClosure</span>(<span class="params"><span class="attr">startState</span>: <span class="title class_">State</span></span>): <span class="title class_">Set</span>&lt;<span class="title class_">State</span>&gt; &#123;</span><br><span class="line">  <span class="comment">// 铁律：闭包必定包含状态自身</span></span><br><span class="line">  <span class="keyword">const</span> closure = <span class="keyword">new</span> <span class="title class_">Set</span>&lt;<span class="title class_">State</span>&gt;([startState]);</span><br><span class="line">  <span class="keyword">const</span> stack = [startState];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (stack.<span class="property">length</span> &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> currentState = stack.<span class="title function_">pop</span>()!;</span><br><span class="line">    <span class="keyword">const</span> epsTransitions = currentState.<span class="title function_">getTransitionsForSymbol</span>(<span class="variable constant_">EPSILON</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 空过渡节点还可能指向下一个空过渡节点，所以需要递归处理</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> targetState <span class="keyword">of</span> epsTransitions) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!closure.<span class="title function_">has</span>(targetState)) &#123;</span><br><span class="line">        closure.<span class="title function_">add</span>(targetState);</span><br><span class="line">        stack.<span class="title function_">push</span>(targetState); <span class="comment">// 递归深入追踪链式 ε</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> closure;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-遍历图生成-NFA-转换表"><a href="#5-3-遍历图生成-NFA-转换表" class="headerlink" title="5.3 遍历图生成 NFA 转换表"></a>5.3 遍历图生成 NFA 转换表</h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">getTransitionTable</span>(): <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt;&gt; &#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="attr">stateToId</span>: <span class="title class_">Map</span>&lt;<span class="title class_">State</span>, <span class="built_in">number</span>&gt; = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line">    <span class="keyword">const</span> <span class="attr">states</span>: <span class="title class_">State</span>[] = []</span><br><span class="line">    <span class="keyword">const</span> <span class="attr">nfaTable</span>: <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="title class_">Map</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>[]&gt;&gt; = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 给每一个state的对象生成独立的ID,通过map映射I和state</span></span><br><span class="line">    <span class="keyword">const</span> <span class="title function_">mark</span> = (<span class="params"><span class="attr">state</span>: <span class="title class_">State</span></span>) =&gt; &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (stateToId.<span class="title function_">has</span>(state)) <span class="keyword">return</span>;</span><br><span class="line">        stateToId.<span class="title function_">set</span>(state, states.<span class="property">length</span> + <span class="number">1</span>);</span><br><span class="line">        states.<span class="title function_">push</span>(state);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">let</span> transitions <span class="keyword">of</span> state.<span class="property">transitions</span>.<span class="title function_">values</span>()) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">let</span> nextState <span class="keyword">of</span> transitions) &#123;</span><br><span class="line">                <span class="title function_">mark</span>(nextState)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="title function_">mark</span>(<span class="variable language_">this</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 第一层循环遍历所有独立的state对象</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">let</span> state <span class="keyword">of</span> states) &#123;</span><br><span class="line">        <span class="keyword">const</span> id = stateToId.<span class="title function_">get</span>(state);</span><br><span class="line">        <span class="keyword">const</span> row = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 遍历每一个state对象的字符集，如果是空字符就跳过</span></span><br><span class="line">        <span class="comment">// 如果是一个合法的正则文法字符，就获取这个字符可以跳转到所有状态</span></span><br><span class="line">        <span class="comment">// 根据这些状态反查ID，建立字符到某一个状态对应的ID映射</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">let</span> [char, nextStates] <span class="keyword">of</span> state.<span class="property">transitions</span>.<span class="title function_">entries</span>()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (char === <span class="variable constant_">EPSILON</span>) <span class="keyword">continue</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">const</span> targetIds = nextStates.<span class="title function_">map</span>(<span class="function"><span class="params">state</span> =&gt;</span> <span class="title class_">String</span>(stateToId.<span class="title function_">get</span>(state)))</span><br><span class="line">            row.<span class="title function_">set</span>(char, targetIds)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 当前状态可以通过空节点所能达到的所有状态</span></span><br><span class="line">        <span class="keyword">const</span> closureStates = state.<span class="title function_">getEpsilonClosure</span>();</span><br><span class="line">        <span class="keyword">const</span> closureIds = closureStates.<span class="title function_">map</span>(<span class="function"><span class="params">state</span> =&gt;</span> <span class="title class_">String</span>(stateToId.<span class="title function_">get</span>(state)))</span><br><span class="line">        row.<span class="title function_">set</span>(<span class="variable constant_">EPSILON</span>, closureIds)</span><br><span class="line">        nfaTable.<span class="title function_">set</span>(<span class="title class_">String</span>(id), row)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> nfaTable;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// 最终生成的结构</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Map(6) &#123;</span></span><br><span class="line"><span class="comment">//   &#x27;1&#x27; =&gt; Map(1) &#123; &#x27;ε&#x27; =&gt; [ &#x27;1&#x27;, &#x27;2&#x27;, &#x27;5&#x27; ] &#125;,</span></span><br><span class="line"><span class="comment">//   &#x27;2&#x27; =&gt; Map(2) &#123; &#x27;a&#x27; =&gt; [ &#x27;3&#x27; ], &#x27;ε&#x27; =&gt; [ &#x27;2&#x27; ] &#125;,</span></span><br><span class="line"><span class="comment">//   &#x27;3&#x27; =&gt; Map(1) &#123; &#x27;ε&#x27; =&gt; [ &#x27;3&#x27;, &#x27;4&#x27; ] &#125;,</span></span><br><span class="line"><span class="comment">//   &#x27;4&#x27; =&gt; Map(1) &#123; &#x27;ε&#x27; =&gt; [ &#x27;4&#x27; ] &#125;,</span></span><br><span class="line"><span class="comment">//   &#x27;5&#x27; =&gt; Map(2) &#123; &#x27;b&#x27; =&gt; [ &#x27;6&#x27; ], &#x27;ε&#x27; =&gt; [ &#x27;5&#x27; ] &#125;,</span></span><br><span class="line"><span class="comment">//   &#x27;6&#x27; =&gt; Map(1) &#123; &#x27;ε&#x27; =&gt; [ &#x27;6&#x27;, &#x27;4&#x27; ] &#125;</span></span><br><span class="line"><span class="comment">// &#125;</span></span><br></pre></td></tr></table></figure>
+
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%AD%A3%E5%88%99/" rel="tag">正则</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag">编译原理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/4fbb303be004/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            正则引擎中的有限自动机 ⑥ DFA Table
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/68243e0decd8/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">正则引擎中的有限自动机 ④ 复杂组合、语法糖、优化</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

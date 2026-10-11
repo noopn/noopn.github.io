@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title> 四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="post-compiling/正则引擎⑥DFA-table copy"
+  class="article article-type-post"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+     
+    <div class="article-meta">
+      <a href="/posts/45502afdd327/" class="article-date">
+  <time datetime="2026-09-04T12:53:52.757Z" itemprop="datePublished">2026-09-04</time>
+</a>   
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">16 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <p>DFA 最小化（DFA Minimization）是形式语言与自动机理论中极其优美的一部分。</p>
+<p>如果说 <strong>子集构造</strong> 解决了 <strong>“从不确定到确定”</strong>，那么 <strong>DFA 最小化</strong> 解决的就是 <strong>“从冗余到精简”</strong>。</p>
+<p>下面为你系统梳理 DFA 最小化的全套理论知识体系。</p>
+<hr>
+<h3 id="一、核心理论基石：为什么一定能最小化？"><a href="#一、核心理论基石：为什么一定能最小化？" class="headerlink" title="一、核心理论基石：为什么一定能最小化？"></a>一、核心理论基石：为什么一定能最小化？</h3><h4 id="1-Myhill-Nerode-定理（极小-DFA-唯一性定理）"><a href="#1-Myhill-Nerode-定理（极小-DFA-唯一性定理）" class="headerlink" title="1. Myhill-Nerode 定理（极小 DFA 唯一性定理）"></a>1. Myhill-Nerode 定理（极小 DFA 唯一性定理）</h4><blockquote>
+<p><strong>定理</strong>：对于任意一个正则语言 $L$，存在且<strong>仅存在一个</strong>状态数最少的 DFA（在状态重命名的同构意义下唯一）。</p>
+</blockquote>
+<p>这意味着：无论你的 NFA 有多乱，转换出来的原始 DFA 有多么庞大，只要经过最小化，它们最终都会<strong>殊途同归</strong>，缩减成那个<strong>结构完全相同的、最完美的极小自动机</strong>。</p>
+<h4 id="2-不可区分性（Indistinguishability）与状态等价"><a href="#2-不可区分性（Indistinguishability）与状态等价" class="headerlink" title="2. 不可区分性（Indistinguishability）与状态等价"></a>2. 不可区分性（Indistinguishability）与状态等价</h4><p>怎么知道两个状态 $p$ 和 $q$ 能不能合并？<br>理论上采用 <strong>“黑盒测试实验”</strong>：</p>
+<p>假设你站在状态 $p$，另一个人站在状态 $q$。我们给你们两个人输入同一个任意字符串 $w$：</p>
+<ul>
+<li>如果你走完 $w$ 到达了<strong>接受状态</strong>，而他走完 $w$ 到达了<strong>拒绝状态</strong>，那么字符串 $w$ 就把你们两个人区分开来了，称 $w$ 为 <strong>区分串（Distinguishing String）</strong>。</li>
+<li>如果<em><em>没有任何字符串 $w \in \Sigma^</em>$</em>* 能够把你们区分开来——也就是说，无论喂什么后续字符串，你们要么<strong>同时接受</strong>，要么<strong>同时拒绝</strong>，那么状态 $p$ 和 $q$ 就是 <strong>等价的（Equivalent）</strong>，记作：<br>$$p \sim q$$</li>
+</ul>
+<p><strong>等价状态的核心结论</strong>：</p>
+<blockquote>
+<p>如果两个状态是等价的，外界任何输入都无法探测出它们俩的区别。因此，把它们合并为一个状态，<strong>绝不会改变自动机对任何语言的识别结果</strong>。</p>
+</blockquote>
+<hr>
+<h3 id="二、从无限到有限：-k-等价性（-k-Equivalence）理论"><a href="#二、从无限到有限：-k-等价性（-k-Equivalence）理论" class="headerlink" title="二、从无限到有限：$k$-等价性（$k$-Equivalence）理论"></a>二、从无限到有限：$k$-等价性（$k$-Equivalence）理论</h3><p>我们不可能用无穷多个字符串去逐一测试状态等价性。理论上是如何将其转化为<strong>有限步计算</strong>的？</p>
+<p>答案是：<strong>按测试字符串的长度 $k$ 进行分层归纳（$k$-等价）</strong>。</p>
+<table>
+<thead>
+<tr>
+<th align="left">等价层级</th>
+<th align="left">数学定义</th>
+<th align="left">直观含义</th>
+<th align="left">分组判据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>$0$-等价 ($\sim_0$)</strong></td>
+<td align="left">无法被长度为 <strong>0</strong> 的字符串（即空串 $\epsilon$）区分</td>
+<td align="left">还没输入任何字符就露出破绽</td>
+<td align="left"><strong>同为接受状态，或同为非接受状态</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>$1$-等价 ($\sim_1$)</strong></td>
+<td align="left">无法被任何长度 <strong>$\le 1$</strong> 的字符串区分</td>
+<td align="left">消耗任意单个字符后，行为依然一致</td>
+<td align="left">在任何单字符转移后，落入同一个 $0$-等价组</td>
+</tr>
+<tr>
+<td align="left"><strong>$k$-等价 ($\sim_k$)</strong></td>
+<td align="left">无法被任何长度 <strong>$\le k$</strong> 的字符串区分</td>
+<td align="left">消耗任意 $\le k$ 长度的字符串，行为依然一致</td>
+<td align="left">在任何单字符转移后，落入同一个 $(k-1)$-等价组</td>
+</tr>
+</tbody></table>
+<h4 id="k-等价的递推核心公式："><a href="#k-等价的递推核心公式：" class="headerlink" title="$k$-等价的递推核心公式："></a>$k$-等价的递推核心公式：</h4><p>状态 $p$ 与 $q$ 是 $k$-等价的，当且仅当：</p>
+<ol>
+<li>$p$ 和 $q$ 本身是 $(k-1)$-等价的；</li>
+<li>对于字母表中的任意输入字符 $a \in \Sigma$：<br>$$\delta(p, a) \sim_{k-1} \delta(q, a)$$</li>
+</ol>
+<blockquote>
+<p><strong>通俗理解</strong>：如果我知道你们在测试长度为 $k-1$ 的字符串时是分不出区别的，那么要测长度为 $k$ 的串，只需要让你们每人先走一步（吃进一个字符 $a$），看你们<strong>走到的新状态是不是属于同一伙人（$(k-1)$-等价组）</strong>。如果是，那在长度 $k$ 上你们依然无法被区分！</p>
+</blockquote>
+<hr>
+<h3 id="三、算法推演机制：分区细化（Partition-Refinement）"><a href="#三、算法推演机制：分区细化（Partition-Refinement）" class="headerlink" title="三、算法推演机制：分区细化（Partition Refinement）"></a>三、算法推演机制：分区细化（Partition Refinement）</h3><p>这个算法在学术上通常被称为 <strong>Moore 状态最小化算法</strong>（也是 <code>dfa-minimizer.js</code> 源码所实现的机制）。</p>
+<p>它的运作方式是：<strong>从最粗的粗粒度划分开始，不断用转移去向把集合“切碎”，直到切不动为止</strong>。</p>
+<pre class="mermaid">graph TD
+    A["初始全集 Q"] --> B["【第 0 轮：0-等价划分 P₀】\n切成两块：[非终态组, 终态组]"]
+    B --> C["【第 1 轮：1-等价划分 P₁】\n检查每组内状态在输入字符后，目标是否在 P₀ 的同一块中？\n若去向不同 -> 细分切开"]
+    C --> D["【第 k 轮：k-等价划分 P_k】\n检查每组内状态在输入字符后，目标是否在 P_{k-1} 的同一块中？\n若去向不同 -> 细分切开"]
+    D --> E{"P_k 是否与 P_{k-1} 完全相同？\n(划分达到不动点 Fixed Point)"}
+    E -- "否 (仍有集合被切开)" --> D
+    E -- "是 (再也切不开了)" --> F["【算法收敛】\n每个最终子块就是一个等价类\n合并为一个新状态，重建极小 DFA"]</pre>
+
+<h4 id="算法必定终止的数学证明（收敛性）："><a href="#算法必定终止的数学证明（收敛性）：" class="headerlink" title="算法必定终止的数学证明（收敛性）："></a>算法必定终止的数学证明（收敛性）：</h4><ol>
+<li><strong>单调性</strong>：集合只能被<strong>拆分（Refine）</strong>，绝不可能发生两个集合重新合并的情况。</li>
+<li><strong>有限性</strong>：总状态数 $|Q| &#x3D; n$ 是有限的。一个拥有 $n$ 个元素的集合，最多只能被切成 $n$ 个单元素子集。</li>
+<li><strong>步数上界</strong>：每一轮至少要切出一刀，如果不发生拆分就会立即终止。因此算法最多在 <strong>$n - 1$</strong> 轮内必定收敛停机！</li>
+</ol>
+<hr>
+<h3 id="四、最终重构：商自动机（Quotient-Automaton）"><a href="#四、最终重构：商自动机（Quotient-Automaton）" class="headerlink" title="四、最终重构：商自动机（Quotient Automaton）"></a>四、最终重构：商自动机（Quotient Automaton）</h3><p>当分区细化终止后，我们得到了一组最终的互不相交的等价类子集：<br>$$\mathcal{P} &#x3D; { [q_1], [q_2], \dots, [q_m] }$$</p>
+<p>如何用这组集合构建最小化 DFA？<br>形式语言理论中称此为构建 **商自动机（Quotient Automaton） $M &#x2F; \sim$**：</p>
+<ol>
+<li>**新状态集 $Q’$**：每个等价类作为一个新状态（例如类 ${2, 3, 4}$ 变成单个新状态 <code>2</code>）。</li>
+<li>**新起始状态 $q_0’$**：包含原起始状态 $q_0$ 的那个等价类 $[q_0]$。</li>
+<li>**新终态集 $F’$**：所有由原终态组成的等价类。</li>
+<li>**新转移函数 $\delta’$**：<br>$$\delta’([q], a) &#x3D; [\delta(q, a)]$$<ul>
+<li><strong>理论良定义（Well-defined）保证</strong>：从等价类 $[q]$ 中<strong>随便挑出哪一个代表状态</strong>，计算其在字符 $a$ 下的转移，其结果落入的等价类都<strong>绝对是同一个</strong>！这是等价类数学性质严格保证的。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="五、经典算法对比：三大最小化流派"><a href="#五、经典算法对比：三大最小化流派" class="headerlink" title="五、经典算法对比：三大最小化流派"></a>五、经典算法对比：三大最小化流派</h3><p>在编译原理与计算理论中，DFA 最小化主要有三种经典算法：</p>
+<table>
+<thead>
+<tr>
+<th align="left">算法名称</th>
+<th align="left">核心思路</th>
+<th align="center">时间复杂度</th>
+<th align="left">特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Moore 算法</strong><br><em>(即我们的代码实现)</em></td>
+<td align="left"><strong>自顶向下细化</strong><br>从 ${F, Q \setminus F}$ 开始逐步切分集合</td>
+<td align="center">$O(</td>
+<td align="left">\Sigma</td>
+</tr>
+<tr>
+<td align="left"><strong>Hopcroft 算法</strong><br><em>(工业界首选)</em></td>
+<td align="left"><strong>反向划分优化</strong><br>“只用较小的子集去分割其他集合”（利用了 $\log$ 技巧）</td>
+<td align="center">$O(</td>
+<td align="left">\Sigma</td>
+</tr>
+<tr>
+<td align="left"><strong>填表法 (Table-Filling)</strong><br><em>(又称 Myhill-Nerode 算法)</em></td>
+<td align="left"><strong>自底向上标记</strong><br>维护一个下三角矩阵，逐对寻找“可区分状态对 $(p, q)$”并打勾</td>
+<td align="center">$O(</td>
+<td align="left">\Sigma</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="总结六字诀"><a href="#总结六字诀" class="headerlink" title="总结六字诀"></a>总结六字诀</h3><p>理解 DFA 最小化，只需记住六个字：</p>
+<ul>
+<li><strong>区分（Distinguish）</strong>：只要有任意后续输入能让一个接受、一个拒绝，就必须分开；</li>
+<li><strong>细化（Refine）</strong>：按转移目标一步步细分，能分则分；</li>
+<li><strong>合并（Merge）</strong>：既然无论怎么输入都完全分不开，就彻底打包成一个状态。<br>在 <a href="file:///home/supreme/Workspace/fundamentals-of-compiling/Automata%20Theory%20inside%20a%20RegExp%20machine/regexp-tree/src/interpreter/finite-automaton/dfa/dfa-minimizer.js"><code>dfa-minimizer.js</code></a> 中，DFA 最小化采用的是经典编译原理中的 <strong>$k$-等价性状态划分算法（$k$-Equivalence Partition Refinement &#x2F; Moore 算法）</strong>。</li>
+</ul>
+<p>其核心思路是：<strong>寻找行为完全等价的状态并将它们合并为一个超级状态</strong>。如果两个状态在面对任意后续字符输入时，走向的接受&#x2F;拒绝结论完全一致，那么它们就是等价的，保留多个只是冗余。</p>
+<hr>
+<h3 id="一、整体算法架构概览"><a href="#一、整体算法架构概览" class="headerlink" title="一、整体算法架构概览"></a>一、整体算法架构概览</h3><p>整个算法流程可以划分为三大核心步骤：</p>
+<pre class="mermaid">flowchart TD
+    A["输入：原始 DFA (包含转换表 table 和终态集 accepting)"] --> B["【阶段 0：0-等价划分】\n根据是否为接受状态，将状态分为两组：终态组 与 非终态组"]
+    B --> C["【阶段 1：循环细化 (1..N-等价)】\nwhile (!sameRow(current, previous))"]
+    C --> D{"遍历当前每个集合\n检查状态对在所有字符上的转移\n是否都落在同一集合？"}
+    D -- "转移不同组" --> E["拆分为更细的子集合"]
+    D -- "转移相同组" --> F["保持在同一个子集合中"]
+    E --> G["生成新的划分集合列表"]
+    F --> G
+    G --> H{"分区是否与上一轮完全一致？\nsameRow(current, previous)"}
+    H -- "否" --> C
+    H -- "是 (收敛)" --> I["【阶段 2：重建最小化表】\n为每个最终等价集合重新分配 ID (1, 2, ...)\n重映射转移目标并构建 minimizedTable"]</pre>
+
+<hr>
+<h3 id="二、核心数据结构"><a href="#二、核心数据结构" class="headerlink" title="二、核心数据结构"></a>二、核心数据结构</h3><p>在阅读代码前，先理解这几个核心变量的作用：</p>
+<ol>
+<li>**<code>currentTransitionMap</code>**（全局&#x2F;闭包映射字典）：<ul>
+<li>结构：<code>&#123; [stateNumber]: Set &#125;</code></li>
+<li><strong>作用</strong>：记录每个原始状态当前<strong>属于哪一个集合（划分块）</strong>。</li>
+<li>例如状态 2 和状态 3 同在终态组 <code>S_accept</code>，则 <code>currentTransitionMap[2] === S_accept</code>，<code>currentTransitionMap[3] === S_accept</code>。</li>
+</ul>
+</li>
+<li>**<code>all</code>**（历史划分栈）：<ul>
+<li><code>all[0]</code>：0-等价的分组结果 <code>[nonAccepting, accepting]</code></li>
+<li><code>all[1]</code>：1-等价的分组结果</li>
+<li><code>all[N]</code>：最终稳定的分组结果</li>
+</ul>
+</li>
+<li>**<code>remaped</code>**（<code>Map&lt;Set, number&gt;</code>）：<ul>
+<li>将最终合并后的每一个 <code>Set</code>（等价集合），重新赋予一个精简的状态编号（如 1, 2, …）。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="三、源码逐段详细解析"><a href="#三、源码逐段详细解析" class="headerlink" title="三、源码逐段详细解析"></a>三、源码逐段详细解析</h3><h4 id="1-阶段-0：构建-0-等价初始划分（行-20-51）"><a href="#1-阶段-0：构建-0-等价初始划分（行-20-51）" class="headerlink" title="1. 阶段 0：构建 0-等价初始划分（行 20 ~ 51）"></a>1. 阶段 0：构建 0-等价初始划分（行 20 ~ 51）</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 行 20-40: 初始化分类</span></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">minimize</span>(<span class="params">dfa</span>) &#123;</span><br><span class="line">  <span class="keyword">const</span> table = dfa.<span class="title function_">getTransitionTable</span>();</span><br><span class="line">  <span class="keyword">const</span> allStates = <span class="title class_">Object</span>.<span class="title function_">keys</span>(table);</span><br><span class="line">  <span class="keyword">const</span> alphabet = dfa.<span class="title function_">getAlphabet</span>();</span><br><span class="line">  <span class="keyword">const</span> accepting = dfa.<span class="title function_">getAcceptingStateNumbers</span>();</span><br><span class="line"></span><br><span class="line">  currentTransitionMap = &#123;&#125;;</span><br><span class="line">  <span class="keyword">const</span> nonAccepting = <span class="keyword">new</span> <span class="title class_">Set</span>();</span><br><span class="line"></span><br><span class="line">  allStates.<span class="title function_">forEach</span>(<span class="function"><span class="params">state</span> =&gt;</span> &#123;</span><br><span class="line">    state = <span class="title class_">Number</span>(state);</span><br><span class="line">    <span class="keyword">const</span> isAccepting = accepting.<span class="title function_">has</span>(state);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (isAccepting) &#123;</span><br><span class="line">      currentTransitionMap[state] = accepting;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      nonAccepting.<span class="title function_">add</span>(state);</span><br><span class="line">      currentTransitionMap[state] = nonAccepting;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 行 46-50: 0-等价集合放入 all 数组</span></span><br><span class="line">  <span class="keyword">const</span> all = [</span><br><span class="line">    [nonAccepting, accepting].<span class="title function_">filter</span>(<span class="function"><span class="params">set</span> =&gt;</span> set.<span class="property">size</span> &gt; <span class="number">0</span>),</span><br><span class="line">  ];</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>原理解析</strong>：<ul>
+<li><strong>0-等价</strong> 代表消耗空串 $\epsilon$ 后的行为：终态直接接受，非终态不接受。</li>
+<li>所以最粗粒度的分类就是将状态划分为 <strong>非终态组 <code>nonAccepting</code></strong> 与 **终态组 <code>accepting</code>**。</li>
+<li><code>currentTransitionMap</code> 建立了 <code>状态 ID -&gt; 所在 Set</code> 的引用映射。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h4 id="2-阶段-1：循环细化（1-N-等价）（行-53-109）"><a href="#2-阶段-1：循环细化（1-N-等价）（行-53-109）" class="headerlink" title="2. 阶段 1：循环细化（1..N-等价）（行 53 ~ 109）"></a>2. 阶段 1：循环细化（1..N-等价）（行 53 ~ 109）</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> current = all[all.<span class="property">length</span> - <span class="number">1</span>];</span><br><span class="line"><span class="keyword">let</span> previous = all[all.<span class="property">length</span> - <span class="number">2</span>];</span><br><span class="line"></span><br><span class="line"><span class="comment">// 直到本轮与上一轮分区完全一致（即不再发生拆分）</span></span><br><span class="line"><span class="keyword">while</span> (!<span class="title function_">sameRow</span>(current, previous)) &#123;</span><br><span class="line">  <span class="keyword">const</span> newTransitionMap = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 遍历当前这一轮中的每一个集合（例如当前的非终态集合）</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> set <span class="keyword">of</span> current) &#123;</span><br><span class="line">    <span class="keyword">const</span> handledStates = &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 取出第一个状态作为当前子组的基准</span></span><br><span class="line">    <span class="keyword">const</span> [first, ...rest] = set;</span><br><span class="line">    handledStates[first] = <span class="keyword">new</span> <span class="title class_">Set</span>([first]);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遍历集合中剩余的其他状态，尝试看它们是否与已处理的状态等价</span></span><br><span class="line">    <span class="attr">restSets</span>: <span class="keyword">for</span> (<span class="keyword">const</span> state <span class="keyword">of</span> rest) &#123;</span><br><span class="line">      <span class="keyword">for</span> (<span class="keyword">const</span> handledState <span class="keyword">of</span> <span class="title class_">Object</span>.<span class="title function_">keys</span>(handledStates)) &#123;</span><br><span class="line">        <span class="comment">// 如果当前状态与某个已处理状态等价：加入该状态所在的 Set</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="title function_">areEquivalent</span>(state, handledState, table, alphabet)) &#123;</span><br><span class="line">          handledStates[handledState].<span class="title function_">add</span>(state);</span><br><span class="line">          handledStates[state] = handledStates[handledState];</span><br><span class="line">          <span class="keyword">continue</span> restSets;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="comment">// 如果与现有子组都不等价，为它独立新建一个集合</span></span><br><span class="line">      handledStates[state] = <span class="keyword">new</span> <span class="title class_">Set</span>([state]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将该集合细化后的状态映射合并到 newTransitionMap 中</span></span><br><span class="line">    <span class="title class_">Object</span>.<span class="title function_">assign</span>(newTransitionMap, handledStates);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  currentTransitionMap = newTransitionMap;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 利用 Set 对相同引用的 Set 实例去重，得到本轮所有的独立分区</span></span><br><span class="line">  <span class="keyword">let</span> newSets = <span class="keyword">new</span> <span class="title class_">Set</span>(</span><br><span class="line">    <span class="title class_">Object</span>.<span class="title function_">keys</span>(newTransitionMap).<span class="title function_">map</span>(<span class="function"><span class="params">state</span> =&gt;</span> newTransitionMap[state])</span><br><span class="line">  );</span><br><span class="line"></span><br><span class="line">  all.<span class="title function_">push</span>([...newSets]);</span><br><span class="line">  current = all[all.<span class="property">length</span> - <span class="number">1</span>];</span><br><span class="line">  previous = all[all.<span class="property">length</span> - <span class="number">2</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>细化过程机制</strong>：<ol>
+<li>对当前集合 <code>set = [A, B, C]</code>：</li>
+<li>先把 <code>A</code> 放入新组：<code>Group1 = &#123;A&#125;</code>。</li>
+<li>检查 <code>B</code>：调用 <code>areEquivalent(B, A, ...)</code>。<ul>
+<li>如果等价，<code>Group1.add(B)</code>，变成 <code>&#123;A, B&#125;</code>；</li>
+<li>如果不等价，为 <code>B</code> 创建新组 <code>Group2 = &#123;B&#125;</code>。</li>
+</ul>
+</li>
+<li>检查 <code>C</code>：分别与已有的代表状态对比，决定并入 <code>Group1</code>、<code>Group2</code> 还是新建 <code>Group3</code>。</li>
+<li>每一轮结束时，如果分区不再变化（<code>sameRow(current, previous) === true</code>），说明已经达到不可再分的极小状态集，跳出循环。</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h4 id="3-核心判定函数：areEquivalent-与-goToSameSet（行-186-218）"><a href="#3-核心判定函数：areEquivalent-与-goToSameSet（行-186-218）" class="headerlink" title="3. 核心判定函数：areEquivalent 与 goToSameSet（行 186 ~ 218）"></a>3. 核心判定函数：<code>areEquivalent</code> 与 <code>goToSameSet</code>（行 186 ~ 218）</h4><p>两个状态在当前轮次下被判定为等价的前提是：<strong>在字母表的所有字符上，它们的目标去向必须一致</strong>。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">areEquivalent</span>(<span class="params">s1, s2, table, alphabet</span>) &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> symbol <span class="keyword">of</span> alphabet) &#123;</span><br><span class="line">    <span class="keyword">if</span> (!<span class="title function_">goToSameSet</span>(s1, s2, table, symbol)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>; <span class="comment">// 只要有一个字符去向不同，就不是等价状态</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">goToSameSet</span>(<span class="params">s1, s2, table, symbol</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!currentTransitionMap[s1] || !currentTransitionMap[s2]) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> originalTransitionS1 = table[s1][symbol];</span><br><span class="line">  <span class="keyword">const</span> originalTransitionS2 = table[s2][symbol];</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 情况 1：两者在该字符上都没有出边，视为行为一致</span></span><br><span class="line">  <span class="keyword">if</span> (!originalTransitionS1 &amp;&amp; !originalTransitionS2) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 情况 2：检查转移目标是否在有效集合中</span></span><br><span class="line">  <span class="keyword">return</span> currentTransitionMap[s1].<span class="title function_">has</span>(originalTransitionS1) &amp;&amp;</span><br><span class="line">    currentTransitionMap[s2].<span class="title function_">has</span>(originalTransitionS2);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>[!NOTE]<br><strong>代码实现细节探讨</strong>：<br>在经典的 Moore 算法中，两个状态在字符 $c$ 上的转移 $\delta(s_1, c) &#x3D; t_1$ 与 $\delta(s_2, c) &#x3D; t_2$ 等价的充要条件是 <strong>$t_1$ 和 $t_2$ 落在同一个划分块中</strong>，即 <code>currentTransitionMap[t1] === currentTransitionMap[t2]</code>。</p>
+<p>在本源码中：</p>
+<ul>
+<li>终态无出边时通过行 211 <code>!originalTransitionS1 &amp;&amp; !originalTransitionS2</code> 判定为 <code>true</code>（例如 <code>/a|b|c/</code> 的多个接受状态）；</li>
+<li>自环或内部闭包转移通过 <code>currentTransitionMap[s1].has(originalTransitionS1)</code> 判断。</li>
+</ul>
+</blockquote>
+<hr>
+<h4 id="4-终止条件检查：sameRow（行-161-184）"><a href="#4-终止条件检查：sameRow（行-161-184）" class="headerlink" title="4. 终止条件检查：sameRow（行 161 ~ 184）"></a>4. 终止条件检查：<code>sameRow</code>（行 161 ~ 184）</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">sameRow</span>(<span class="params">r1, r2</span>) &#123;</span><br><span class="line">  <span class="keyword">if</span> (!r2) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  <span class="keyword">if</span> (r1.<span class="property">length</span> !== r2.<span class="property">length</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; r1.<span class="property">length</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">const</span> s1 = r1[i];</span><br><span class="line">    <span class="keyword">const</span> s2 = r2[i];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (s1.<span class="property">size</span> !== s2.<span class="property">size</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// 将 Set 内部元素排序转为字符串进行比对，如 &quot;2,3&quot; === &quot;2,3&quot;</span></span><br><span class="line">    <span class="keyword">if</span> ([...s1].<span class="title function_">sort</span>().<span class="title function_">join</span>(<span class="string">&#x27;,&#x27;</span>) !== [...s2].<span class="title function_">sort</span>().<span class="title function_">join</span>(<span class="string">&#x27;,&#x27;</span>)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>比较相邻两轮（如第 $k$ 轮与第 $k-1$ 轮）的分区数组。当两轮中集合个数相同、每个集合大小相同且包含的状态 ID 完全一致时，算法达到不动点（Fixed-point），终止细化。</p>
+<hr>
+<h4 id="5-阶段-2：重构最小化转换表（行-111-159）"><a href="#5-阶段-2：重构最小化转换表（行-111-159）" class="headerlink" title="5. 阶段 2：重构最小化转换表（行 111 ~ 159）"></a>5. 阶段 2：重构最小化转换表（行 111 ~ 159）</h4><p>此时每个等价状态集合 <code>Set</code> 就是最小化 DFA 的一个节点。代码在这里做<strong>状态重编号与表重建</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 给每个最终的等价集合分配新的状态编号 (1, 2, 3...)</span></span><br><span class="line"><span class="keyword">const</span> remaped = <span class="keyword">new</span> <span class="title class_">Map</span>();</span><br><span class="line"><span class="keyword">let</span> idx = <span class="number">1</span>;</span><br><span class="line">current.<span class="title function_">forEach</span>(<span class="function"><span class="params">set</span> =&gt;</span> remaped.<span class="title function_">set</span>(set, idx++));</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> minimizedTable = &#123;&#125;;</span><br><span class="line"><span class="keyword">const</span> minimizedAcceptingStates = <span class="keyword">new</span> <span class="title class_">Set</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// 辅助函数：如果集合内包含原接受状态，则新 ID 也为接受状态</span></span><br><span class="line"><span class="keyword">const</span> <span class="title function_">updateAcceptingStates</span> = (<span class="params">set, idx</span>) =&gt; &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> state <span class="keyword">of</span> set) &#123;</span><br><span class="line">    <span class="keyword">if</span> (accepting.<span class="title function_">has</span>(state)) &#123;</span><br><span class="line">      minimizedAcceptingStates.<span class="title function_">add</span>(idx);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 构建最小化转换表</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">const</span> [set, idx] <span class="keyword">of</span> remaped.<span class="title function_">entries</span>()) &#123;</span><br><span class="line">  minimizedTable[idx] = &#123;&#125;;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">const</span> symbol <span class="keyword">of</span> alphabet) &#123;</span><br><span class="line">    <span class="title function_">updateAcceptingStates</span>(set, idx);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从原集合中任选一个代表状态，取出该字符的原始转移目标</span></span><br><span class="line">    <span class="keyword">let</span> originalTransition;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> originalState <span class="keyword">of</span> set) &#123;</span><br><span class="line">      originalTransition = table[originalState][symbol];</span><br><span class="line">      <span class="keyword">if</span> (originalTransition) &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果有转移，通过 currentTransitionMap 找到目标所在的集合，再映射到新的 idx</span></span><br><span class="line">    <span class="keyword">if</span> (originalTransition) &#123;</span><br><span class="line">      minimizedTable[idx][symbol] = remaped.<span class="title function_">get</span>(</span><br><span class="line">        currentTransitionMap[originalTransition]</span><br><span class="line">      );</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 3. 写回 DFA 实例</span></span><br><span class="line">dfa.<span class="title function_">setTransitionTable</span>(minimizedTable);</span><br><span class="line">dfa.<span class="title function_">setAcceptingStateNumbers</span>(minimizedAcceptingStates);</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> dfa;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="四、实战推演：以-a-b-c-d-的测试用例为例"><a href="#四、实战推演：以-a-b-c-d-的测试用例为例" class="headerlink" title="四、实战推演：以 /a|b|c|d/ 的测试用例为例"></a>四、实战推演：以 <code>/a|b|c|d/</code> 的测试用例为例</h3><p>来看 <a href="file:///home/supreme/Workspace/fundamentals-of-compiling/Automata%20Theory%20inside%20a%20RegExp%20machine/regexp-tree/src/interpreter/finite-automaton/dfa/__tests__/dfa-minimizer-test.js#L28-L44"><code>dfa-minimizer-test.js</code></a> 中的真实用例：</p>
+<h4 id="1-原始-DFA-表："><a href="#1-原始-DFA-表：" class="headerlink" title="1. 原始 DFA 表："></a>1. 原始 DFA 表：</h4><ul>
+<li>状态 <code>1</code>：非终态，<code>&#123; a: 5, b: 4, c: 3, d: 2 &#125;</code></li>
+<li>状态 <code>2, 3, 4, 5</code>：全是接受状态，且没有出边 <code>&#123;&#125;</code></li>
+</ul>
+<h4 id="2-执行过程追踪："><a href="#2-执行过程追踪：" class="headerlink" title="2. 执行过程追踪："></a>2. 执行过程追踪：</h4><table>
+<thead>
+<tr>
+<th align="left">步骤</th>
+<th align="left">操作</th>
+<th align="left">结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>0-等价划分</strong></td>
+<td align="left">区分非终态与终态</td>
+<td align="left"><code>nonAccepting = &#123;1&#125;</code><br><code>accepting = &#123;2, 3, 4, 5&#125;</code></td>
+</tr>
+<tr>
+<td align="left"><strong>1-等价细化</strong></td>
+<td align="left">1. 检查 <code>&#123;1&#125;</code><br>2. 检查 <code>&#123;2, 3, 4, 5&#125;</code></td>
+<td align="left">1. 只有单状态，无需拆分。<br>2. 以 <code>2</code> 为基准；<code>3, 4, 5</code> 在所有字符上都无转移，<code>goToSameSet</code> 均返回 <code>true</code>，全部与 <code>2</code> 等价。保持为同一个集合 <code>&#123;2, 3, 4, 5&#125;</code>。</td>
+</tr>
+<tr>
+<td align="left"><strong>收敛判断</strong></td>
+<td align="left">比较 <code>all[1]</code> 与 <code>all[0]</code></td>
+<td align="left">两个集合完全相同，<code>sameRow</code> 返回 <code>true</code>，循环结束！</td>
+</tr>
+<tr>
+<td align="left"><strong>重映射 (Remap)</strong></td>
+<td align="left">分配新 ID</td>
+<td align="left"><code>&#123;1&#125;</code> $\to$ <strong>新状态 1</strong><br><code>&#123;2, 3, 4, 5&#125;</code> $\to$ <strong>新状态 2</strong>（接受状态）</td>
+</tr>
+<tr>
+<td align="left"><strong>构建新表</strong></td>
+<td align="left">重建边转移</td>
+<td align="left">状态 1 对 <code>a,b,c,d</code> 均转移到 <code>&#123;2,3,4,5&#125;</code>，即 <strong>新状态 2</strong><br>状态 2 无出边 <code>&#123;&#125;</code></td>
+</tr>
+</tbody></table>
+<h4 id="3-最终最小化表："><a href="#3-最终最小化表：" class="headerlink" title="3. 最终最小化表："></a>3. 最终最小化表：</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">minimizedTable = &#123;</span><br><span class="line">  <span class="number">1</span>: &#123; <span class="attr">a</span>: <span class="number">2</span>, <span class="attr">b</span>: <span class="number">2</span>, <span class="attr">c</span>: <span class="number">2</span>, <span class="attr">d</span>: <span class="number">2</span> &#125;,</span><br><span class="line">  <span class="number">2</span>: &#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line">minimizedAcceptingStates = <span class="title class_">Set</span> &#123; <span class="number">2</span> &#125;</span><br></pre></td></tr></table></figure>
+<p>原 DFA 从 <strong>5 个状态</strong>精简为 <strong>2 个状态</strong>，完全消除了冗余状态。</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+    
+      <a href="/posts/54b467a90835/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">Claude Code</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

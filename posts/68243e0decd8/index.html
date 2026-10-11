@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>正则引擎中的有限自动机 ④ 复杂组合、语法糖、优化 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-compiling/正则引擎④组合-语法糖-优化 copy"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  正则引擎中的有限自动机 ④ 复杂组合、语法糖、优化
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/68243e0decd8/" class="article-date">
+  <time datetime="2024-11-16T18:44:33.000Z" itemprop="datePublished">2024-11-17</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.5k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">9 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h2 id="1-组合与分解"><a href="#1-组合与分解" class="headerlink" title="1. 组合与分解"></a>1. 组合与分解</h2><p>拥有了五大基础构建块后，面对真实世界中复杂的正则表达式，我们如何将其转化为等价的状态机？</p>
+<p>答案是经典的软件工程方法学：</p>
+<ol>
+<li><strong>分解（Decomposition）</strong>：自顶向下，将一个宏观复杂的表达式拆解为层层嵌套的小型子表达式。</li>
+<li><strong>组合（Composition）</strong>：自底向上，利用我们编写的工厂函数（<code>char</code>, <code>concat</code>, <code>or</code>, <code>rep</code>），将微型状态机积木一层层封装、组装为巨大的复合机器。</li>
+</ol>
+<hr>
+<h3 id="1-1-操作符优先级阶梯-Operator-Precedence"><a href="#1-1-操作符优先级阶梯-Operator-Precedence" class="headerlink" title="1.1 操作符优先级阶梯 (Operator Precedence)"></a>1.1 操作符优先级阶梯 (Operator Precedence)</h3><p>就像数学算术中有“先乘除后加减”一样，正则表达式中的操作符也有严格的优先级次序。在进行分解和求值时，必须严格遵守<strong>从高到低</strong>的优先级：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">+────────────────────────────────────────────────────────+</span><br><span class="line">| 优先级 1 (最高):   单个字符 / 字符集 (Literals: a, b)    |</span><br><span class="line">| 优先级 2:          星号闭包 (Kleene Star: *)             |</span><br><span class="line">| 优先级 3:          连接运算 (Concatenation: 隐式邻接 ab)  |</span><br><span class="line">| 优先级 4 (最低):   并集运算 (Union: 管道符 |)             |</span><br><span class="line">+────────────────────────────────────────────────────────+</span><br></pre></td></tr></table></figure>
+
+<h3 id="1-2-运算优先级的实战指导意义"><a href="#1-2-运算优先级的实战指导意义" class="headerlink" title="1.2 运算优先级的实战指导意义"></a>1.2 运算优先级的实战指导意义</h3><p>当遇到一个表达式时，<strong>优先级最低的操作符反而决定了整棵语法树的最顶层根节点！</strong><br>因为要评估低优先级的操作符，必须先把它左右两侧的高优先级子表达式先完整计算出来。</p>
+<h4 id="1-2-1-经典案例实战拆解：-xy-z"><a href="#1-2-1-经典案例实战拆解：-xy-z" class="headerlink" title="1.2.1 经典案例实战拆解：/xy*|z/"></a>1.2.1 经典案例实战拆解：<code>/xy*|z/</code></h4><p>考虑正则表达式：<code>/xy*|z/</code><br>该模式能接受的合法字符串包括：<code>&quot;x&quot;</code>, <code>&quot;xy&quot;</code>, <code>&quot;xyy&quot;</code>, <code>&quot;xyyy&quot;</code>, <code>&quot;z&quot;</code> 等。</p>
+<p>树形递归分解过程 (AST 视角)</p>
+<ol>
+<li><strong>第 1 层（最低优先级：Union <code>|</code>）</strong>：<ul>
+<li>将表达式拆为左右两半：左半部分为 <code>xy*</code>，右半部分为 <code>z</code>。</li>
+</ul>
+</li>
+<li><strong>第 2 层（次低优先级：Concatenation 连接）</strong>：<ul>
+<li>深入左半部分 <code>xy*</code>，它是一个连接模式：由字符 <code>x</code> 紧随子表达式 <code>y*</code> 构成。</li>
+</ul>
+</li>
+<li><strong>第 3 层（高优先级：Kleene Star 闭包）</strong>：<ul>
+<li>深入 <code>y*</code>，它是一个克莱恩闭包运算：作用在单字符 <code>y</code> 之上。</li>
+</ul>
+</li>
+<li><strong>第 4 层（最高优先级：单字符）</strong>：<ul>
+<li>最终到达原子基石：字符 <code>&#39;x&#39;</code>，字符 <code>&#39;y&#39;</code>，字符 <code>&#39;z&#39;</code>。</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">              Union (|)  &lt;--- 顶层根节点 (最后执行)</span><br><span class="line">             /         \</span><br><span class="line">   Concatenation        Char (&#x27;z&#x27;)</span><br><span class="line">     /       \</span><br><span class="line">Char (&#x27;x&#x27;)  Kleene (*)</span><br><span class="line">                |</span><br><span class="line">            Char (&#x27;y&#x27;)</span><br></pre></td></tr></table></figure>
+
+<h4 id="1-2-2-两种工程实现范式的对比"><a href="#1-2-2-两种工程实现范式的对比" class="headerlink" title="1.2.2 两种工程实现范式的对比"></a>1.2.2 两种工程实现范式的对比</h4><table>
+<thead>
+<tr>
+<th align="left">范式</th>
+<th align="left">递归下降解释器 (AST Interpreter)</th>
+<th align="left">自动机编译器 (State Machine, 本课程范式)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>工作原理</strong></td>
+<td align="left">解析成 AST 语法树，运行时在树节点上递归遍历匹配。</td>
+<td align="left">将 AST 节点一对一编译为 NFA 状态图片段并最终生成状态转移表。</td>
+</tr>
+<tr>
+<td align="left"><strong>匹配速度</strong></td>
+<td align="left">较慢（受限于函数递归调用开销与树遍历开销）。</td>
+<td align="left"><strong>极快</strong>（运行时脱离语法树，只剩下轻量的图指针跳转或数组查表）。</td>
+</tr>
+</tbody></table>
+<h3 id="1-2-3-代码组装实战"><a href="#1-2-3-代码组装实战" class="headerlink" title="1.2.3 代码组装实战"></a>1.2.3 代码组装实战</h3><p>假设我们已经实现了前面的工厂函数，构造 <code>/xy*|z/</code> 的状态机代码就像拼积木一样清晰直观：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 自底向上组装状态机</span></span><br><span class="line"><span class="keyword">const</span> yStarMachine = <span class="title function_">rep</span>(<span class="title function_">char</span>(<span class="string">&#x27;y&#x27;</span>));                  <span class="comment">// y*</span></span><br><span class="line"><span class="keyword">const</span> xyStarMachine = <span class="title function_">concat</span>(<span class="title function_">char</span>(<span class="string">&#x27;x&#x27;</span>), yStarMachine); <span class="comment">// xy*</span></span><br><span class="line"><span class="keyword">const</span> zMachine = <span class="title function_">char</span>(<span class="string">&#x27;z&#x27;</span>);                           <span class="comment">// z</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 最终的大机器：xy* | z</span></span><br><span class="line"><span class="keyword">const</span> complexMachine = <span class="title function_">or</span>(xyStarMachine, zMachine);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 测试验证</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;x&#x27;</span>);    <span class="comment">// true  (走上面分支，y 重复 0 次)</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;xy&#x27;</span>);   <span class="comment">// true  (走上面分支，y 重复 1 次)</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;xyyy&#x27;</span>); <span class="comment">// true  (走上面分支，y 重复 3 次)</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;z&#x27;</span>);    <span class="comment">// true  (走下面分支)</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;y&#x27;</span>);    <span class="comment">// false</span></span><br><span class="line">complexMachine.<span class="title function_">test</span>(<span class="string">&#x27;xyz&#x27;</span>);  <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="2-什么是语法糖-Syntactic-Sugar-？"><a href="#2-什么是语法糖-Syntactic-Sugar-？" class="headerlink" title="2. 什么是语法糖 (Syntactic Sugar)？"></a>2. 什么是语法糖 (Syntactic Sugar)？</h2><p>在计算机科学与编程语言设计中，<strong>语法糖（Syntactic Sugar）</strong>指的是一种语言构造：</p>
+<ul>
+<li>它<strong>并不给语言引入任何新的核心表达能力（Expressive Power）</strong>；</li>
+<li>它仅仅是一种<strong>更甜美、更符合人类阅读与书写习惯的语法外壳</strong>；</li>
+<li>它的语义完全可以通过已有的基础特性组合表达出来。</li>
+</ul>
+<p>为了支持这些便民语法，编译器通常只需要在编译前端执行一道<strong>自动脱糖（Desugaring &#x2F; Rewriting）</strong>工序，将其还原为基础语法的等价形式即可。</p>
+<p><strong>常见正则语法糖的理论等价转换 (用 $\equiv$ 表示语义等价)</strong></p>
+<p>五大基础构建块中只包含了单字符、$\epsilon$、连接、并集和星号闭包。我们在现代正则中常见的 <code>+</code>、<code>?</code>、<code>[...]</code> 全部都可以用五大基础模型完美重写：</p>
+<h3 id="2-1-加号算子：-重复一次或多次"><a href="#2-1-加号算子：-重复一次或多次" class="headerlink" title="2.1 加号算子：+ (重复一次或多次)"></a>2.1 加号算子：<code>+</code> (重复一次或多次)</h3><ul>
+<li><strong>人类直觉</strong>：匹配至少 1 次，往后不限。</li>
+<li><strong>理论等价重写</strong>：等于“该模式自身，紧随该模式的零次或多次闭包”（即连接运算 + 星号闭包）：<br>$$A^+ \equiv A A^*$$</li>
+<li><strong>代码脱糖映射</strong>：<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">plus</span>(<span class="params"><span class="attr">fragment</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="title function_">concat</span>(fragment, <span class="title function_">rep</span>(fragment));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="2-2-问号算子：-零次或一次-x2F-可选匹配"><a href="#2-2-问号算子：-零次或一次-x2F-可选匹配" class="headerlink" title="2.2 问号算子：? (零次或一次 &#x2F; 可选匹配)"></a>2.2 问号算子：<code>?</code> (零次或一次 &#x2F; 可选匹配)</h3><ul>
+<li><strong>人类直觉</strong>：该模式是可选的（要么出现一次，要么完全没有）。</li>
+<li><strong>理论等价重写</strong>：等于“该模式自身”与“空串 $\epsilon$”的并集运算（即并集运算 + $\epsilon$ 机器）：<br>$$A? \equiv A \mid \epsilon$$</li>
+<li><strong>代码脱糖映射</strong>：<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">opt</span>(<span class="params"><span class="attr">fragment</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="title function_">or</span>(fragment, <span class="title function_">epsilon</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="2-3-字符类-x2F-字符集：-abc"><a href="#2-3-字符类-x2F-字符集：-abc" class="headerlink" title="2.3 字符类 &#x2F; 字符集：[abc]"></a>2.3 字符类 &#x2F; 字符集：<code>[abc]</code></h3><ul>
+<li><strong>人类直觉</strong>：匹配括号内列出的任意一个字符。</li>
+<li><strong>理论等价重写</strong>：等于这些单字符机器之间的多元并集（Union）：<br>$$[a-c] \equiv a \mid b \mid c$$</li>
+<li><strong>衍生简写糖</strong>：<ul>
+<li><code>\d</code>（数字） $\equiv [0-9] \equiv 0 \mid 1 \mid 2 \mid \dots \mid 9$</li>
+<li><code>\w+</code> $\equiv ([a-zA-Z0-9_])^+$</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="2-4-理论重写实战演练"><a href="#2-4-理论重写实战演练" class="headerlink" title="2.4 理论重写实战演练"></a>2.4 理论重写实战演练</h3><p>考虑带有语法糖的表达式：<br>$$&#x2F;a+[0-9]?&#x2F;$$</p>
+<p>通过纯理论脱糖重写，它被无缝还原为仅含 5 大基础原语的等价长表达式：<br>$$\underbrace{(a \cdot a^*)}<em>{a^+} \cdot \underbrace{((0 \mid 1 \mid \dots \mid 9) \mid \epsilon)}</em>{[0-9]?}$$</p>
+<h3 id="2-5-理论优雅-vs-工程灾难（抛出矛盾）"><a href="#2-5-理论优雅-vs-工程灾难（抛出矛盾）" class="headerlink" title="2.5 理论优雅 vs. 工程灾难（抛出矛盾）"></a>2.5 理论优雅 vs. 工程灾难（抛出矛盾）</h3><p>将语法糖重写为理论等价的组合，在数学理论上无可挑剔、无懈可击。<br><strong>但是在工业级软件工程实现中，直接采用这种理论脱糖方案会引发严重的性能灾难！</strong></p>
+<ul>
+<li>例如：考虑一个常见的字符集重复 <code>[0-9]+</code>。如果盲目展开成：<br>$$(0 \mid 1 \mid \dots \mid 9) \cdot (0 \mid 1 \mid \dots \mid 9)^*$$<br>每一个并集都要引入 2 个新状态和 4 条 $\epsilon$ 边，连接又要引入状态，闭包再引入状态……生成出来的 NFA 状态节点数量会发生失控爆炸！</li>
+<li>内存开销巨大，并且庞大臃肿的 $\epsilon$ 转移链会严重拖垮匹配执行速度。</li>
+</ul>
+<h2 id="3-理论与工程的冲突：状态爆炸之痛"><a href="#3-理论与工程的冲突：状态爆炸之痛" class="headerlink" title="3. 理论与工程的冲突：状态爆炸之痛"></a>3. 理论与工程的冲突：状态爆炸之痛</h2><p>在上一讲中，我们看到加号操作符在理论上等价于 $A^+ \equiv AA^*$，字符集 $[a-c] \equiv a \mid b \mid c$。</p>
+<p>现在我们来看看，如果<strong>盲目死板地使用理论脱糖</strong>去为一个微小的正则模式 <code>[a-c]+</code> 构建 NFA，会发生什么恐怖的事情：</p>
+<ol>
+<li><code>[a-c]</code> 展开为 3 个字符的并集：产生 8 个状态；</li>
+<li>再加上星号闭包 <code>[a-c]*</code>：又引入外层状态与回环边；</li>
+<li>再通过连接运算把两者连起来：</li>
+</ol>
+<ul>
+<li><strong>最终结果</strong>：仅仅为了匹配一个简单的 <code>[a-c]+</code>，状态机图谱竟然膨胀到了<strong>整整 22 个状态节点和数十条 $\epsilon$ 空转移边！</strong></li>
+</ul>
+<p>这种机器在内存占用和图遍历执行效率上都是极其低劣且不可接受的。</p>
+<hr>
+<p>核心优化哲学：语义等价下的极简化重构</p>
+<blockquote>
+<p><strong>系统工程第一军规</strong>：<br><strong>只要最终对外呈现的语言识别语义（Semantics）得到 100% 完整保留，你可以采用任何更高效、更轻量级的内部实现，而不必拘泥于死板的理论构造步骤！</strong></p>
+</blockquote>
+<p>针对高频使用的语法糖，我们可以直接定制专属的轻量级 NFA 片段：</p>
+<h3 id="3-1-优化-1：字符集（Character-Class）定制优化"><a href="#3-1-优化-1：字符集（Character-Class）定制优化" class="headerlink" title="3.1 优化 1：字符集（Character Class）定制优化"></a>3.1 优化 1：字符集（Character Class）定制优化</h3><ul>
+<li><strong>痛点</strong>：原版把 $[abc]$ 展开为多重 Union 树，生成一堆辅助节点和 $\epsilon$ 边。</li>
+<li><strong>优化思路</strong>：<br>既然单字符机是从起始态到接受态连一条字符边，那字符集为什么不<strong>直接在同一对起始和接受态之间拉出多条平行的字符边</strong>？</li>
+<li><strong>拓扑结构</strong>：<strong>仅需 2 个状态！</strong><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">         ┌──── &#x27;a&#x27; ────┐</span><br><span class="line">         ├──── &#x27;b&#x27; ────┤</span><br><span class="line">( In ) ──┼──── &#x27;c&#x27; ────┼──&gt; (( Out ))</span><br><span class="line">         └──── ... ────┘</span><br></pre></td></tr></table></figure></li>
+<li><strong>效果</strong>：状态数从膨胀的数十个，被瞬间秒杀压缩到了仅剩 <strong>2 个状态</strong>！</li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">optimizedChar</span>(<span class="params">...<span class="attr">characters</span>: <span class="built_in">string</span>[]</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">    <span class="keyword">const</span> inState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">    <span class="keyword">const</span> outState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> char <span class="keyword">of</span> characters) &#123;</span><br><span class="line">        inState.<span class="title function_">addTransitionForSymbol</span>(char, outState);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(inState, outState);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-1-优化-2：加号算子（-）定制优化"><a href="#3-1-优化-2：加号算子（-）定制优化" class="headerlink" title="3.1 优化 2：加号算子（+）定制优化"></a>3.1 优化 2：加号算子（<code>+</code>）定制优化</h3><ul>
+<li><strong>语义</strong>：必须至少消耗一次，随后可以重复多次。</li>
+<li><strong>拓扑结构</strong>：<strong>仅需 2 个状态！</strong><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">         ┌──────────── &#x27;A&#x27; ────────────┐</span><br><span class="line">         │                             ▼</span><br><span class="line">( In ) ──┘                          (( Out )) </span><br><span class="line">         ▲                             │</span><br><span class="line">         └───────────── ε ─────────────┘</span><br></pre></td></tr></table></figure></li>
+<li><strong>核心差异</strong>：<br>相比于星号闭包 <code>*</code>，加号 <code>+</code> <strong>唯独去掉了最下层“从 In 直达 Out 跳过 0 次”的 $\epsilon$ 旁路边</strong>！<br>必须先通过字符边至少踏入一次终点，随后再靠回环 $\epsilon$ 边返回起点继续循环。</li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">plus</span>(<span class="params"><span class="attr">frag</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">    frag.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, frag.<span class="property">inState</span>);</span><br><span class="line">    <span class="keyword">return</span> frag;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-3-优化-3：问号算子（-）定制优化"><a href="#3-3-优化-3：问号算子（-）定制优化" class="headerlink" title="3.3 优化 3：问号算子（?）定制优化"></a>3.3 优化 3：问号算子（<code>?</code>）定制优化</h3><ul>
+<li><strong>语义</strong>：可选（出现 0 次或 1 次）。</li>
+<li><strong>拓扑结构</strong>：<strong>仅需 2 个状态！</strong><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">   ┌────────── ε (跳过0次) ──────────┐</span><br><span class="line">   ▼                                 ▼</span><br><span class="line">( In ) ────────── &#x27;A&#x27; (匹配1次) ──&gt; (( Out ))</span><br></pre></td></tr></table></figure></li>
+<li><strong>效果</strong>：一条字符边管“出现 1 次”，一条 $\epsilon$ 边管“跳过 0 次”，干脆利落。</li>
+</ul>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">optional</span>(<span class="params"><span class="attr">frag</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">    frag.<span class="property">inState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, frag.<span class="property">outState</span>);</span><br><span class="line">    <span class="keyword">return</span> frag;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-4-优化-4：星号闭包（-）的轻量级紧凑形态"><a href="#3-4-优化-4：星号闭包（-）的轻量级紧凑形态" class="headerlink" title="3.4 优化 4：星号闭包（*）的轻量级紧凑形态"></a>3.4 优化 4：星号闭包（<code>*</code>）的轻量级紧凑形态</h3><ul>
+<li>原始版本需要 4 个状态维护严格的层级包裹。</li>
+<li><strong>优化版本</strong>：压缩为 <strong>2 个状态</strong>！<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">   ┌────────── ε (跳过0次) ──────────┐</span><br><span class="line">   ▼                                 ▼</span><br><span class="line">( In ) ────────── &#x27;A&#x27; ──────────&gt; (( Out ))</span><br><span class="line">   ▲                                 │</span><br><span class="line">   └────────── ε (多次回环) ─────────┘</span><br></pre></td></tr></table></figure></li>
+</ul>
+<hr>
+<h3 id="3-5-优化前后的惊人对比"><a href="#3-5-优化前后的惊人对比" class="headerlink" title="3.5 优化前后的惊人对比"></a>3.5 优化前后的惊人对比</h3><p>以匹配 <code>[a-c]+</code> 为例：</p>
+<table>
+<thead>
+<tr>
+<th align="left">维度</th>
+<th align="left">理论纯脱糖版本 ($AA^*$)</th>
+<th align="left">定制工程优化版本</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>状态节点总数</strong></td>
+<td align="left"><strong>22 个状态</strong></td>
+<td align="left"><strong>仅需 2 个状态！</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>$\epsilon$ 空转移数量</strong></td>
+<td align="left">数十条冗余跳转</td>
+<td align="left"><strong>仅 1 条回环边</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>内存占用</strong></td>
+<td align="left">庞大臃肿</td>
+<td align="left">极低</td>
+</tr>
+<tr>
+<td align="left"><strong>匹配穿透耗时</strong></td>
+<td align="left">漫长试探与图跳转</td>
+<td align="left">几乎无损直达</td>
+</tr>
+</tbody></table>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%AD%A3%E5%88%99/" rel="tag">正则</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag">编译原理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/8700de120fca/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            正则引擎中的有限自动机 ④ NFA acceptor/table
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/cd5aeeba11e2/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">正则引擎中的有限自动机 ③ 5个基础状态机</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Termux DNS 测试环境 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-web-security/TermuxDNS压力测试"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Termux DNS 测试环境
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/0719559987ac/" class="article-date">
+  <time datetime="2024-11-02T14:11:48.000Z" itemprop="datePublished">2024-11-02</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.3k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">5 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="DNS-查询"><a href="#DNS-查询" class="headerlink" title="DNS 查询"></a>DNS 查询</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 更新软件源与所有已安装的软件包</span></span><br><span class="line">pkg update &amp;&amp; pkg upgrade -y</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 强制重新安装 OpenSSL 和 dnsutils</span></span><br><span class="line">pkg install --reinstall openssl dnsutils -y</span><br><span class="line"></span><br><span class="line">nslookup gs-asf325-sadfa34df.ccqqsd.com 178.94.14.101</span><br></pre></td></tr></table></figure>
+
+<h4 id="DNS压力测试"><a href="#DNS压力测试" class="headerlink" title="DNS压力测试"></a>DNS压力测试</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 更新软件包列表</span></span><br><span class="line">pkg update &amp;&amp; pkg upgrade -y</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 安装 C/C++ 编译器、git 以及相关依赖库</span></span><br><span class="line">pkg install clang make cmake git autoconf automake libtool pkg-config openssl ldns libnghttp2 -y</span><br></pre></td></tr></table></figure>
+
+<p>编译安装 libck</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1. 克隆 libck 官方仓库</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/concurrencykit/ck.git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 进入目录</span></span><br><span class="line"><span class="built_in">cd</span> ck</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 配置、编译并安装到 Termux 系统目录中</span></span><br><span class="line"><span class="comment"># 默认行为：如果你只运行 ./configure（不加任何参数），大多数开源软件的默认安装路径是 /usr/local。</span></span><br><span class="line"><span class="comment"># 编译出的可执行文件会放进 /usr/local/bin</span></span><br><span class="line"><span class="comment"># 依赖库会放进 /usr/local/lib</span></span><br><span class="line"><span class="comment"># 头文件会放进 /usr/local/include</span></span><br><span class="line"><span class="comment"># 加上 --prefix=/你的路径 后：你可以自定义这个软件安装到哪里。比如指定 --prefix=/home/user/app，那么软件就会被安装到 /home/user/app/bin 目录下。</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 在普通的 Linux 系统（如 Ubuntu）中，根目录 /usr 是可以随意写入的。但在 Termux (Android) 环境下：</span></span><br><span class="line"><span class="comment"># 手机没有 Root 权限，Android 系统禁止你向 /usr/local 或 /usr/bin 写入任何文件（会报错 Read-only file system）。</span></span><br><span class="line"><span class="comment"># Termux 为每个用户分配了一个专属的沙盒文件夹，这个文件夹的路径长这样：</span></span><br><span class="line"><span class="comment"># /data/data/com.termux/files/usr</span></span><br><span class="line"><span class="comment"># Termux 官方把这个长路径自动存为了环境变量 $PREFIX。</span></span><br><span class="line"><span class="comment"># 你可以直接在 Termux 里输入 echo $PREFIX 查看，输出的就是这个专属路径</span></span><br><span class="line"></span><br><span class="line">./configure --prefix=<span class="variable">$PREFIX</span></span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>下载 dnsperf 源码并编译</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 3. 克隆官方 Git 仓库（若 Codeberg 被墙，可从 GitHub 镜像获取）</span></span><br><span class="line">git <span class="built_in">clone</span> https://github.com/DNS-OARC/dnsperf.git</span><br><span class="line"></span><br><span class="line"><span class="comment"># 4. 进入源码目录</span></span><br><span class="line"><span class="built_in">cd</span> dnsperf</span><br><span class="line"></span><br><span class="line"><span class="comment"># 5. 生成配置并编译安装</span></span><br><span class="line">./autogen.sh</span><br><span class="line"><span class="comment"># 1. 重新配置，指定安装路径到 Termux 专属的前缀目录 $PREFIX</span></span><br><span class="line">./configure --prefix=<span class="variable">$PREFIX</span> CFLAGS=<span class="string">&quot;-I<span class="variable">$PREFIX</span>/include&quot;</span> LDFLAGS=<span class="string">&quot;-L<span class="variable">$PREFIX</span>/lib&quot;</span></span><br><span class="line">make</span><br><span class="line">make install</span><br></pre></td></tr></table></figure>
+
+<p>准备测试数据集 </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">nano data.txt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 格式：域名 记录类型</span></span><br><span class="line"><span class="comment"># baidu.com A</span></span><br><span class="line"><span class="comment"># qq.com A</span></span><br><span class="line"><span class="comment"># google.com AAAA</span></span><br><span class="line"><span class="comment"># github.com A</span></span><br></pre></td></tr></table></figure>
+
+<p>运行压测命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">dnsperf -s [目标DNS服务器IP] -p [端口] -d [数据文件名] -c [并发线程/连接数] -l [压测时长秒数] -q [目标每秒请求数QPS]</span><br><span class="line"></span><br><span class="line">dnsperf -s 192.168.1.1 -p 53 -d data.txt -c 10 -l 30 -q 2000</span><br></pre></td></tr></table></figure>
+
+<h4 id="流量控制"><a href="#流量控制" class="headerlink" title="流量控制"></a>流量控制</h4><p>在网络编程、API 网关（如 Nginx、Envoy、Spring Cloud Gateway）以及高并发压测工具（如 dnsperf）中，系统需要对流量进行精确控制，防止突发流量冲垮后端服务。</p>
+<p>核心目标：将发包&#x2F;请求速率精确限制在指定的 QPS（Queries Per Second）。令牌桶思想：</p>
+<p>系统有一个容量上限为 $Capacity$ 的桶。</p>
+<p>系统以恒定速率 $Rate$（每秒生成多少个令牌）向桶内发放令牌。</p>
+<p>每次发起请求，必须先从桶中取走对应数量的令牌（通常为 1 个）。</p>
+<p>若桶内有令牌，放行请求；若桶为空，则拒绝请求或等待。</p>
+<p><strong>传统“定时器&#x2F;后台线程”实现的痛点</strong></p>
+<p>初学者容易设想的朴素实现方式是：开一个后台线程，每隔固定时间（如 1ms）向桶里 push 一个令牌。存在的问题与瓶颈：</p>
+<p>CPU 资源浪费严重：系统需要维持一个独立的定时器线程，不断轮询或睡眠唤醒，带来额外的线程开销。</p>
+<p>锁竞争与并发开销：后台生产线程往桶里写数据，工作线程从桶里读数据，两者必须加锁（Mutex）或使用线程安全的并发队列，在超高 QPS 场景下锁竞争会成为严重的性能瓶颈。</p>
+<p>精度受限：操作系统的线程调度和普通睡眠函数（如 sleep&#x2F;usleep）在微秒级别容易发生抖动，很难做到极度精准的定时注入。</p>
+<p><strong>惰性计算（Lazy Evaluation）</strong></p>
+<p>系统完全不需要后台线程，也不需要定时往桶里放数据。桶在平时是完全静态的。<br>只有当有请求真正到达，想要获取令牌时，系统才在当前瞬间“顺便”计算并把这段时间内应该补充的令牌一次性加进去。</p>
+<p>$R$ (rate)：令牌发放速率（个&#x2F;秒）。<br>$C$ (capacity)：桶的最大容量上限。<br>$T_{last}$ (last_time)：上一次成功刷新&#x2F;取走令牌的时间戳（单位：秒或微秒）。<br>$T_{now}$ (now)：当前请求发起时的时间戳。<br>$Tokens$ (tokens)：桶中当前剩余的可用令牌数。</p>
+<p>计算流逝时间：$\Delta t &#x3D; T_{now} - T_{last}$</p>
+<p>计算这段时间应增发的令牌数：$\Delta tokens &#x3D; \Delta t \times R$</p>
+<p>更新桶中当前令牌数（不能超过容量上限）：$Tokens_{new} &#x3D; \min(C,; Tokens_{old} + \Delta tokens)$</p>
+<p>消耗令牌并更新时间基准：若 $Tokens_{new} \ge 1$ :  $Tokens &#x3D; Tokens_{new} - 1$; $T_{last} &#x3D; T_{now}$</p>
+<p>若 $Tokens_{new} &lt; 1$：结果：拒绝请求或挂起等待下一个微秒周期。</p>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/DNS/" rel="tag">DNS</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/0d8a7ae7bced/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            OpenWrt 安装与设置
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/cfb8fcdb919f/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">代理检测</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

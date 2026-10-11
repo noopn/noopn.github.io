@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>正则引擎中的有限自动机 ③ 5个基础状态机 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-compiling/正则引擎③5个基础状态机"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  正则引擎中的有限自动机 ③ 5个基础状态机
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/cd5aeeba11e2/" class="article-date">
+  <time datetime="2024-11-14T13:22:36.000Z" itemprop="datePublished">2024-11-14</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/">编译原理</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">5.8k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">22 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h2 id="1-渐进式构造思想与架构不变量"><a href="#1-渐进式构造思想与架构不变量" class="headerlink" title="1. 渐进式构造思想与架构不变量"></a>1. 渐进式构造思想与架构不变量</h2><p>在第一模块中，我们实现了面向对象的底层节点类 <code>State</code>。从本模块开始，我们将使用<strong>渐进式实现方法（Gradual Implementation Approach）</strong>：从最简单的原子级自动机片段开始，像搭积木一样逐步组合出支撑复杂正则表达式的高性能复合机器。</p>
+<p>在进入具体机器之前，必须确立贯穿整个自动机引擎的核心架构法则：</p>
+<h3 id="核心架构不变量-The-Architectural-Invariant"><a href="#核心架构不变量-The-Architectural-Invariant" class="headerlink" title="核心架构不变量 (The Architectural Invariant)"></a>核心架构不变量 (The Architectural Invariant)</h3><p>无论一个自动机内部多么复杂（无论是单个字符、还是包含成百上千个状态的复合模式），<strong>每一个独立的 NFA 片段在对外抽象时，必须始终严格保持：</strong></p>
+<ol>
+<li><strong>仅有唯一的一个起始状态（One Input State）</strong>；</li>
+<li><strong>仅有唯一的一个终止接受状态（One Output State &#x2F; Accepting State）</strong>。</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">          ┌─────────────────────────────────────────┐</span><br><span class="line">[输入状态] ───&gt;│        NFA 片段内部逻辑 (黑盒)           │───&gt; ((接受状态))</span><br><span class="line"> (唯一入口)    └─────────────────────────────────────────┘      (唯一出口)</span><br></pre></td></tr></table></figure>
+
+<p>这个不变量是后续将不同子机器进行拼接、并联、嵌套的生命线。</p>
+<hr>
+<h2 id="2-单字符机-Single-Character-Machine"><a href="#2-单字符机-Single-Character-Machine" class="headerlink" title="2. 单字符机 (Single Character Machine)"></a>2. 单字符机 (Single Character Machine)</h2><h3 id="2-1-语义与正则映射"><a href="#2-1-语义与正则映射" class="headerlink" title="2.1 语义与正则映射"></a>2.1 语义与正则映射</h3><p>单字符机对应于<strong>只显式接受一个指定字符</strong>的正则表达式（相当于被行首与行尾锚点锁定的单个字符，如 <code>/^A$/</code>）。</p>
+<h3 id="2-2-状态结构"><a href="#2-2-状态结构" class="headerlink" title="2.2 状态结构"></a>2.2 状态结构</h3><p>根据不变量法则，单字符机仅由两个状态组成：</p>
+<ul>
+<li>一个<strong>起始状态（Input State）</strong>（<code>accepting: false</code>）；</li>
+<li>一个<strong>接受状态（Output State）</strong>（<code>accepting: true</code>）；</li>
+<li>两者之间通过一条标记为目标字符（如 <code>&#39;A&#39;</code>）的有向转移边相连。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">( 状态 1 ) ────────── &#x27;A&#x27; ──────────&gt; (( 状态 2 ))</span><br><span class="line">[Input State]                        [Output State]</span><br><span class="line">                                    (accepting: true)</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-3-字符串纸带匹配模型-Tape-amp-Cursors"><a href="#2-3-字符串纸带匹配模型-Tape-amp-Cursors" class="headerlink" title="2.3 字符串纸带匹配模型 (Tape &amp; Cursors)"></a>2.3 字符串纸带匹配模型 (Tape &amp; Cursors)</h3><p>在自动机运行跟踪中，输入字符串被抽象为一条字符纸带，末尾带有显式的结束标记 <code>$</code>（美元符）：</p>
+<ul>
+<li><strong>状态游标（State Cursor）</strong>：指向当前停留的自动机节点；</li>
+<li><strong>字符游标（Tape Cursor）</strong>：指向输入字符串的当前读取位置。</li>
+</ul>
+<h4 id="匹配执行流程演练：输入-quot-A-quot"><a href="#匹配执行流程演练：输入-quot-A-quot" class="headerlink" title="匹配执行流程演练：输入 &quot;A$&quot;"></a>匹配执行流程演练：输入 <code>&quot;A$&quot;</code></h4><ol>
+<li><strong>初始时刻</strong>：状态游标位于状态 1，字符游标指向 <code>&#39;A&#39;</code>。</li>
+<li><strong>字符消耗</strong>：状态 1 仅有一条出边，要求消耗字符 <code>&#39;A&#39;</code>。检查当前字符恰好是 <code>&#39;A&#39;</code>，条件满足！消耗该字符，字符游标前进指向 <code>$</code>，状态游标前进跃迁到状态 2。</li>
+<li><strong>结束判决</strong>：字符游标已到达字符串末尾 <code>$</code>，此时检查状态游标停留在状态 2。状态 2 的 <code>accepting === true</code>，判定<strong>匹配成功，接受该字符串</strong>！</li>
+</ol>
+<ul>
+<li><em>反例</em>：如果输入是 <code>&quot;B$&quot;</code>，在状态 1 无法找到匹配 <code>&#39;B&#39;</code> 的出边，状态机死机卡住，判定<strong>匹配失败</strong>。</li>
+</ul>
+<hr>
+<h3 id="2-4-封装抽象：NFA-类与工厂函数实现"><a href="#2-4-封装抽象：NFA-类与工厂函数实现" class="headerlink" title="2.4 封装抽象：NFA 类与工厂函数实现"></a>2.4 封装抽象：<code>NFA</code> 类与工厂函数实现</h3><h3 id="2-5-NFA-容器类的设计"><a href="#2-5-NFA-容器类的设计" class="headerlink" title="2.5 NFA 容器类的设计"></a>2.5 <code>NFA</code> 容器类的设计</h3><p>我们需要一个专门的 <code>NFA</code> 类来包装整个片段。它对外暴露统一的输入输出接口：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">NFA</span> &#123;</span><br><span class="line">  <span class="attr">inState</span>: <span class="title class_">State</span>;</span><br><span class="line">  <span class="attr">outState</span>: <span class="title class_">State</span>;</span><br><span class="line"></span><br><span class="line">  <span class="title function_">constructor</span>(<span class="params"><span class="attr">inState</span>: <span class="title class_">State</span>, <span class="attr">outState</span>: <span class="title class_">State</span></span>) &#123;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">inState</span> = inState;</span><br><span class="line">    <span class="variable language_">this</span>.<span class="property">outState</span> = outState;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 测试输入字符串是否被当前机器接受</span></span><br><span class="line"><span class="comment">   * （底层将委托给图遍历算法，后文将深入展开）</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="title function_">test</span>(<span class="attr">string</span>: <span class="built_in">string</span>): <span class="built_in">boolean</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">this</span>.<span class="property">inState</span>.<span class="title function_">test</span>(<span class="built_in">string</span>);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>test</code> 函数的四大核心职责</p>
+<p>如果我们要写一个完整的 <code>test(string)</code>，它在内部必须承担以下四项职责：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">       输入字符串: &quot; a b c &quot;</span><br><span class="line">             │</span><br><span class="line">             ▼</span><br><span class="line">┌───────────────────────────────────────────────┐</span><br><span class="line">│              test(string) 引擎                │</span><br><span class="line">│                                               │</span><br><span class="line">│  1. 游标控制: 逐字读取字符 (Cursor)             │</span><br><span class="line">│  2. ε-闭包扩展: 遇到 ε 边立刻&quot;瞬移&quot;扩散 (Closure)│</span><br><span class="line">│  3. 转移派发: 查找当前状态集合的 transitions    │</span><br><span class="line">│  4. 终态裁决: 字符串读完时，是否停在 accepting?  │</span><br><span class="line">└───────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h4 id="职责-1：输入流游标推进（Input-Stream-Cursor）"><a href="#职责-1：输入流游标推进（Input-Stream-Cursor）" class="headerlink" title="职责 1：输入流游标推进（Input Stream Cursor）"></a>职责 1：输入流游标推进（Input Stream Cursor）</h4><ul>
+<li>职责：它维护一个指针，指向当前正在匹配的字符（如 index <code>0, 1, 2...</code>）。</li>
+<li>规则：只有当走过一条<strong>真实的字符边</strong>（比如 <code>&#39;a&#39;</code>）时，输入游标才往后移动一位；如果是 $\epsilon$ 边，游标<strong>原地不动</strong>。</li>
+</ul>
+<h4 id="职责-2：-epsilon-闭包展开（Epsilon-Closure-瞬移扩展）——-最关键的调度逻辑！"><a href="#职责-2：-epsilon-闭包展开（Epsilon-Closure-瞬移扩展）——-最关键的调度逻辑！" class="headerlink" title="职责 2：$\epsilon$-闭包展开（Epsilon-Closure 瞬移扩展）—— 最关键的调度逻辑！"></a>职责 2：$\epsilon$-闭包展开（Epsilon-Closure 瞬移扩展）—— <strong>最关键的调度逻辑！</strong></h4><ul>
+<li>自动机处于某个状态时，只要这个状态身上有 <code>ε</code> 转移，就意味着<strong>不需要任何字符就可以到达下一个状态</strong>。</li>
+<li><code>test</code> 必须在<strong>每读入一个字符之前和之后</strong>，主动向外探测：“顺着 <code>ε</code> 边我还能免费到达哪些状态？”</li>
+<li>这一步叫做计算 <strong>$\epsilon$-闭包</strong>。比如在 <code>concatenation</code> 里，一旦到达 <code>nfa1.outState</code>，<code>test</code> 就会借助闭包算法自动把它扩散到 <code>nfa2.inState</code>。</li>
+</ul>
+<h4 id="职责-3：非确定性多分支派发（Nondeterministic-Dispatching）"><a href="#职责-3：非确定性多分支派发（Nondeterministic-Dispatching）" class="headerlink" title="职责 3：非确定性多分支派发（Nondeterministic Dispatching）"></a>职责 3：非确定性多分支派发（Nondeterministic Dispatching）</h4><ul>
+<li>因为是 <strong>NFA</strong>（非确定性有限状态机），对于同一个输入字符（例如 <code>&#39;a&#39;</code>），可能会有<strong>多条边</strong>都可以走，或者同时既可以走字符边也可以走 <code>ε</code> 边。</li>
+<li><code>test</code> 必须做出决策：<ul>
+<li><strong>策略 A（深度优先 &#x2F; 回溯 DFS）</strong>：先选一条路走到底，如果撞墙死掉了，回溯退回来走另一条路（传统 PCRE 正则引擎做法）。</li>
+<li><strong>策略 B（广度优先 &#x2F; 集合并行 BFS，即 Thompson VM）</strong>：维护一个“当前活跃状态的集合 <code>Set&lt;State&gt;</code>”，遇到分支时让分身同时存在于多个状态中，并行向前推进（Go&#x2F;Rust 等现代正则引擎做法）。</li>
+</ul>
+</li>
+</ul>
+<h4 id="职责-4：停机与接受判定（Halting-amp-Acceptance）"><a href="#职责-4：停机与接受判定（Halting-amp-Acceptance）" class="headerlink" title="职责 4：停机与接受判定（Halting &amp; Acceptance）"></a>职责 4：停机与接受判定（Halting &amp; Acceptance）</h4><ul>
+<li>当输入字符串的所有字符被消耗完毕（EOF）时：</li>
+<li><code>test</code> 检查当前停留在哪些状态上；</li>
+<li>如果这些状态中<strong>有至少一个状态</strong>标记了 <code>accepting === true</code>，则判定成功，返回 <code>true</code>；</li>
+<li>否则判定失败，返回 <code>false</code>。</li>
+</ul>
+<hr>
+<p>架构解耦之美：数据与逻辑彻底分离</p>
+<p>之所以要把它们拆开，是因为这种架构具备极高的工业美感：</p>
+<table>
+<thead>
+<tr>
+<th align="left">模块</th>
+<th align="left">角色</th>
+<th align="left">关注点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>char</code>, <code>concatenation</code>, <code>union</code>, <code>rep</code></strong></td>
+<td align="left"><strong>图构建器（Graph Builder）</strong></td>
+<td align="left">只关注<strong>拓扑关系</strong>（谁和谁相连，入口是哪，出口是哪）。不管字符串长什么样。</td>
+</tr>
+<tr>
+<td align="left"><strong><code>test(string)</code></strong></td>
+<td align="left"><strong>图遍历求值器（Evaluator &#x2F; VM）</strong></td>
+<td align="left">只关注<strong>运行规则</strong>（状态搜索、闭包计算、分支推进、匹配结果）。不管图是怎么拼出来的。</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="2-6-单字符机工厂函数：char-symbol"><a href="#2-6-单字符机工厂函数：char-symbol" class="headerlink" title="2.6 单字符机工厂函数：char(symbol)"></a>2.6 单字符机工厂函数：<code>char(symbol)</code></h3><p>封装一个简明、通用的构造工厂，生成任意单字符的 NFA 片段：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">char</span>(<span class="params"><span class="attr">symbol</span>: <span class="built_in">string</span></span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> inState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">  <span class="keyword">const</span> outState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 连接单字符转移边</span></span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="built_in">symbol</span>, outState);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(inState, outState);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="3-空串机工厂函数：epsilon"><a href="#3-空串机工厂函数：epsilon" class="headerlink" title="3 空串机工厂函数：epsilon()"></a>3 空串机工厂函数：<code>epsilon()</code></h2><p>利用特殊的 <code>EPSILON</code> 标记复用转移逻辑：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="variable constant_">EPSILON</span> = <span class="string">&#x27;ε&#x27;</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">epsilon</span>(<span class="params"></span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> inState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">  <span class="keyword">const</span> outState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 连接空转移边</span></span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, outState);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(inState, outState);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>基石地位</strong>：单字符机与空串机是整个正则表达式理论中<strong>唯二的原子级基本构建块</strong>。正则表达式中的其余一切高阶语法（连接、选择、闭包、字符集等），全部是基于这两个原子组合嵌套出来的。<br><strong>不变量至上</strong>：坚持“单入单出”设计原则，使我们无需关心黑盒内部结构即可实现任意复杂度的模块化组合。</p>
+<hr>
+<h2 id="4-状态机结构与连接机制"><a href="#4-状态机结构与连接机制" class="headerlink" title="4. 状态机结构与连接机制"></a>4. 状态机结构与连接机制</h2><p>在正则表达式的全部五大基础机器中，<strong>连接模式（Concatenation Pattern）</strong>是第一个由基础原子拼装出的复合机器。</p>
+<ul>
+<li><strong>语义含义</strong>：表示<strong>“模式 A 紧随模式 B”</strong>（$A \text{ followed by } B$），在正则表达式中直接书写为顺序排列，例如 <code>/AB/</code>。</li>
+<li><strong>匹配规则</strong>：该机器仅接受由“能够被机器 A 接受的前缀”加上“能够被机器 B 接受的后缀”拼接而成的完整字符串。</li>
+<li><strong>抽象普适性</strong>：虽然我们常拿字符 <code>A</code> 和 <code>B</code> 举例，但连接模式中的 $A$ 和 $B$ <strong>可以是任意复杂的子机器</strong>（例如：<code>a+[0-9]*</code> 本质上是一个重复子机与字符集子机的连接）。连接模式不需要知道内部细节，它将子机器视作黑盒。</li>
+</ul>
+<h3 id="4-1-构造拓扑图"><a href="#4-1-构造拓扑图" class="headerlink" title="4.1 构造拓扑图"></a>4.1 构造拓扑图</h3><p>如何将两个独立的 NFA 串联在一起？核心秘诀正是 <strong>$\epsilon$-空转移（Epsilon Transition）</strong>。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">              [ 子机器 A (黑盒) ]                              [ 子机器 B (黑盒) ]</span><br><span class="line">         ┌───────────────────────────┐                    ┌───────────────────────────┐</span><br><span class="line">( S0 ) ──┤                           ├── ( S1 ) ─── ε ──&gt; ( S2 ) ──┤                           ├── (( S3 ))</span><br><span class="line">(输入)   └───────────────────────────┘                     └───────────────────────────┘   (接受)</span><br><span class="line">                                      [原接受态:                  [新输入态]</span><br><span class="line">                                       降级为普通态]</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-2-维护架构不变量（关键细节）"><a href="#4-2-维护架构不变量（关键细节）" class="headerlink" title="4.2 维护架构不变量（关键细节）"></a>4.2 维护架构不变量（关键细节）</h3><p>为了确保整个复合机器依然符合<strong>“唯一输入、唯一输出”</strong>的架构铁律，当用 $\epsilon$ 连接 $A$ 的出口和 $B$ 的入口时，必须执行一个至关重要的操作：</p>
+<ul>
+<li><strong>重置第一台机器的终止标记</strong>：必须将子机器 $A$ 的输出状态的 <code>accepting</code> 显式重置为 <code>false</code>！</li>
+<li>此时，整台复合机器唯一的入口是 $A$ 的输入态，唯一的出口是 $B$ 的接受态。</li>
+</ul>
+<h3 id="4-3-为什么需要-4-个状态而不是-3-个？"><a href="#4-3-为什么需要-4-个状态而不是-3-个？" class="headerlink" title="4.3 为什么需要 4 个状态而不是 3 个？"></a>4.3 为什么需要 4 个状态而不是 3 个？</h3><p>可以简单理解为，通过空状态机消除了，两个状态机之间的状态引用，相当于一次克隆。</p>
+<p>如果让你拿笔在纸上画正则表达式 <code>/AB/</code> 的状态机，任何一个正常人都会画出 3 个状态：<br>$$S_0 \xrightarrow{\text{ A }} S_1 \xrightarrow{\text{ B }} S_2$$<br>这没有任何毛病，在<strong>结果</strong>上也完全正确。</p>
+<p>那为什么汤普森（Ken Thompson）和编译原理教材偏偏要多造一个状态，画成 4 个状态呢？<br>$$S_0 \xrightarrow{\text{ A }} S_1 \xrightarrow{\quad \epsilon \quad} S_2 \xrightarrow{\text{ B }} S_3$$</p>
+<p>这背后的根本原因，不是理论不行，而是<strong>“手画图”与“写通用代码算法”之间的巨大鸿沟</strong>。</p>
+<p>我们用代码实现的视角，来彻底拆解为什么<strong>必须用 4 个状态 + $\epsilon$ 边</strong>：</p>
+<hr>
+<h4 id="4-3-1-看一下函数的入参：你在连接的是两个“黑盒子”"><a href="#4-3-1-看一下函数的入参：你在连接的是两个“黑盒子”" class="headerlink" title="4.3.1 看一下函数的入参：你在连接的是两个“黑盒子”"></a>4.3.1 看一下函数的入参：你在连接的是两个“黑盒子”</h4><p>请看你写的代码函数签名：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">concatPair</span>(<span class="params"><span class="attr">first</span>: NFA, <span class="attr">second</span>: NFA</span>): <span class="variable constant_">NFA</span></span><br></pre></td></tr></table></figure>
+<p>在这个函数被调用的时候，请问你作为这个函数的作者，<strong>你知道 <code>first</code> 和 <code>second</code> 到底长什么样吗？</strong></p>
+<p><strong>你完全不知道！</strong></p>
+<ul>
+<li>它可能是两个单字符机器（<code>a</code> 和 <code>b</code>）；</li>
+<li>但它更有可能是极其复杂的两个子机器：比如 <code>first</code> 是 <code>(x|y)*</code>，<code>second</code> 是 <code>(p|q)+</code>！</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[ first 机器: 可能是包含20个状态的复杂迷宫 ]        [ second 机器: 也是个庞大迷宫 ]</span><br><span class="line">         ┌───────────────────────────┐                 ┌───────────────────────────┐</span><br><span class="line">inState ─┤                           ├─ outState       inState ─┤                           ├─ outState</span><br><span class="line">         └───────────────────────────┘                 └───────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<p>此时，你要把这两个机器按顺序串起来：</p>
+<h4 id="4-3-2-方案-A（汤普森的做法：4个状态，拉一条-epsilon-边）"><a href="#4-3-2-方案-A（汤普森的做法：4个状态，拉一条-epsilon-边）" class="headerlink" title="4.3.2 方案 A（汤普森的做法：4个状态，拉一条 $\epsilon$ 边）"></a>4.3.2 方案 A（汤普森的做法：4个状态，拉一条 $\epsilon$ 边）</h4><p>你只需要写一行极其优雅、绝对不会出错的代码：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">first.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, second.<span class="property">inState</span>);</span><br></pre></td></tr></table></figure>
+<p><strong>不管里面有多复杂，两个机器的内部丝毫未动，你只是在它们之间搭了一座桥。</strong><br>这个操作的耗时是严格的 $O(1)$，并且<strong>绝对不会破坏子机器内部原有的逻辑</strong>。</p>
+<hr>
+<h4 id="4-3-3（强行做成-3-个状态：合并节点）"><a href="#4-3-3（强行做成-3-个状态：合并节点）" class="headerlink" title="4.3.3（强行做成 3 个状态：合并节点）"></a>4.3.3（强行做成 3 个状态：合并节点）</h4><p>如果你坚持要让连接处“只保留 1 个状态”，意味着你必须把 <code>first.outState</code> 和 <code>second.inState</code> <strong>融合成同一个对象</strong>！</p>
+<p>在内存图结构中，<strong>把两个已有的节点融合成一个节点，是一场极其痛苦的“开颅手术”</strong>：</p>
+<ol>
+<li><strong>指针重定向</strong>：原来整张图里所有指向 <code>second.inState</code> 的有向边，你必须全部找出来，把它们的指针改指向 <code>first.outState</code>；</li>
+<li><strong>状态合并</strong>：原来 <code>second.inState</code> 身上的所有出边，你必须全部复制挪动到 <code>first.outState</code> 上；</li>
+<li><strong>销毁旧节点</strong>：从内存中把 <code>second.inState</code> 删掉。</li>
+</ol>
+<p>这不仅要把算法复杂度从 $O(1)$ 拖慢到遍历整张图的 $O(V + E)$，而且极容易写出内存引用错乱的 Bug！</p>
+<hr>
+<h4 id="4-3-4-致命风险：直接合并节点会“污染”子机器内部逻辑"><a href="#4-3-4-致命风险：直接合并节点会“污染”子机器内部逻辑" class="headerlink" title="4.3.4 致命风险：直接合并节点会“污染”子机器内部逻辑"></a>4.3.4 致命风险：直接合并节点会“污染”子机器内部逻辑</h4><p>如果你觉得“节点合并虽然麻烦，但我硬写代码也能做”，那看下面这个<strong>逻辑灾难</strong>：</p>
+<p>假设我们要连接的是 <code>first = a</code>，和 <code>second = (b*)</code>（即匹配 <code>/ab*/</code>）：</p>
+<ul>
+<li>机器 <code>second</code>（即 <code>b*</code>）是一个循环机器，它的内部有这样一条逻辑：**每读完一个 <code>b</code>，就有一条回环边跳回自己的入口 <code>second.inState</code>**。</li>
+</ul>
+<p>如果你强行把 <code>first.outState</code> 和 <code>second.inState</code> **融合成同一个状态 $S_{\text{middle}}$**：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">              ┌───────── b ─────────┐</span><br><span class="line">              ▼                     │ (循环回环)</span><br><span class="line">( S0 ) ──a──&gt; ( S_middle ) ─────────┘</span><br></pre></td></tr></table></figure>
+<p><strong>灾难发生了！</strong><br>现在这个 $S_{\text{middle}}$ 既是第一台机器的出口，又是第二台机器的入口。<br>机器二的回环边指回了 $S_{\text{middle}}$，<strong>两台机器的内部边界彻底被击穿了</strong>！在某些更复杂的嵌套（比如多层闭包、多层或运算）中，这种破坏边界的合并会导致系统意外地在不该循环的地方循环，彻底破坏原有的正则语义！</p>
+<p>而如果用 $\epsilon$ 边连接：<br>$$A_{out} \xrightarrow{\quad \epsilon \quad} B_{in}$$<br>两台机器<strong>井水不犯河水</strong>。$B$ 内部怎么循环都只在 $B_{in}$ 这一侧打转，绝对不会把脏数据或者控制流回退到 $A$ 的底盘里！</p>
+<hr>
+<h4 id="4-3-5-编译器的设计哲学：分阶段治之（Separation-of-Concerns）"><a href="#4-3-5-编译器的设计哲学：分阶段治之（Separation-of-Concerns）" class="headerlink" title="4.3.5 编译器的设计哲学：分阶段治之（Separation of Concerns）"></a>4.3.5 编译器的设计哲学：分阶段治之（Separation of Concerns）</h4><p>看到这里你可能会问：“难道为了算法好写，我们就容忍状态机里留着这么多冗余的 4 状态和 $\epsilon$ 边吗？”</p>
+<p>汤普森和所有编译器设计大师的回答是：</p>
+<blockquote>
+<p><strong>“在构造期（NFA），我们追求极致的通用、简洁与无 Bug；在优化期（DFA），我们再用数学算法把多余的边狠狠砍掉！”</strong></p>
+</blockquote>
+<p>现代编译器的标准流水线是分工极其明确的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">[步骤 1: AST -&gt; NFA]</span><br><span class="line">采用最无脑、最规范的汤普森构造法（拉一条 ε 边）。</span><br><span class="line">状态多没关系、有 ε 边没关系，保证 100% 模块化不出错！</span><br><span class="line">         │</span><br><span class="line">         ▼</span><br><span class="line">[步骤 2: NFA -&gt; DFA (子集构造法)]</span><br><span class="line">在这个阶段，编译器会运行 ε-闭包算法（Epsilon Closure）。</span><br><span class="line">它会自动识别出：从 S1 到 S2 既然只是一个无需消耗字符的 ε 边，</span><br><span class="line">算法在这一步会自动把它们无缝压缩压成 1 个状态！</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-4-链接状态机实现的代码"><a href="#4-4-链接状态机实现的代码" class="headerlink" title="4.4 链接状态机实现的代码"></a>4.4 链接状态机实现的代码</h4><figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">concatenation</span>(<span class="params"><span class="attr">nfa1</span>: NFA, <span class="attr">nfa2</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">    nfa1.<span class="property">outState</span>.<span class="property">accepting</span> = <span class="literal">false</span>;</span><br><span class="line">    nfa2.<span class="property">outState</span>.<span class="property">accepting</span> = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    nfa1.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, nfa2.<span class="property">inState</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(nfa1.<span class="property">inState</span>, nfa2.<span class="property">outState</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">concat</span>(<span class="params"><span class="attr">first</span>: NFA, ...<span class="attr">rest</span>: NFA[]</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> frag <span class="keyword">of</span> rest) &#123;</span><br><span class="line">        first = <span class="title function_">concatPair</span>(first, frag);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> first;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="5-并集模式的语义与数学定义"><a href="#5-并集模式的语义与数学定义" class="headerlink" title="5. 并集模式的语义与数学定义"></a>5. 并集模式的语义与数学定义</h2><p>在五大基础构建块中，<strong>并集模式（Union Pattern，也称析取 Disjunction）</strong>对应正则表达式中的“或运算”（<code>OR</code>），用竖线管道符 <code>|</code> 表示，如 <code>/A|B/</code>。</p>
+<ul>
+<li><strong>语义含义</strong>：表示<strong>“接受模式 A 或者接受模式 B”</strong>。只要输入字符串能够被两个分支中的任意一个完整接受，整台复合机器即判定匹配成功。</li>
+<li><strong>黑盒普适性</strong>：参与并集的两个子机器可以是基础单字符机，也可以是高度复杂的复合模式（如 <code>[0-9]+ | [a-zA-Z]+</code>）。</li>
+</ul>
+<p>为了让整台机器能够“二选一”，并且严格维持<strong>“唯一输入、唯一输出”</strong>的架构不变量，并集模式需要引入两个全新的外界包裹状态：</p>
+<ul>
+<li>一个全新的<strong>起始状态（$S_{in}$）</strong>；</li>
+<li>一个全新的<strong>接受状态（$S_{out}$）</strong>。</li>
+</ul>
+<h3 id="5-1-构造拓扑图"><a href="#5-1-构造拓扑图" class="headerlink" title="5.1 构造拓扑图"></a>5.1 构造拓扑图</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">               ε               [ 子机器 A (黑盒) ]               ε</span><br><span class="line">        ┌─────────────&gt; ( A.in ) ─── ... ───&gt; ( A.out ) ─────────────┐</span><br><span class="line">        │                                                            │</span><br><span class="line">        │                                                            ▼</span><br><span class="line"> ( S_in )                                                         (( S_out ))</span><br><span class="line">[全新起始态]                                                      [全新接受态]</span><br><span class="line">        │                                                            ▲</span><br><span class="line">        │      ε               [ 子机器 B (黑盒) ]               ε   │</span><br><span class="line">        └─────────────&gt; ( B.in ) ─── ... ───&gt; ( B.out ) ─────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-2-构造四部曲"><a href="#5-2-构造四部曲" class="headerlink" title="5.2 构造四部曲"></a>5.2 构造四部曲</h3><ol>
+<li><strong>分叉连接（Fan-out）</strong>：从全新的 $S_{in}$ 向子机器 $A$ 的入口与子机器 $B$ 的入口分别拉出一条 $\epsilon$-转移边。</li>
+<li><strong>汇聚连接（Fan-in）</strong>：从子机器 $A$ 的出口与子机器 $B$ 的出口向全新的 $S_{out}$ 分别拉出一条 $\epsilon$-转移边。</li>
+<li><strong>状态降级</strong>：必须显式重置两个子机器的原接受态：<code>A.out.accepting = false; B.out.accepting = false;</code>。</li>
+<li><strong>统一出口</strong>：将全新的 $S_{out}$ 设为唯一的接受状态（<code>accepting = true</code>）。</li>
+</ol>
+<h3 id="5-3-非确定性（Non-determinism）的执行与性能探讨"><a href="#5-3-非确定性（Non-determinism）的执行与性能探讨" class="headerlink" title="5.3 非确定性（Non-determinism）的执行与性能探讨"></a>5.3 非确定性（Non-determinism）的执行与性能探讨</h3><h4 id="5-3-1-尝试匹配-quot-A-quot-的执行轨迹"><a href="#5-3-1-尝试匹配-quot-A-quot-的执行轨迹" class="headerlink" title="5.3.1 尝试匹配 &quot;A$&quot; 的执行轨迹"></a>5.3.1 尝试匹配 <code>&quot;A$&quot;</code> 的执行轨迹</h4><p>在起始状态 $S_{in}$，机器有两个 $\epsilon$-分支可以选择：</p>
+<ul>
+<li><p><strong>单线程深度优先（DFS &#x2F; 回溯视角）</strong>：</p>
+<ol>
+<li>假设系统先盲目走入下方的 $B$ 分支：通过 $\epsilon$ 瞬移到 $B.in$。</li>
+<li>进入子机器 $B$，要求消耗字符 <code>&#39;B&#39;</code>。但当前纸带字符是 <code>&#39;A&#39;</code>，<strong>路断了（Dead End）</strong>！</li>
+<li><strong>回滚回溯</strong>：撤销刚才的转移，退回分叉点 $S_{in}$，尝试走上方的 $A$ 分支。</li>
+<li>顺着 $\epsilon$ 瞬移到 $A.in$，成功消耗字符 <code>&#39;A&#39;</code> 到达 $A.out$。</li>
+<li>顺着 $\epsilon$ 汇聚到全局接受状态 $S_{out}$，纸带到达 <code>$</code>，匹配成功！</li>
+</ol>
+</li>
+<li><p><strong>多线程并行探索（NFA 状态集合视角）</strong>：<br>在 $S_{in}$ 处遇到两条 $\epsilon$ 边，系统分裂为两个并发线程（或将状态放入集合 <code>&#123;A.in, B.in&#125;</code>）。当下层分支遇到字符不匹配时，自动消亡淘汰；上层分支顺利存活并最终抵达终点。</p>
+</li>
+</ul>
+<h3 id="5-3-2-为什么-NFA-往往要转化为-DFA？"><a href="#5-3-2-为什么-NFA-往往要转化为-DFA？" class="headerlink" title="5.3.2 为什么 NFA 往往要转化为 DFA？"></a>5.3.2 为什么 NFA 往往要转化为 DFA？</h3><p>直接遍历 NFA 图在遇到死胡同时需要尝试不同分支。如果状态分支极其深邃复杂，单纯在 NFA 上回溯搜索会造成严重的性能浪费。<br>因此在工业界编译器中，我们先借助 $\epsilon$-NFA 的超强灵活性拼装出结构，随后再通过算法将其统一<strong>确定化为 DFA（消除所有 $\epsilon$ 边和多分支，实现无回溯的 $O(n)$ 高速执行）</strong>。</p>
+<hr>
+<h3 id="5-4-二元并集工厂：orPair-first-second"><a href="#5-4-二元并集工厂：orPair-first-second" class="headerlink" title="5.4 二元并集工厂：orPair(first, second)"></a>5.4 二元并集工厂：<code>orPair(first, second)</code></h3><figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">orPair</span>(<span class="params"><span class="attr">first</span>: NFA, <span class="attr">second</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="comment">// 1. 创建全新的外层单入、单出节点</span></span><br><span class="line">  <span class="keyword">const</span> inState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">  <span class="keyword">const</span> outState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 2. 维护不变量：重置两个子机器的原接受态</span></span><br><span class="line">  first.<span class="property">outState</span>.<span class="property">accepting</span> = <span class="literal">false</span>;</span><br><span class="line">  second.<span class="property">outState</span>.<span class="property">accepting</span> = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 3. 入口分叉：从新入口通过 ε 边瞬移到两个子机器的入口</span></span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, first.<span class="property">inState</span>);</span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, second.<span class="property">inState</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 4. 出口汇聚：从两个子机器的原出口通过 ε 边汇聚到新接受态</span></span><br><span class="line">  first.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, outState);</span><br><span class="line">  second.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, outState);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(inState, outState);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-5-多元并集工厂：or-fragments"><a href="#5-5-多元并集工厂：or-fragments" class="headerlink" title="5.5 多元并集工厂：or(...fragments)"></a>5.5 多元并集工厂：<code>or(...fragments)</code></h3><p>支持任意多个选择分支（如 <code>A | B | C</code>）：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">or</span>(<span class="params">...<span class="attr">fragments</span>: NFA[]</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (fragments.<span class="property">length</span> === <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="title function_">epsilon</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 递归或迭代拼装成嵌套的二元并集树</span></span><br><span class="line">  <span class="keyword">return</span> fragments.<span class="title function_">reduce</span>(<span class="function">(<span class="params">acc, current</span>) =&gt;</span> <span class="title function_">orPair</span>(acc, current));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 构建匹配 /a|b|c/ 的 NFA</span></span><br><span class="line"><span class="keyword">const</span> abcOrMachine = <span class="title function_">or</span>(<span class="title function_">char</span>(<span class="string">&#x27;a&#x27;</span>), <span class="title function_">char</span>(<span class="string">&#x27;b&#x27;</span>), <span class="title function_">char</span>(<span class="string">&#x27;c&#x27;</span>));</span><br><span class="line"></span><br><span class="line">abcOrMachine.<span class="title function_">test</span>(<span class="string">&#x27;a&#x27;</span>); <span class="comment">// true</span></span><br><span class="line">abcOrMachine.<span class="title function_">test</span>(<span class="string">&#x27;b&#x27;</span>); <span class="comment">// true</span></span><br><span class="line">abcOrMachine.<span class="title function_">test</span>(<span class="string">&#x27;c&#x27;</span>); <span class="comment">// true</span></span><br><span class="line">abcOrMachine.<span class="title function_">test</span>(<span class="string">&#x27;ab&#x27;</span>); <span class="comment">// false</span></span><br><span class="line">abcOrMachine.<span class="title function_">test</span>(<span class="string">&#x27;d&#x27;</span>); <span class="comment">// false</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="6-克莱恩闭包的语义与历史渊源"><a href="#6-克莱恩闭包的语义与历史渊源" class="headerlink" title="6. 克莱恩闭包的语义与历史渊源"></a>6. 克莱恩闭包的语义与历史渊源</h2><p>在五大基础构建块中，<strong>克莱恩闭包（Kleene Closure &#x2F; Kleene Star）</strong>是最后一个复合机器，也是正则表达式中最核心的重复算子。</p>
+<ul>
+<li><strong>历史命名</strong>：以正则表达式与正则语言的发明者——数学家斯蒂芬·克莱恩（Stephen Kleene）命名。</li>
+<li><strong>语义定义</strong>：表示<strong>“将某个模式重复零次或多次”</strong>（$0 \text{ or more times}$）。在正则表达式中用星号 <code>*</code> 表示，如 <code>/A*/</code>。</li>
+<li><strong>接受集合</strong>：对于 <code>/A*/</code>，合法字符串包括：空串 <code>&quot;&quot;</code>、单个 <code>&quot;A&quot;</code>、两个 <code>&quot;AA&quot;</code>、三个 <code>&quot;AAA&quot;</code> 等无穷多个可能。</li>
+<li><strong>黑盒普适性</strong>：闭包算子可以作用于任意复杂的子机器上（例如：<code>(a|b)*</code> 代表由 <code>a</code> 或 <code>b</code> 构成的任意组合）。</li>
+</ul>
+<hr>
+<p>如何用状态机同时表达“跳过（0次）”和“循环重入（多次）”？我们需要引入一对新的起始与接受状态，并布设 <strong>4 条关键的 $\epsilon$-转移边</strong>。</p>
+<h3 id="6-1-构造拓扑图"><a href="#6-1-构造拓扑图" class="headerlink" title="6.1 构造拓扑图"></a>6.1 构造拓扑图</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">                   ε (进入子机)                ε (出子机)</span><br><span class="line">              ┌────────────────&gt; ( A.in ) ────┐</span><br><span class="line">              │                               │</span><br><span class="line">              │               [ 子机器 A ]    │</span><br><span class="line"> ( S_in ) ────┤                  (黑盒)       ├───&gt; (( S_out ))</span><br><span class="line">[全新起始态]  │                               │    [全新接受态]</span><br><span class="line">              │        ε (回环重入: 多次重复)  │</span><br><span class="line">              │   ┌───────────────────────────┘</span><br><span class="line">              │   │</span><br><span class="line">              ▼   ▼ ε (旁路跳过: 0次重复)</span><br><span class="line">              └─────────────────────────────────────►</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-2-四条-epsilon-边的分工使命"><a href="#6-2-四条-epsilon-边的分工使命" class="headerlink" title="6.2 四条 $\epsilon$-边的分工使命"></a>6.2 四条 $\epsilon$-边的分工使命</h3><ol>
+<li><strong>旁路边（Bypass: 零次重复）</strong>：<br>$$S_{in} \xrightarrow{\epsilon} S_{out}$$<br>允许整个子机器被完全绕过。即使输入为空字符串，也能瞬间抵达终点，满足“重复 0 次”的定义。</li>
+<li><strong>进入边（Enter）</strong>：<br>$$S_{in} \xrightarrow{\epsilon} A.in$$<br>引导机器走入实际子模块进行至少一次的字符消耗。</li>
+<li><strong>出机边（Exit）</strong>：<br>$$A.out \xrightarrow{\epsilon} S_{out}$$<br>完成一次或多次循环后，从子机器出口安全引导到全局接受态。</li>
+<li><strong>回环边（Loopback: 多次重复）</strong>：<br>$$A.out \xrightarrow{\epsilon} A.in \quad (\text{或从 } S_{out} \xrightarrow{\epsilon} A.in)$$<br>每当子机器完成一轮匹配到达出口时，提供一条无需消耗字符的“传送门”将控制流瞬间拉回到子机器入口，为下一轮循环匹配做好准备。</li>
+</ol>
+<blockquote>
+<p>[!NOTE]<br><strong>关于回环边起点位置的说明</strong>：<br>在理论实现中，回环边可以从 $A.out$ 直连 $A.in$，也可以从 $S_{out}$ 连回 $A.in$。二者在语义上完全等价。本课程采用标准的原始规范版本（直接连接 $A.out \xrightarrow{\epsilon} A.in$ 或 $S_{out} \xrightarrow{\epsilon} A.in$）。</p>
+</blockquote>
+<hr>
+<h3 id="6-3-双游标纸带执行演练"><a href="#6-3-双游标纸带执行演练" class="headerlink" title="6.3 双游标纸带执行演练"></a>6.3 双游标纸带执行演练</h3><p>场景 A：匹配空字符串 <code>&quot;&quot;</code>（即 <code>&quot;$&quot;</code>）</p>
+<ol>
+<li>状态机在 $S_{in}$，纸带游标指向 <code>$</code>。</li>
+<li>走最下方的<strong>旁路边</strong>：$S_{in} \xrightarrow{\epsilon} S_{out}$，直接进入终点。</li>
+<li>纸带在 <code>$</code>，状态在接受态，<strong>判定成功（匹配 0 次）</strong>！</li>
+</ol>
+<p>场景 B：匹配字符串 <code>&quot;AA$&quot;</code>（即重复 2 次）</p>
+<ol>
+<li>状态机在 $S_{in}$，纸带指向第 1 个 <code>&#39;A&#39;</code>。</li>
+<li>走进入边：$S_{in} \xrightarrow{\epsilon} A.in$。</li>
+<li>消耗第 1 个字符 <code>&#39;A&#39;</code>，到达 $A.out$，纸带指向第 2 个 <code>&#39;A&#39;</code>。</li>
+<li>顺着<strong>回环边</strong>：$A.out \xrightarrow{\epsilon} A.in$，重新回到子机入口。</li>
+<li>消耗第 2 个字符 <code>&#39;A&#39;</code>，再次到达 $A.out$，纸带指向 <code>$</code>。</li>
+<li>顺着出机边：$A.out \xrightarrow{\epsilon} S_{out}$，到达全局终点。</li>
+<li>纸带在 <code>$</code>，状态在接受态，<strong>判定成功（循环匹配 2 次）</strong>！</li>
+</ol>
+<hr>
+<h3 id="6-4-代码工程实现"><a href="#6-4-代码工程实现" class="headerlink" title="6.4 代码工程实现"></a>6.4 代码工程实现</h3><p>闭包工厂函数：<code>rep(fragment)</code> &#x2F; <code>kleene(fragment)</code></p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">rep</span>(<span class="params"><span class="attr">fragment</span>: NFA</span>): <span class="variable constant_">NFA</span> &#123;</span><br><span class="line">  <span class="comment">// 1. 创建全新的单入、单出节点</span></span><br><span class="line">  <span class="keyword">const</span> inState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">false</span> &#125;);</span><br><span class="line">  <span class="keyword">const</span> outState = <span class="keyword">new</span> <span class="title class_">State</span>(&#123; <span class="attr">accepting</span>: <span class="literal">true</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 2. 重置子机器的原接受状态</span></span><br><span class="line">  fragment.<span class="property">outState</span>.<span class="property">accepting</span> = <span class="literal">false</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 3. 边1: 旁路跳过（重复 0 次）</span></span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, outState);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 4. 边2: 进入子机器（进行匹配）</span></span><br><span class="line">  inState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, fragment.<span class="property">inState</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 5. 边3: 退出子机器到接受态</span></span><br><span class="line">  fragment.<span class="property">outState</span>.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, outState);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 6. 边4: 回环重入（支持重复多次）</span></span><br><span class="line">  <span class="comment">// 方式一：从 outState 回环到 fragment.inState</span></span><br><span class="line">  <span class="comment">// 也可以从 fragment.outState 回环到 fragment.inState</span></span><br><span class="line">  outState.<span class="title function_">addTransitionForSymbol</span>(<span class="variable constant_">EPSILON</span>, fragment.<span class="property">inState</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title function_">NFA</span>(inState, outState);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 构建匹配 /a*/ 的 NFA</span></span><br><span class="line"><span class="keyword">const</span> aStar = <span class="title function_">rep</span>(<span class="title function_">char</span>(<span class="string">&#x27;a&#x27;</span>));</span><br><span class="line"></span><br><span class="line">aStar.<span class="title function_">test</span>(<span class="string">&#x27;&#x27;</span>);    <span class="comment">// true (0次)</span></span><br><span class="line">aStar.<span class="title function_">test</span>(<span class="string">&#x27;a&#x27;</span>);   <span class="comment">// true (1次)</span></span><br><span class="line">aStar.<span class="title function_">test</span>(<span class="string">&#x27;aaa&#x27;</span>); <span class="comment">// true (3次)</span></span><br><span class="line">aStar.<span class="title function_">test</span>(<span class="string">&#x27;b&#x27;</span>);   <span class="comment">// false</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 复杂子机器测试：/(a|b)*/</span></span><br><span class="line"><span class="keyword">const</span> abStar = <span class="title function_">rep</span>(<span class="title function_">or</span>(<span class="title function_">char</span>(<span class="string">&#x27;a&#x27;</span>), <span class="title function_">char</span>(<span class="string">&#x27;b&#x27;</span>)));</span><br><span class="line">abStar.<span class="title function_">test</span>(<span class="string">&#x27;&#x27;</span>);      <span class="comment">// true</span></span><br><span class="line">abStar.<span class="title function_">test</span>(<span class="string">&#x27;a&#x27;</span>);     <span class="comment">// true</span></span><br><span class="line">abStar.<span class="title function_">test</span>(<span class="string">&#x27;b&#x27;</span>);     <span class="comment">// true</span></span><br><span class="line">abStar.<span class="title function_">test</span>(<span class="string">&#x27;abba&#x27;</span>);  <span class="comment">// true</span></span><br><span class="line">abStar.<span class="title function_">test</span>(<span class="string">&#x27;abbac&#x27;</span>); <span class="comment">// false</span></span><br></pre></td></tr></table></figure> 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E6%AD%A3%E5%88%99/" rel="tag">正则</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E7%BC%96%E8%AF%91%E5%8E%9F%E7%90%86/" rel="tag">编译原理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/68243e0decd8/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            正则引擎中的有限自动机 ④ 复杂组合、语法糖、优化
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/3eecc83132ed/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">正则引擎中的有限自动机 ② 有限自动机</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

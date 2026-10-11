@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>Steam 动态限速 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-other/Steam动态限速"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  Steam 动态限速
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/6a27ccdebbe5/" class="article-date">
+  <time datetime="2024-11-05T07:12:34.000Z" itemprop="datePublished">2024-11-05</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E5%85%B6%E4%BB%96/">其他</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">1.1k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">4 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="场景分析"><a href="#场景分析" class="headerlink" title="场景分析"></a>场景分析</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">+---------------------------------------------------------------------------------------------------+</span><br><span class="line">|                                      PVE 存储服务端 (Linux 底层)                                     |</span><br><span class="line">|                                                                                                   |</span><br><span class="line">|   +-----------------------+              (异步下刷 Flush)              +----------------------+   |</span><br><span class="line">|   | NVMe SSD 写入缓存层    | -----------------------------------------&gt; | 底层 HDD 机械存储池   |   |</span><br><span class="line">|   | (dm-writecache 水位)  |                                            +----------------------+   |</span><br><span class="line">|   +-----------+-----------+                                                                       |</span><br><span class="line">|               |                                                                                   |</span><br><span class="line">|               v                                                                                   |</span><br><span class="line">|   +-----------+-----------+                                                                       |</span><br><span class="line">|   | iSCSI Target 服务端   | &lt;=================== 3260 端口 (iSCSI 块存储流量) ====================+   |</span><br><span class="line">|   +-----------------------+                                                                       |</span><br><span class="line">+---------------+-----------------------------------------------------------------------------------+</span><br><span class="line">                ^</span><br><span class="line">                |</span><br><span class="line">          (SSH: 22 端口)</span><br><span class="line">    定时查询 dmsetup status</span><br><span class="line">                |</span><br><span class="line">                v</span><br><span class="line">+---------------+-----------------------------------------------------------------------------------+</span><br><span class="line">|                                          Windows 客户端                                           |</span><br><span class="line">|                                                                                                   |</span><br><span class="line">|   +-------------------------------------------------------------------------------------------+   |</span><br><span class="line">|   |                               Node.js 监控守护进程 (后台常驻)                                 |   |</span><br><span class="line">|   |                                                                                           |   |</span><br><span class="line">|   |   1. 每 3 秒执行一次 SSH 命令查询 PVE 端脏页比例                                           |   |</span><br><span class="line">|   |   2. 计算当前水位: Dirty Blocks / Total Blocks                                            |   |</span><br><span class="line">|   |   3. 匹配控速策略:                                                                        |   |</span><br><span class="line">|   |      * 水位 &gt; 85%  --&gt;  强制降速至 10 MB/s (防止 SSD 缓存被打爆假死)                      |   |</span><br><span class="line">|   |      * 水位 70%~85% --&gt; 限制至 30 MB/s                                                    |   |</span><br><span class="line">|   |      * 水位 50%~70% --&gt; 限制至 60 MB/s                                                    |   |</span><br><span class="line">|   |      * 水位 &lt; 50%  --&gt;  解除限速 (0 / 恢复满速)                                           |   |</span><br><span class="line">|   +---------------------------------------------+---------------------------------------------+   |</span><br><span class="line">|                                                 |                                                 |</span><br><span class="line">|                            (WebSocket / CDP 通信: 8080 端口)                                      |</span><br><span class="line">|                       发送 SteamClient.Downloads.SetDownloadThrottle                              |</span><br><span class="line">|                                                 |                                                 |</span><br><span class="line">|                                                 v                                                 |</span><br><span class="line">|   +---------------------------------------------+---------------------------------------------+   |</span><br><span class="line">|   |                       Steam 客户端 (-cef-enable-debugging 启动)                           |   |</span><br><span class="line">|   |                                                                                           |   |</span><br><span class="line">|   |   [CEF 调试接口] ------------&gt; [下载管理器引擎] ----------------&gt; [写入挂载的 iSCSI 盘]   |   |</span><br><span class="line">|   |   (实时注入速率)               (动态调整拉取速度)                  (NTFS 格式 / 映射自 PVE) |   |</span><br><span class="line">|   +-----------------------------------------------------------------------------+-------------+   |</span><br><span class="line">+---------------------------------------------------------------------------------|-----------------+</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h4 id="项目地址"><a href="#项目地址" class="headerlink" title="项目地址"></a>项目地址</h4><p>🚀 <a target="_blank" rel="noopener" href="https://gitlab.iftrue.me/sunzhiqi/steam-auto-throttle">Steam Auto Throttle</a></p>
+<h4 id="实现流程"><a href="#实现流程" class="headerlink" title="实现流程"></a>实现流程</h4><h5 id="Steam-开启-CEF"><a href="#Steam-开启-CEF" class="headerlink" title="Steam 开启 CEF"></a>Steam 开启 CEF</h5><p>Steam CEF（Chromium Embedded Framework） 是 Valve 为 Steam 客户端构建全新 UI（基于 React &#x2F; TypeScript）所内嵌的 开源 Chromium 网页渲染引擎。</p>
+<p>现代 Steam 客户端除了最底层的 C++ 游戏启动与网络通讯核心外，整个商店、库、好友列表、下载管理界面本质上都是运行在这个内置 Chromium 浏览器中的 Web 页面。</p>
+<p>参数 -cef-enable-debugging 的底层作用<br>给 Steam 启动项添加 -cef-enable-debugging，本质上是向其内部的 Chromium 内核传递了 –remote-debugging-port 指令：</p>
+<p>暴露 CDP 调试端口：默认在本地 127.0.0.1:8080（或系统动态端口）启动一个 HTTP &#x2F; WebSocket 服务。</p>
+<p>开放 Chrome DevTools Protocol (CDP)：允许外部程序（浏览器开发者工具、Node.js、Python 等）通过标准的 CDP 协议，直接连接到 Steam 的前端渲染进程。</p>
+<p>打通 SteamClient 原生桥接对象：Steam 前端暴露了一个特权的全局 JS 对象 window.SteamClient，该对象封装了与 Steam C++ 底层通信的各种 IPC 接口。开启调试后，外部脚本可以通过 CDP 的 Runtime.evaluate 自由调用这些接口。</p>
+<table>
+<thead>
+<tr>
+<th align="left">功能方向</th>
+<th align="left">具体应用场景</th>
+<th align="left">对应实现接口 &#x2F; 方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>下载与带宽控制</strong></td>
+<td align="left">实时根据 NAS&#x2F;SSD 缓存水位、局域网 QoS 动态降速或恢复满速</td>
+<td align="left"><code>SteamClient.Downloads.SetDownloadThrottle(bps)</code></td>
+</tr>
+<tr>
+<td align="left"><strong>游戏与任务自动化</strong></td>
+<td align="left">暂停&#x2F;恢复特定游戏更新、触发游戏安装、切换下载区</td>
+<td align="left"><code>SteamClient.Downloads.PauseDownload(appid)</code></td>
+</tr>
+<tr>
+<td align="left"><strong>客户端状态监控</strong></td>
+<td align="left">获取当前正在下载的游戏 AppID、已下载字节数、实时读写峰值</td>
+<td align="left"><code>SteamClient.Downloads.GetDownloadOverview()</code></td>
+</tr>
+<tr>
+<td align="left"><strong>界面与皮肤定制</strong></td>
+<td align="left">注入自定义 CSS&#x2F;JS 脚本、去除冗余模块（类似 Millennium&#x2F;Steam-Skin 工具）</td>
+<td align="left">CDP <code>DOM.enable</code> &#x2F; <code>Page.addScriptToEvaluateOnNewDocument</code></td>
+</tr>
+<tr>
+<td align="left"><strong>账号与好友交互</strong></td>
+<td align="left">静默切换在线&#x2F;隐身状态、自动化接收好友邀请</td>
+<td align="left"><code>SteamClient.Friends.SetPersonaState(state)</code></td>
+</tr>
+</tbody></table>
+<p>找到 Steam 快捷图标的位置，修改启动参数命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;C:\Program Files (x86)\Steam\Steam.exe&quot;</span> -cef-enable-debugging</span><br></pre></td></tr></table></figure>
+
+<p>在浏览器访问 <code>http://localhost:8080/json</code> 来验证是否启用成功。</p>
+<h5 id="功能设计"><a href="#功能设计" class="headerlink" title="功能设计"></a>功能设计</h5><ul>
+<li>静默拉起</li>
+</ul>
+<p>通过 pkg 编译为 .exe 文件，修改默认的 steam 快捷方式,右键点击捷方式 -&gt; 属性（Properties）。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 将 Target（目标） 清空并替换为以下单行命令：</span></span><br><span class="line">mshta vbscript:CreateObject(<span class="string">&quot;WScript.Shell&quot;</span>).Run(<span class="string">&quot;&quot;</span><span class="string">&quot;C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Steam\steam-throttle.exe&quot;</span><span class="string">&quot;&quot;</span>,0,<span class="literal">false</span>)(window.close)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 将 Start in（起始位置） 填入</span></span><br><span class="line">C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Steam</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>动态限速</li>
+</ul>
+<p>缓存使用超出 90% 开启限速，直到缓存回落到 80% 以下</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> lastSpeed = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">let</span> startTimeStemp = <span class="title class_">Date</span>.<span class="title function_">now</span>();</span><br><span class="line"><span class="keyword">let</span> low = <span class="number">80</span>;</span><br><span class="line"><span class="keyword">let</span> high = <span class="number">90</span></span><br><span class="line"><span class="keyword">let</span> isThrottle = <span class="literal">false</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">function</span> <span class="title function_">calculateTargetThrottle</span>(<span class="params">&#123; dirtyRatio &#125;, avgMBps</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="title class_">Date</span>.<span class="title function_">now</span>() - startTimeStemp &lt; <span class="number">60</span> * <span class="number">1000</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="attr">needUpdate</span>: <span class="literal">false</span>,</span><br><span class="line">            <span class="attr">speed</span>: <span class="number">0</span></span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    startTimeStemp = <span class="title class_">Date</span>.<span class="title function_">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (dirtyRatio &lt;= low &amp;&amp; isThrottle) &#123;</span><br><span class="line">        isThrottle = <span class="literal">false</span>;</span><br><span class="line">        <span class="keyword">return</span> &#123;</span><br><span class="line">            <span class="attr">needUpdate</span>: <span class="literal">true</span>,</span><br><span class="line">            <span class="attr">speed</span>: <span class="number">150</span> * <span class="number">8</span> * <span class="number">1024</span></span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> ((dirtyRatio &gt; low &amp;&amp; isThrottle)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="title class_">Math</span>.<span class="title function_">abs</span>(lastSpeed - avgMBps) &gt; <span class="number">5</span>) &#123;</span><br><span class="line">            lastSpeed = avgMBps;</span><br><span class="line">            <span class="keyword">return</span> &#123;</span><br><span class="line">                <span class="attr">needUpdate</span>: <span class="literal">true</span>,</span><br><span class="line">                <span class="comment">// 客户端内部对于 download_throttle_rate 这个字段的基本计量单位是 Kilobits per second (Kbps，千比特每秒)，而不是 Kilobytes per second (KB/s，千字节每秒)。</span></span><br><span class="line">                <span class="attr">speed</span>: +(avgMBps - <span class="number">5</span>).<span class="title function_">toFixed</span>(<span class="number">0</span>) * <span class="number">1024</span> * <span class="number">8</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (dirtyRatio &gt; high) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="title class_">Math</span>.<span class="title function_">abs</span>(lastSpeed - avgMBps) &gt; <span class="number">5</span>) &#123;</span><br><span class="line">            lastSpeed = avgMBps;</span><br><span class="line">            isThrottle = <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">return</span> &#123;</span><br><span class="line">                <span class="attr">needUpdate</span>: <span class="literal">true</span>,</span><br><span class="line">                <span class="comment">// 客户端内部对于 download_throttle_rate 这个字段的基本计量单位是 Kilobits per second (Kbps，千比特每秒)，而不是 Kilobytes per second (KB/s，千字节每秒)。</span></span><br><span class="line">                <span class="attr">speed</span>: +(avgMBps - <span class="number">5</span>).<span class="title function_">toFixed</span>(<span class="number">0</span>) * <span class="number">1024</span> * <span class="number">8</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> &#123;</span><br><span class="line">        <span class="attr">needUpdate</span>: <span class="literal">false</span>,</span><br><span class="line">        <span class="attr">speed</span>: <span class="number">0</span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Steam/" rel="tag">Steam</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/2034ae39586e/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            正则引擎中的有限自动机 ① 正则历史和语法
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/0d8a7ae7bced/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">OpenWrt 安装与设置</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>

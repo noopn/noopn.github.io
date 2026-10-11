@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+
+
+<html lang="zh-CN">
+  
+
+    <head>
+      <meta charset="utf-8" />
+       
+      <meta name="keywords" content="前端 web react" />
+       
+      <meta name="description" content="前端技术与生活。" />
+      
+      <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1"
+      />
+      <title>防止节点钓鱼 |  四月八日</title>
+  <meta name="generator" content="hexo-theme-ayer">
+      
+      <link rel="shortcut icon" href="/favicon.ico" />
+       
+<link rel="stylesheet" href="/dist/main.css">
+ 
+<link rel="stylesheet" href="/css/fonts/remixicon.css">
+ 
+<link rel="stylesheet" href="/css/custom.css">
+ 
+      <script src="/js/pace.min.js"></script>
+       
+ 
+
+      <link rel="stylesheet" href="/css/bulma.min.css" />
+      <script src="/js/sweetalert2.min.js"></script>
+
+      <!-- mermaid -->
+      
+      <script src="/js/mermaid.min.js"></script>
+      
+      <style>
+        .swal2-styled.swal2-confirm {
+          font-size: 1.6rem;
+        }
+      </style>
+    <!-- hexo injector head_end start -->
+<link rel="stylesheet" href="/css/katex.min.css">
+
+<link rel="stylesheet" href="/css/style.css">
+<!-- hexo injector head_end end --></head>
+  </html>
+</html>
+
+
+<body>
+  <div id="app">
+    
+      
+    <main class="content on">
+      <section class="outer">
+  <article
+  id="posts-web-security/防止节点钓鱼 copy"
+  class="article article-type-posts"
+  itemscope
+  itemprop="blogPost"
+  data-scroll-reveal
+>
+  <div class="article-inner">
+    
+    <header class="article-header">
+       
+<h1 class="article-title sea-center" style="border-left:0" itemprop="name">
+  防止节点钓鱼
+</h1>
+ 
+
+      
+    </header>
+     
+    <div class="article-meta">
+      <a href="/posts/e16f153dbeed/" class="article-date">
+  <time datetime="2024-10-03T06:28:12.000Z" itemprop="datePublished">2024-10-03</time>
+</a> 
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/%E7%BD%91%E7%BB%9C%E5%AE%89%E5%85%A8/">网络安全</a>
+  </div>
+  
+<div class="word_count">
+    <span class="post-time">
+        <span class="post-meta-item-icon">
+            <i class="ri-quill-pen-line"></i>
+            <span class="post-meta-item-text"> 字数统计:</span>
+            <span class="post-count">2.4k</span>
+        </span>
+    </span>
+
+    <span class="post-time">
+        &nbsp; | &nbsp;
+        <span class="post-meta-item-icon">
+            <i class="ri-book-open-line"></i>
+            <span class="post-meta-item-text"> 阅读时长≈</span>
+            <span class="post-count">8 分钟</span>
+        </span>
+    </span>
+</div>
+ 
+    </div>
+      
+    <div class="tocbot"></div>
+
+
+
+
+  
+    <div class="article-entry" itemprop="articleBody">
+       
+  <h4 id="安全建议"><a href="#安全建议" class="headerlink" title="安全建议"></a>安全建议</h4><ul>
+<li>设置非全局模式，国内能访问的站点就不要使用代理</li>
+<li>HTTP 站点如果要进行敏感操作，不要使用代理（安全的网站都是用 HTTPS 协议）</li>
+<li>千万别被安装了根证书，这是最重要的一条，会帔看个精光</li>
+<li>最好不要使用自带节点的第三方软件，某某加速器、某某 VPN 等这种软件可能会给你安装证书。</li>
+<li>经常性检查证书链，保障数据安全</li>
+</ul>
+<h4 id="链路分析"><a href="#链路分析" class="headerlink" title="链路分析"></a>链路分析</h4><ul>
+<li><p>创建一个根证书 </p>
+<p>打开 Fiddler Classic，点击顶部菜单栏的 Tools -&gt; Options…。</p>
+<p>切换到 HTTPS 选项卡。</p>
+<p>勾选 Capture HTTPS CONNECTs 和 Decrypt HTTPS traffic。</p>
+<p>勾选后，Fiddler 会自动弹窗问你是否要将根证书安装到系统受信任区域，点击 Yes 即可。</p>
+<p>如果需要导出证书文件（例如给手机安装）：</p>
+<p>点击右侧的 Actions 按钮。</p>
+<p>选择 Export Root Certificate to Desktop。</p>
+<p>此时你的桌面就会出现一个名为 FiddlerRoot.cer 的证书文件。</p>
+<p>这个证书会被写入到第三方软件的内部，软件安装的时候会在目标机器上生成一个根证书。</p>
+</li>
+<li><p>把证书传到目标电脑上执行安装来模拟证书被注入的过程：</p>
+<p><strong>方法一</strong>：手动图形化安装（最适合单台电脑）</p>
+<p>启动安装向导：双击该证书文件，在弹出的窗口中点击 “安装证书…” (Install Certificate)。</p>
+<p>选择存储位置：</p>
+<p>选 “当前用户”（仅对当前登录账号生效，通常不需要管理员权限）。</p>
+<p>选 “本地计算机”（对电脑上所有账号生效，推荐，需要管理员权限）。</p>
+<p>点击“下一步”。</p>
+<p>【最关键的一步】选择证书存储：</p>
+<p>选择 “将所有的证书都放入下列存储”。</p>
+<p>点击 “浏览” 按钮。</p>
+<p>在列表中选中 受信任的根证书颁发机构 (Trusted Root Certification Authorities)。</p>
+<p>点击“确定”，然后“下一步”，最后点击“完成”。</p>
+<p>安全警告确认：如果系统弹出一个安全警告弹窗，询问是否要安装此证书，点击 “是” 即可。</p>
+<p><strong>方法二</strong>：命令行极速安装（适合自动化 &#x2F; 批处理脚本）</p>
+<p>以管理员身份运行命令提示符 (CMD) 或 PowerShell。 执行以下命令（将路径替换为你实际的证书文件路径）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">certutil -addstore -f <span class="string">&quot;Root&quot;</span> <span class="string">&quot;C:\路径\到\你的\FiddlerRoot.cer&quot;</span></span><br><span class="line"><span class="comment"># 看到“CertUtil: -addstore 命令成功完成”的提示，就说明安装好了。</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>目标电脑 google 安装插件 SwitchyOmega 用于模拟开了的代理软件对数据进行转发</p>
+<p>配置转发 <code>fillder所在的服务器IP地址:8888</code></p>
+<p>开启 Fiddler 允许远程连接：</p>
+<p>打开 Fiddler Classic，依次点击菜单栏 Tools -&gt; Options -&gt; Connections。</p>
+<p>勾选 Allow remote computers to connect（允许远程计算机连接）。</p>
+<p>(修改后需要重启一次 Fiddler 才能生效)。</p>
+<p>此时被注入的目标电脑就能通过代理转发到 fillder 服务上网了，但是使用的还是原有的证书，也并不能看见解密的信息</p>
+</li>
+<li><p>安装了根证书并不等于开启了解密！Fiddler 默认只捕获 HTTP，对 HTTPS 流量只做透传（Tunnel），所以浏览器看到的还是原厂证书。</p>
+</li>
+</ul>
+<p>  解决办法：</p>
+<p>  打开 Fiddler，点击菜单栏 Tools -&gt; Options -&gt; HTTPS 页签。</p>
+<p>  确保勾选了 Decrypt HTTPS traffic（解密 HTTPS 流量）。</p>
+<p>  下方的下拉菜单选择 from all processes（捕获所有进程）或 from browsers only。</p>
+<p>  点击 OK 保存并重启（如果是第一次勾选，它会提示你重新生成并安装一次证书）。</p>
+<p>  这样可以在左侧列表中看到被拦截的并解密的明文信息。</p>
+<h4 id="证书校验流程"><a href="#证书校验流程" class="headerlink" title="证书校验流程"></a>证书校验流程</h4><p>当我们首次访问一个之前从未去过的网站（比如 <a target="_blank" rel="noopener" href="https://example.com)时,你的电脑里确实没有/">https://example.com）时，你的电脑里确实没有</a> example.com 的证书。</p>
+<p>那么浏览器到底是怎么敢信任这个网站的呢？核心原因在于：TLS 证书体系采用的是“信任链 (Chain of Trust)”机制。</p>
+<p>你可以把证书验证想象成去办理出国签证：海关（浏览器）并不认识你个人（网站），但海关认识给你盖章的“大使馆&#x2F;公安局（根证书颁发机构 CA）”。</p>
+<p>证书的“家族树”：三层信任链结构，在真实的互联网中，证书通常分为三层：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[ 根证书 Root CA ]             ---- 存放在你的 Windows / macOS 系统信任库中（预装好的）</span><br><span class="line">      │ (签发/盖章)</span><br><span class="line">      ▼</span><br><span class="line">[ 中级证书 Intermediate CA ]    ---- 由 CA 机构持有，负责日常签发</span><br><span class="line">      │ (签发/盖章)</span><br><span class="line">      ▼</span><br><span class="line">[ 站点证书 Server/Leaf ]       ---- 你访问的网站（如 example.com）持有的证书</span><br></pre></td></tr></table></figure>
+
+<p>根证书 (Root CA)：全球权威的“超级公章”（如 DigiCert, Sectigo, Let’s Encrypt）。它们数量很少（几百个），在你买电脑&#x2F;装操作系统时，微软或苹果就已经预先打包安装在你的系统里了。</p>
+<p>中级证书 (Intermediate CA)：根证书的“代理人”。为了防止根证书的私钥泄露导致全球信任崩塌，根 CA 通常把私钥锁在保险柜里，平时只用中级证书来给具体的网站盖章。</p>
+<p>站点证书 (Leaf Certificate)：网站管理员买到的、写着 example.com 的证书。</p>
+<p>当 Chrome 拿到服务器发过来的证书链后，它会在你的电脑本地进行以下 4 步严格审查：</p>
+<p>步骤 A：查验域名与有效期 (Domain &amp; Expiry Verification)</p>
+<p>检查域名：这个证书里的 Subject Alternative Name (SAN) 字段写的是不是 example.com？（防止拿 baidu.com 的证书来冒充 example.com）。</p>
+<p>检查时间：当前时间是不是在证书的 Not Before 和 Not After（有效期）之间？</p>
+<p>步骤 B：沿着“信任链”向上溯源 (Chain Building)</p>
+<p>浏览器看站点证书：“你是 example.com，谁给你签发的？” $\rightarrow$ 发现签名者是 “DigiCert Global TLS Intermediate CA”。</p>
+<p>浏览器检查随请求一起发过来的中级证书，确认签名正确。</p>
+<p>浏览器继续看中级证书：“你又是谁签发的？” $\rightarrow$ 发现签名者是 “DigiCert Global Root CA”。</p>
+<p>步骤 C：对暗号，比对系统预装的“根证书库” (Trust Anchor Matching)</p>
+<p>浏览器拿着寻找目标的名称 “DigiCert Global Root CA”，打开你的 Windows 系统内置的 “受信任的根证书颁发机构” 数据库。</p>
+<p>结果：找到了！ 你的 Windows 系统里早已躺着这个 DigiCert 的根证书公钥。</p>
+<p>步骤 D：数学密码学验证（公钥验签）</p>
+<p>用系统里的根证书公钥，去解密并验证中级证书上的数字签名 $\rightarrow$ 验证成功！（证明中级证书合法）。</p>
+<p>用中级证书的公钥，去解密并验证 example.com 站点证书上的数字签名 $\rightarrow$ 验证成功！（证明站点证书合法）。</p>
+<p><strong>兜底检查</strong>：证书有没有被临时吊销？(Revocation Check)</p>
+<p>即使证书没过期、签名也对，网站如果私钥泄露，CA 机构会提前吊销这张证书。浏览器还会通过以下方式快速确认：</p>
+<p>OCSP Stapling（在线证书状态协议）：服务器在握手时直接附带一份来自 CA 的“带防伪印章的证明”，证明这张证书今天依然有效。</p>
+<p>CRL（证书吊销列表）：浏览器定期下载的黑名单列表。</p>
+<h4 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h4><ul>
+<li><p><strong>Q</strong>： Chrome 走了 QUIC (HTTP&#x2F;3) 协议，绕过了 HTTP 代理<br>Google 自家的服务（Google 搜索、YouTube 等）默认会优先使用基于 UDP 的 QUIC 协议。<br>Fiddler 只支持基于 TCP 的 HTTP&#x2F;1.1 和 HTTP&#x2F;2，无法拦截 UDP 流量。当 Chrome 走 QUIC 时，流量直接绕过代理直连了 Google，所以你看到的是官方证书。</p>
+<p><strong>A</strong>: Chrome 的 QUIC 协议</p>
+<p>在 Chrome 地址栏输入并打开：chrome:&#x2F;&#x2F;flags&#x2F;#enable-quic</p>
+<p>找到 Experimental QUIC protocol，将其状态改为 Disabled。</p>
+<p>点击右下角的 Relaunch 重启浏览器。</p>
+</li>
+<li><p><strong>Q</strong>: 为什么本地电脑也受影响？<br>当你在本地电脑上打开 Fiddler Classic 时，它在后台默默做了这件事：</p>
+<p>它把 Windows 系统的代理设置自动改成了 127.0.0.1:8888。</p>
+<p>因为 Chrome、Edge、IE 以及绝大多数 Windows 应用，默认都会读取系统全局代理，所以你本地电脑上的所有网页请求，都会强制自动走 Fiddler。</p>
+<p>只要请求走了 Fiddler，并且你开启了 HTTPS 解密，Fiddler 就会用它安装在本地的根证书去重签网页，因此你在本地电脑访问网页时就会看到 Fiddler 的证书。</p>
+<p>如果你只希望通过代理插件（比如 SwitchyOmega）或远程设备连过来，而不想让本地电脑的所有软件都被 Fiddler 劫持，可以关闭 Fiddler 的“系统代理”功能：</p>
+<p>操作步骤：<br>关闭 Fiddler 的系统代理捕获：</p>
+<p>Fiddler Classic：点击左下角的 Capturing 字样（或者按 F12），取消它的勾选。此时左下角不会显示 Capturing。</p>
+<p>或者取消勾选顶部菜单 File -&gt; Capture Traffic。</p>
+<p>保持 Fiddler 的监听端口开放：</p>
+<p>只要 Fiddler 软件开着（并且在 Tools -&gt; Options -&gt; Connections 里勾选了 Allow remote computers to connect），它的 8888 端口就在后台持续监听着。</p>
+<p>效果：</p>
+<p>此时你本地的普通浏览器、软件不再走 Fiddler，访问网站依然是原厂证书。</p>
+<p>只有开启了 SwitchyOmega 插件的浏览器，或者配置了代理（指向 你的IP:8888）的远程电脑&#x2F;手机，流量才会进入 Fiddler 被拦截解密。</p>
+</li>
+</ul>
+ 
+      <!-- reward -->
+      
+      <div id="reword-out">
+        <div id="reward-btn">
+          打赏
+        </div>
+      </div>
+      
+    </div>
+    
+
+    <!-- copyright -->
+    
+    <div class="declare">
+      <ul class="post-copyright">
+        <li>
+          <i class="ri-copyright-line"></i>
+          <strong>版权声明： </strong>
+          
+          本博客所有文章除特别声明外，著作权归作者所有。转载请注明出处！
+          
+        </li>
+      </ul>
+    </div>
+    
+    <footer class="article-footer">
+       
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/VPN/" rel="tag">VPN</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/%E4%BB%A3%E7%90%86/" rel="tag">代理</a></li></ul>
+
+    </footer>
+  </div>
+
+   
+  <nav class="article-nav">
+    
+      <a href="/posts/31cf04fdc929/" class="article-nav-link">
+        <strong class="article-nav-caption">上一篇</strong>
+        <div class="article-nav-title">
+          
+            Speaches 部署
+          
+        </div>
+      </a>
+    
+    
+      <a href="/posts/153cccf78fe3/" class="article-nav-link">
+        <strong class="article-nav-caption">下一篇</strong>
+        <div class="article-nav-title">代理模式</div>
+      </a>
+    
+  </nav>
+
+  
+   
+<div class="gitalk" id="gitalk-container"></div>
+
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.css">
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.7.2/gitalk.min.js"></script>
+
+
+<script src="https://cdn.staticfile.org/blueimp-md5/2.19.0/js/md5.min.js"></script>
+
+<script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: 'bce2317b25da7c3c18f6',
+    clientSecret: 'e0ab868ca9054234798be82c2b1c0c9dd8632307',
+    repo: 'noopn.github.io',
+    owner: 'noopn',
+    admin: ['noopn'],
+    // id: location.pathname,      // Ensure uniqueness and length less than 50
+    id: md5(location.pathname),
+    distractionFreeMode: false,  // Facebook-like distraction free mode
+    pagerDirection: 'last'
+  })
+
+  gitalk.render('gitalk-container')
+</script>
+
+     
+</article>
+
+</section>
+      <footer class="footer">
+  <div class="outer">
+    <ul>
+      <li>
+        Copyrights &copy;
+        2015-2026
+        <i class="ri-heart-fill heart_icon"></i> SunZhiqi
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      <li>
+        
+      </li>
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      
+    </ul>
+    <ul>
+      <li>
+        <!-- cnzz统计 -->
+        
+      </li>
+    </ul>
+  </div>
+</footer>    
+    </main>
+    <div class="float_btns">
+      <div class="totop" id="totop">
+  <i class="ri-arrow-up-line"></i>
+</div>
+
+    </div>
+    <aside class="sidebar on">
+      <button class="navbar-toggle"></button>
+<nav class="navbar">
+  
+  <div class="logo">
+    <a href="/"><img src="/images/ayer-side.png" alt="四月八日"></a>
+  </div>
+  
+  <ul class="nav nav-main">
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/">主页</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/archives">归档</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/categories">分类</a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-item-link" href="/tags">标签</a>
+    </li>
+    
+  </ul>
+</nav>
+<nav class="navbar navbar-bottom">
+  <ul class="nav">
+    <li class="nav-item">
+      
+      <a class="nav-item-link nav-item-search"  title="搜索">
+        <i class="ri-search-line"></i>
+      </a>
+      
+      
+    </li>
+  </ul>
+</nav>
+<div class="search-form-wrap">
+  <div class="local-search local-search-plugin">
+  <input type="search" id="local-search-input" class="local-search-input" placeholder="Search...">
+  <div id="local-search-result" class="local-search-result"></div>
+</div>
+</div>
+    </aside>
+    <div id="mask"></div>
+
+<!-- #reward -->
+<div id="reward">
+  <span class="close"><i class="ri-close-line"></i></span>
+  <p class="reward-p"><i class="ri-cup-line"></i>此时无声胜有声！</p>
+  <div class="reward-box">
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/alipay.jpg">
+      <span class="reward-type">支付宝</span>
+    </div>
+    
+    
+    <div class="reward-item">
+      <img class="reward-img" src="/images/wechat.jpg">
+      <span class="reward-type">微信</span>
+    </div>
+    
+  </div>
+</div>
+    
+<script src="/js/jquery-3.6.0.min.js"></script>
+ 
+<script src="/js/lazyload.min.js"></script>
+
+<!-- Tocbot -->
+ 
+<script src="/js/tocbot.min.js"></script>
+
+<script>
+  tocbot.init({
+    tocSelector: ".tocbot",
+    contentSelector: ".article-entry",
+    headingSelector: "h1, h2, h3, h4, h5, h6",
+    hasInnerContainers: true,
+    scrollSmooth: true,
+    scrollContainer: "main",
+    positionFixedSelector: ".tocbot",
+    positionFixedClass: "is-position-fixed",
+    fixedSidebarOffset: "auto",
+  });
+</script>
+
+<script src="/js/jquery.modal.min.js"></script>
+<link rel="stylesheet" href="/css/jquery.modal.min.css" />
+<script src="/js/jquery.justifiedGallery.min.js"></script>
+
+<script src="/dist/main.js"></script>
+
+<!-- ImageViewer -->
+ <!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+  <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+  <div class="pswp__bg"></div>
+
+  <!-- Slides wrapper with overflow:hidden. -->
+  <div class="pswp__scroll-wrap">
+    <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+    <div class="pswp__container">
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+      <div class="pswp__item"></div>
+    </div>
+
+    <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+    <div class="pswp__ui pswp__ui--hidden">
+      <div class="pswp__top-bar">
+        <!--  Controls are self-explanatory. Order can be changed. -->
+
+        <div class="pswp__counter"></div>
+
+        <button
+          class="pswp__button pswp__button--close"
+          title="Close (Esc)"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--share"
+          style="display: none"
+          title="Share"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--fs"
+          title="Toggle fullscreen"
+        ></button>
+
+        <button
+          class="pswp__button pswp__button--zoom"
+          title="Zoom in/out"
+        ></button>
+
+        <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+        <!-- element will get class pswp__preloader--active when preloader is running -->
+        <div class="pswp__preloader">
+          <div class="pswp__preloader__icn">
+            <div class="pswp__preloader__cut">
+              <div class="pswp__preloader__donut"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+        <div class="pswp__share-tooltip"></div>
+      </div>
+
+      <button
+        class="pswp__button pswp__button--arrow--left"
+        title="Previous (arrow left)"
+      ></button>
+
+      <button
+        class="pswp__button pswp__button--arrow--right"
+        title="Next (arrow right)"
+      ></button>
+
+      <div class="pswp__caption">
+        <div class="pswp__caption__center"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="/css/photoswipe.min.css" />
+<link rel="stylesheet" href="/css/default-skin.min.css" />
+<script src="/js/photoswipe.min.js"></script>
+<script src="/js/photoswipe-ui-default.min.js"></script>
+
+<script>
+  function viewer_init() {
+    let pswpElement = document.querySelectorAll(".pswp")[0];
+    let $imgArr = document.querySelectorAll(
+      ".article-entry img:not(.reward-img)"
+    );
+
+    $imgArr.forEach(($em, i) => {
+      $em.onclick = () => {
+        // slider展开状态
+        // todo: 这样不好，后面改成状态
+        if (document.querySelector(".left-col.show")) return;
+        let items = [];
+        $imgArr.forEach(($em2, i2) => {
+          let img = $em2.getAttribute("data-idx", i2);
+          let src =
+            $em2.getAttribute("data-target") || $em2.getAttribute("src");
+          let title = $em2.getAttribute("alt");
+          // 获得原图尺寸
+          const image = new Image();
+          image.src = src;
+          items.push({
+            src: src,
+            w: image.width || $em2.width,
+            h: image.height || $em2.height,
+            title: title,
+          });
+        });
+        var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, {
+          index: parseInt(i),
+        });
+        gallery.init();
+      };
+    });
+  }
+  viewer_init();
+</script>
+ 
+<!-- MathJax -->
+ <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {
+          inlineMath: [ ['$','$'], ["\\(","\\)"]  ],
+          processEscapes: true,
+          skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+  });
+
+  MathJax.Hub.Queue(function() {
+      var all = MathJax.Hub.getAllJax(), i;
+      for(i=0; i < all.length; i += 1) {
+          all[i].SourceElement().parentNode.className += ' has-jax';
+      }
+  });
+</script>
+
+<script src="/js/MathJax.js"></script>
+<script src="/js/TeX-AMS-MML_HTMLorMML-full.js"></script>
+
+<script>
+  var ayerConfig = {
+    mathjax: true,
+  };
+</script>
+
+<!-- Katex -->
+
+<!-- busuanzi  -->
+
+<!-- ClickLove -->
+
+<!-- ClickBoom1 -->
+
+<!-- ClickBoom2 -->
+
+<!-- CodeCopy -->
+ 
+<link rel="stylesheet" href="/css/clipboard.css">
+ <script src="/js/clipboard.min.js"></script>
+<script>
+  function wait(callback, seconds) {
+    var timelag = null;
+    timelag = window.setTimeout(callback, seconds);
+  }
+  !(function (e, t, a) {
+    var initCopyCode = function () {
+      var copyHtml = "";
+      copyHtml += '<button class="btn-copy" data-clipboard-snippet="">';
+      copyHtml += '<i class="ri-file-copy-2-line"></i><span>COPY</span>';
+      copyHtml += "</button>";
+      $(".highlight .code pre").before(copyHtml);
+      $(".article pre code").before(copyHtml);
+      var clipboard = new ClipboardJS(".btn-copy", {
+        target: function (trigger) {
+          return trigger.nextElementSibling;
+        },
+      });
+      clipboard.on("success", function (e) {
+        let $btn = $(e.trigger);
+        $btn.addClass("copied");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-checkbox-circle-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPIED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-checkbox-circle-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+      clipboard.on("error", function (e) {
+        e.clearSelection();
+        let $btn = $(e.trigger);
+        $btn.addClass("copy-failed");
+        let $icon = $($btn.find("i"));
+        $icon.removeClass("ri-file-copy-2-line");
+        $icon.addClass("ri-time-line");
+        let $span = $($btn.find("span"));
+        $span[0].innerText = "COPY FAILED";
+
+        wait(function () {
+          // 等待两秒钟后恢复
+          $icon.removeClass("ri-time-line");
+          $icon.addClass("ri-file-copy-2-line");
+          $span[0].innerText = "COPY";
+        }, 2000);
+      });
+    };
+    initCopyCode();
+  })(window, document);
+</script>
+ 
+<!-- CanvasBackground -->
+
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({ theme: "default" });
+  }
+</script>
+
+<script src="/js/replace-drawio-domain.js"></script>
+
+
+    
+    
+
+  </div>
+</body>
+
+</html>
