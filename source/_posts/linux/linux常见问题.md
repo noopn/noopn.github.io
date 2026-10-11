@@ -477,7 +477,7 @@ LVM 的逻辑是：“这种连续大文件写进去就是占地方，以后大�
 但是代价极其高昂：
 因为 Windows 放弃了“对账”，如果在复制过程中，或者复制刚完成的几秒钟内，网线松了、PVE 意外重启、或者交换机闪断，那些存在 Windows 内存里以及 PVE 内存里、还没来得及真正写到机械硬盘上的数据，会瞬间灰飞烟灭，并大概率导致你的 iSCSI 分区文件系统直接损坏（变成 RAW 格式）。
 
-##### iSCSI策略设计
+#### iSCSI策略设计
 
 服务端主外，客户端主内。
 
@@ -526,6 +526,22 @@ lvconvert --type writecache --cachevol vg_home_data/home_writecache vg_home_data
 # 为什么会弹这个？ 因为你的 lv_home_data 是通过 iSCSI 挂载给 Windows 使用的，底层格式化（如 NTFS）是在 Windows 端完成的。PVE 宿主机无法直接“透视”到里面的文件系统块大小，所以它报了个“无法检测”的警告。
 # 为什么选 4096？ Windows 的 NTFS 文件系统默认簇大小（Block Size）几乎全都是 4096 字节 (4KB)。dm-writecache 使用 4096 字节不仅性能最好，而且能与 Windows 的文件系统完美对齐。
 
+# 1. 永久修改并发数为 4
+lvchange --cachesettings 'writeback_jobs=4' vg_home_data/lv_home_data
+# 2. 永久修改高低水位
+lvchange --cachesettings 'high_watermark=30 low_watermark=10' vg_home_data/lv_home_data
+
+# 3. 永久修改自动提交时间（可选，增加到 5秒/5000毫秒）
+# dm-writecache 的元数据全部保存在“缓存盘（SSD）”的头部专属区域内，它压根不需要写进机械硬盘。这 5 秒发生了什么？
+# 系统只是在 SSD 上极速记录一笔：“刚才收到的这几批数据块已经有效，索引已建好”。对于 SSD 而言，写几个 4KB 的元数据块耗时在 微秒（μs）级别，就像在便签纸上打了个勾，对 SSD 自身寿命和性能都几乎毫无察觉。
+# 机械硬盘在这个瞬间需要做什么？什么都不需要做。 此时根本没有任何指令发给机械硬盘，机械硬盘完全不受这 5 秒定时器的干扰。
+lvchange --cachesettings 'autocommit_time=5000' vg_home_data/lv_home_data
+
+# 验证
+dmsetup table vg_home_data-lv_home_data
+# 如果没有生效必须热更新
+dmsetup resume vg_home_data-lv_home_data
+
 # 5.targetcli 找到旧的 LUN 和 fileio 名称
 targetcli
 ls
@@ -539,6 +555,7 @@ ls
 # 8.创建全新的 Block 设备:指定我们刚才搞好的 LVM 路径.现在，创建一个纯粹的块级设备，命名为 block_home_data ，并指向你的主数据卷
 # 在底层已经是 4K 的情况下，必须显式告诉 iSCSI 协议对外广播自己是 4K 盘。进入 targetcli，在创建块设备后，必须立即设置 block_size：
 /backstores/block create name=block_home_data dev=/dev/vg_home_data/lv_home_data
+
 /backstores/block/block_home_data set attribute block_size=4096
 
 # 9.将新 Block 映射为 LUN:重新挂载给 iSCSI 目标.把刚刚建好的 block_home 挂载到你的 iSCSI 目标上
@@ -554,10 +571,63 @@ exit
 watch -n 1 "lvs -o name,data_percent,cache_write_hits,cache_dirty_blocks vg_home_data/lv_home_data"
 
 # 监控 lvm-cache dm-writecache 状态
+# | 序号 | 示例值 | 字段名称 (Kernel 源码) | 详细功能与解读 |
+# | :---: | :--- | :--- | :--- |
+# | **1** | `0` | **Starting Sector** | 逻辑卷起始扇区号（通常为 0）。 |
+# | **2** | `5860524032` | **Length (Sectors)** | 设备总扇区数（换算后约为 2.72 TB）。 |
+# | **3** | `writecache` | **Target Type** | Device-mapper 驱动模块类型名称。 |
+# | **4** | `0` | **Error / Status** | 错误码（`0` 为正常，非 0 表示处于错误/只读模式）。 |
+# | **5** | `118312625` | **Total Blocks** | **缓存盘总块数**（按 4KB/块 计算，约 451.3 GB）。 |
+# | **6** | `62277359` | **Free Blocks** | **当前空闲可用块数**（尚未被脏数据或读缓存占用的块）。 |
+# | **7** | `0` | **Writeback in progress** | **当前正在进行回写锁定的块数**。 |
+# | **8** | `842069694` | **Read Hits** | **读命中次数**（直接由 SSD 返回数据的累计 I/O 次数）。 |
+# | **9** | `512795821` | **Read Misses** | **读未命中次数**（SSD 无缓存，穿透到底层机械盘读取的次数）。 |
+# | **10** | `592773768` | **Write Hits** | **写命中次数**（目标块已在 SSD 中，直接覆盖更新的次数）。 |
+# | **11** | `279529` | **Write Misses** | **写未命中次数**（写入全新位置，在 SSD 中新分配块的次数）。 |
+# | **12** | `29003956` | **Dirty Blocks** | **【核心指标】当前积压的脏块数**（已入 SSD 但**未同步到底层机械盘**的数据，当前约 110.6 GB）。 |
+# | **13** | `0` | **Clearing in progress** | 当前正在执行擦除/元数据清理的块数。 |
+# | **14** | `563490289` | **Total Flushed Blocks** | **累计已刷盘块数**（历史成功写回到底层机械盘的总块数）。 |
+# | **15** | `0` | **Discard Blocks** | 累计处理的 TRIM/Discard 丢弃块统计。 |
+# | **16** | `1815036` | **Allocated Structures** | **当前分配的元数据结构体/内存节点数**（反映驱动占用的内存开销）。 |
+# | **17** | `0` | **Corrupt / Bad Blocks** | 损坏/校验失败的坏块数（非 0 代表硬件故障或数据损坏）。 |
+# 0 5860524032 writecache 0 118312625 62277359 0 842070036 512795837 592774496 279529 29004304 0 563490669 0 1815077 0
 watch -n 1 'dmsetup status vg_home_data-lv_home_data'
+
+watch -n 1 -t 'dmsetup status vg_home_data-lv_home_data | awk "{
+    total=\$5; free=\$6; in_flight=\$7;
+    
+    used = total - free;
+    
+    total_gb = total * 4 / 1024 / 1024;
+    free_gb = free * 4 / 1024 / 1024;
+    dirty_gb = used * 4 / 1024 / 1024;
+    inflight_mb = in_flight * 4 / 1024;
+    
+    dirty_ratio = (total > 0) ? (used / total) * 100 : 0;
+    
+    read_hit=\$8; read_miss=\$9; write_hit=\$10; write_miss=\$11;
+    total_reads = read_hit + read_miss;
+    read_hit_ratio = (total_reads > 0) ? (read_hit / total_reads) * 100 : 0;
+    
+    printf \"%-22s: %.2f GB\n\", \"SSD 缓存总容量\", total_gb;
+    printf \"%-22s: %.2f GB (这就是脏数据池)\n\", \"当前占用 (未落盘)\", dirty_gb;
+    printf \"%-22s: %.1f%%\n\", \"当前脏数据水位\", dirty_ratio;
+    printf \"%-22s: %.2f MB\n\", \"正在写入机械盘的实时量\", inflight_mb;
+    printf \"%-22s: %.2f%% (命中: %d, 未命中: %d)\n\", \"读缓存命中率\", read_hit_ratio, read_hit, read_miss;
+    printf \"%-22s: %d 次 / %d 次\n\", \"写入命中/未命中\", write_hit, write_miss;
+}"'
+
+# 检查底层是否抛出内核错误
+dmesg -T | grep -E "blocked|hung|writecache|I/O error|timeout"
+
+# 查看硬盘状读写状态
+iostat -x -z 1
 
 #监控系统内存状态
 watch -n 1 "free -h; echo '===================='; grep -E 'Dirty|Writeback' /proc/meminfo"
+
+#如果达到水位之后，还是不落盘执行以下命令
+dmsetup message vg_home_data-lv_home_data 0 flush
 ```
 
 **Q**: 为什么挂在后会变成容量变大且不能访问？
