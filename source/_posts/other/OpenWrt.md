@@ -750,7 +750,7 @@ Sing-box 拿到这个查 browserleaks.net 的请求，开始检查 DNS 规则：
 因为所有规则都没命中，Sing-box 启用了全局兜底 DNS（Default DNS server: Google）。
 Google DNS 节点配置的是 outbound 'BWG'。于是，这个 DNS 查询包被丢进了 Vless 代理隧道，跑到国外去查 IP。
 
-#### 拦截/禁用移动设备的IPv6流量
+#### 拦截/禁用 手机移动设备的IPv6流量
 
 为什么图形化界面的“IP 规则”行不通？
 因为 IPv6 的设计初衷就包含“隐私扩展（Privacy Extensions）”。你的手机不会只有一个固定的 IPv6 地址，系统会不断生成随机的、临时的 IPv6 地址去访问外网（比如 YouTube）。
