@@ -196,3 +196,16 @@ source ~/.zshrc 2>/dev/null || source ~/.bashrc
 
 # 验证方法：新开一个终端标签页或重新 SSH 登录 Manjaro，执行 echo $SSH_AUTH_SOCK，确认输出为 /run/user/1000/ssh-agent.socket（不再为空）。
 ```
+
+配置 AddKeysToAgent yes，实现首次使用自动加载私钥（免手动 ssh-add）
+修改 ~/.ssh/config 后，只要你在任意一次 ssh 或 git 操作中使用了私钥，系统就会自动把它注册进常驻的 ssh-agent 并持续缓存（若私钥设置了密码短语，也只需在开机后首次使用时输入一次）：
+
+```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+cat << 'EOF' >> ~/.ssh/config
+
+Host *
+    AddKeysToAgent yes
+EOF
+chmod 600 ~/.ssh/config
+```
