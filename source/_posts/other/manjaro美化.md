@@ -167,3 +167,32 @@ sudo pacman -Syu $(basename $(pacman -Qq linux | grep "^linux[0-9]*$"))-headers
 # 2. 安装指定的驱动
 sudo mhwd -a pci nonfree 0300
 ```
+
+
+#### ssh-agent 常驻服务
+
+Windows 为什么不用： Windows 内置的 OpenSSH 将 OpenSSH Authentication Agent 注册为了全局后台系统服务，开机自动常驻，所有终端窗口共用同一个全局命名管道，不需要手动拉起；同时，Windows 还会把你通过 ssh-add 添加过的私钥加密保存在系统注册表（DPAPI）中，哪怕重启电脑也会自动恢复，无需重复添加。
+
+Manjaro 为什么每次都要输： 在 Linux 上直接执行 eval "$(ssh-agent -s)"，只会在当前终端会话中临时启动一个 ssh-agent 进程，并把通信地址 SSH_AUTH_SOCK 写入当前 Shell 的内存环境变量。一旦你新开终端标签页、断开 SSH 重连或注销登录，新终端继承不到之前的 SSH_AUTH_SOCK 变量（或者旧进程随会话退出被销毁），就必须重新启动并重新 ssh-add。
+
+Manjaro 自带的 openssh 软件包已经内置了用户级服务模板，启用后所有终端都会共享同一个固定套接字（Socket）；同时开启 linger 可防止你断开所有 SSH 连接后后台进程被系统回收
+
+```bash
+systemctl --user enable --now ssh-agent.service
+sudo loginctl enable-linger $USER
+
+
+# 验证方法：执行 systemctl --user status ssh-agent.service --no-pager，确认输出显示 Active: active (running)
+# 且 /run/user/$(id -u)/ssh-agent.socket 文件已生成。
+```
+
+将固定 Socket 路径写入 Shell 环境变量（Zsh / Bash 通用）
+让每次新打开的终端自动连接到上述后台常驻的 ssh-agent，而不再各自启动新进程（根据你之前终端提示符判断你正在使用 Zsh，此处同步写入 ~/.zshrc 和 ~/.bashrc 以防脚本调用 Bash 时找不到变量）：
+
+```bash
+echo 'export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"' >> ~/.zshrc
+echo 'export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"' >> ~/.bashrc
+source ~/.zshrc 2>/dev/null || source ~/.bashrc
+
+# 验证方法：新开一个终端标签页或重新 SSH 登录 Manjaro，执行 echo $SSH_AUTH_SOCK，确认输出为 /run/user/1000/ssh-agent.socket（不再为空）。
+```
